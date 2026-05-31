@@ -1,0 +1,46 @@
+{
+  "main_menu_screen": {
+    "context": {
+      "button_grid": [
+        {"label": "Scan", "icon": "scan"},
+        {"label": "Seeds", "icon": "seeds"},
+        {"label": "Settings", "icon": "settings"},
+        {"label": "Tools", "icon": "tools"}
+      ]
+    }
+  },
+  "large_icon_status_screen": {
+    "context": {
+      "title": "Success!",
+      "status_icon": "success",
+      "status_color": "success",
+      "status_headline": "",
+      "text": "The operation completed successfully.",
+      "button_data": ["OK"]
+    },
+    "variations": [
+      {
+        "name": "warning",
+        "context": {
+          "title": "Caution",
+          "status_icon": "warning",
+          "status_color": "warning",
+          "status_headline": "Privacy Leak!",
+          "text": "Your data may be exposed if you continue.",
+          "button_data": ["I understand", "Cancel"]
+        }
+      },
+      {
+        "name": "error",
+        "context": {
+          "title": "Error",
+          "status_icon": "error",
+          "status_color": "error",
+          "status_headline": "Failed to Sign",
+          "text": "The PSBT could not be processed. Please check your MicroSD card and try again.",
+          "button_data": ["Back"]
+        }
+      }
+    ]
+  }
+}

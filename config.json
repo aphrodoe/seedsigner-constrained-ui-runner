@@ -1,0 +1,14 @@
+{
+  "display": {
+    "type": "simulator",
+    "i2c_address": "0x27",
+    "i2c_bus": 1
+  },
+  "audio": {
+    "enabled": false,
+    "gpio_pin": 18
+  },
+  "input": {
+    "type": "keyboard"
+  }
+}
