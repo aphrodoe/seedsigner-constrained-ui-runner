@@ -21,8 +21,19 @@ pip install -r requirements.txt
 
 ## Running the Simulator
 
-You can test the UI on your laptop without any hardware connected:
+You can test the UI on your laptop without any hardware connected using the built-in terminal simulator. Use the **Up/Down arrow keys** to navigate, **Enter** to select, and **q** to quit.
 
+**Test 1: A simple short menu**
 ```bash
 python3 -m src.main --display simulator --scenario button_list_screen
+```
+
+**Test 2: A long menu with scrolling**
+```bash
+python3 -m src.main --display simulator --scenario button_list_screen --variation scroll_many
+```
+
+**Test 3: The Main Menu Grid**
+```bash
+python3 -m src.main --display simulator --scenario main_menu_screen
 ```
