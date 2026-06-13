@@ -19,16 +19,19 @@ class DisplayManager:
         if display_type == "simulator":
             from src.renderers.simulator_renderer import SimulatorRenderer
             return SimulatorRenderer(visible_rows=5, cols=20)
+        elif display_type == "lcd_16x2_sim":
+            from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
+            return LCDSimulatorRenderer(rows=2, cols=16)
+        elif display_type == "lcd_20x4_sim":
+            from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
+            return LCDSimulatorRenderer(rows=4, cols=20)
         elif display_type == "lcd_16x2":
-            # Will be implemented in Phase 2
-            # from src.renderers.text_renderer import TextRenderer
-            # return TextRenderer(visible_rows=2, cols=16)
-            raise NotImplementedError("lcd_16x2 renderer not yet implemented")
+            # Real hardware — will be implemented with I2C driver
+            raise NotImplementedError("lcd_16x2 hardware renderer not yet implemented")
         elif display_type == "lcd_20x4":
-            # Will be implemented in Phase 2
-            raise NotImplementedError("lcd_20x4 renderer not yet implemented")
+            # Real hardware — will be implemented with I2C driver
+            raise NotImplementedError("lcd_20x4 hardware renderer not yet implemented")
         elif display_type == "oled_128x32":
-            # Will be implemented in Phase 3
             raise NotImplementedError("oled_128x32 renderer not yet implemented")
             
         raise ValueError(f"Unknown display type: {display_type}")
