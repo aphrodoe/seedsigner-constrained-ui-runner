@@ -37,3 +37,23 @@ python3 -m src.main --display simulator --scenario button_list_screen --variatio
 ```bash
 python3 -m src.main --display simulator --scenario main_menu_screen
 ```
+
+## LCD Simulators
+
+These simulate the exact character output that would appear on a physical LCD:
+
+**16x2 LCD (Block Pagination)** — shows one item at a time:
+```bash
+python3 -m src.main --display lcd_16x2_sim --scenario button_list_screen
+```
+
+**20x4 LCD (Sliding Window)** — shows a 3-item scrollable window:
+```bash
+python3 -m src.main --display lcd_20x4_sim --scenario button_list_screen --variation scroll_many
+```
+
+## Running Tests
+
+```bash
+python3 -m pytest tests/ -v
+```
