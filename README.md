@@ -52,6 +52,25 @@ python3 -m src.main --display lcd_16x2_sim --scenario button_list_screen
 python3 -m src.main --display lcd_20x4_sim --scenario button_list_screen --variation scroll_many
 ```
 
+**Testing Status Screens (Simulators):**
+```bash
+python3 -m src.main --display lcd_20x4_sim --scenario large_icon_status_screen --variation warning
+```
+
+## Running on Physical Hardware
+
+To run the runner directly on physical I2C LCD displays connected to the Raspberry Pi:
+
+**16x2 Physical LCD:**
+```bash
+python3 -m src.main --display lcd_16x2 --scenario button_list_screen
+```
+
+**20x4 Physical LCD:**
+```bash
+python3 -m src.main --display lcd_20x4 --scenario large_icon_status_screen --variation dire_warning
+```
+
 ## Running Tests
 
 ```bash

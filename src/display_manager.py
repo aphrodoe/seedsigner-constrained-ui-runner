@@ -26,11 +26,11 @@ class DisplayManager:
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=4, cols=20)
         elif display_type == "lcd_16x2":
-            # Real hardware — will be implemented with I2C driver
-            raise NotImplementedError("lcd_16x2 hardware renderer not yet implemented")
+            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
+            return LCDHardwareRenderer(rows=2, cols=16)
         elif display_type == "lcd_20x4":
-            # Real hardware — will be implemented with I2C driver
-            raise NotImplementedError("lcd_20x4 hardware renderer not yet implemented")
+            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
+            return LCDHardwareRenderer(rows=4, cols=20)
         elif display_type == "oled_128x32":
             raise NotImplementedError("oled_128x32 renderer not yet implemented")
             

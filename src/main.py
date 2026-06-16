@@ -43,14 +43,18 @@ def main():
     
     # Event Loop
     with KeyboardInput() as keyboard:
+        # Initial render
+        renderer.render(state)
+        
         while True:
-            renderer.render(state)
-            
-            event = keyboard.read_event()
+            event = keyboard.read_event(timeout=0.3)
             
             needs_render = False
             
-            if event == InputEvent.QUIT:
+            if event is None:
+                # Timeout occurred, tick animation state
+                needs_render = state.tick()
+            elif event == InputEvent.QUIT:
                 renderer.clear()
                 break
             elif event == InputEvent.UP:
@@ -80,7 +84,7 @@ def main():
                 break
                 
             if needs_render:
-                pass # The loop will re-render
+                renderer.render(state)
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,8 @@ from enum import Enum
 import sys
 import tty
 import termios
+import select
+import os
 
 class InputEvent(Enum):
     UP = "UP"
@@ -26,19 +28,31 @@ class KeyboardInput:
         if self.old_settings:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old_settings)
 
-    def read_event(self) -> InputEvent:
-        """Blocks until a mapped key is pressed, then returns the InputEvent."""
+    def read_event(self, timeout: float = None) -> InputEvent:
+        """Blocks until a key is pressed or timeout expires. Returns None on timeout."""
         while True:
-            ch = sys.stdin.read(1)
+            if timeout is not None:
+                rlist, _, _ = select.select([sys.stdin], [], [], timeout)
+                if not rlist:
+                    return None
+            
+            ch = os.read(self.fd, 1).decode('utf-8', errors='ignore')
             
             # Arrow keys are escape sequences: \x1b[A etc.
             if ch == '\x1b':
                 # We use a non-blocking read for the rest of the sequence
                 # to differentiate between ESC key and Arrow keys.
-                # In raw mode, sys.stdin.read(1) blocks.
-                ch2 = sys.stdin.read(1)
+                rlist, _, _ = select.select([self.fd], [], [], 0.1)
+                if not rlist:
+                    return InputEvent.BACK
+                    
+                ch2 = os.read(self.fd, 1).decode('utf-8', errors='ignore')
                 if ch2 == '[':
-                    ch3 = sys.stdin.read(1)
+                    rlist, _, _ = select.select([self.fd], [], [], 0.1)
+                    if not rlist:
+                        return InputEvent.BACK
+                        
+                    ch3 = os.read(self.fd, 1).decode('utf-8', errors='ignore')
                     if ch3 == 'A':
                         return InputEvent.UP
                     elif ch3 == 'B':
