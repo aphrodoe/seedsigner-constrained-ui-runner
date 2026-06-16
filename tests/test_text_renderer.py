@@ -236,12 +236,17 @@ class TestMainMenuRenderer:
 class TestStatusRenderer:
     def test_success_screen(self):
         context = {
-            "title": "Success!",
-            "status_icon": "success",
+            "top_nav": {"title": "Backup Verified"},
+            "status_type": "success",
+            "status_headline": "Success!",
             "text": "Done.",
+            "button_list": [{"label": "OK", "value": "OK"}]
         }
         state = ScreenState("large_icon_status_screen", context, visible_rows=1)
-        renderer = TextRenderer(rows=2, cols=16)
+        renderer = TextRenderer(rows=4, cols=20)
         lines = renderer.render(state)
-
-        assert "Success!" in lines[0]
+        
+        assert "Backup Verified" in lines[0]
+        assert "✓" in lines[1]
+        assert "Success!" in lines[1]
+        assert "[ OK ]" in lines[3]

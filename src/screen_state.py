@@ -5,6 +5,7 @@ class ScreenType(Enum):
     BUTTON_LIST = "button_list_screen"
     MAIN_MENU = "main_menu_screen"
     LARGE_ICON_STATUS = "large_icon_status_screen"
+    SEED_ADD_PASSPHRASE = "seed_add_passphrase_screen"
     SCREENSAVER = "screensaver_screen"
     
     @classmethod
@@ -23,6 +24,8 @@ class ScreenState:
         
         self.selected_index = 0
         self.scroll_offset = 0
+        self.max_scroll_offset = 0
+        self.marquee_tick = 0
         
         self.items = self._extract_items()
         
@@ -35,24 +38,36 @@ class ScreenState:
             return self.context["button_data"]
         return []
         
-    def move_up(self) -> bool:
-        """Move cursor up. Returns True if selection changed."""
-        if not self.items or self.selected_index <= 0:
-            # Allow wrapping to bottom? The original UI doesn't generally wrap, but let's implement strict boundaries.
-            return False
-        
-        self.selected_index -= 1
-        self._adjust_scroll()
+    def tick(self) -> bool:
+        """Increment marquee tick. Returns True to indicate screen needs render."""
+        self.marquee_tick += 1
         return True
+        
+    def move_up(self) -> bool:
+        """Move cursor up. Returns True if selection changed or scrolled."""
+        changed = False
+        if self.items and self.selected_index > 0:
+            self.selected_index -= 1
+            self.marquee_tick = 0
+            self._adjust_scroll()
+            changed = True
+        elif self.scroll_offset > 0:
+            self.scroll_offset -= 1
+            changed = True
+        return changed
         
     def move_down(self) -> bool:
-        """Move cursor down. Returns True if selection changed."""
-        if not self.items or self.selected_index >= len(self.items) - 1:
-            return False
-            
-        self.selected_index += 1
-        self._adjust_scroll()
-        return True
+        """Move cursor down. Returns True if selection changed or scrolled."""
+        changed = False
+        if self.items and self.selected_index < len(self.items) - 1:
+            self.selected_index += 1
+            self.marquee_tick = 0
+            self._adjust_scroll()
+            changed = True
+        elif self.scroll_offset < self.max_scroll_offset:
+            self.scroll_offset += 1
+            changed = True
+        return changed
 
     def page_up(self) -> bool:
         """Move cursor up by visible_rows. Used for LEFT/RIGHT keys acting as page up/down on char LCDs."""
@@ -60,6 +75,7 @@ class ScreenState:
             return False
             
         self.selected_index = max(0, self.selected_index - self.visible_rows)
+        self.marquee_tick = 0
         self._adjust_scroll()
         return True
         
@@ -69,6 +85,7 @@ class ScreenState:
             return False
             
         self.selected_index = min(len(self.items) - 1, self.selected_index + self.visible_rows)
+        self.marquee_tick = 0
         self._adjust_scroll()
         return True
 

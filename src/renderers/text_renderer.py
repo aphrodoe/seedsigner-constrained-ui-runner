@@ -69,7 +69,7 @@ class TextRenderer:
         else:
             display = label
 
-        item_line = self._item_row(display, selected=True)
+        item_line = self._item_row(display, selected=True, state=state)
         return [title_line, item_line]
 
     def _render_sliding_window(self, state: ScreenState, title_line: str) -> List[str]:
@@ -93,7 +93,7 @@ class TextRenderer:
                 display = label
 
             selected = (i == state.selected_index)
-            lines.append(self._item_row(display, selected=selected))
+            lines.append(self._item_row(display, selected=selected, state=state))
 
         return self._pad_rows(lines)
 
@@ -131,21 +131,90 @@ class TextRenderer:
 
     def _render_status(self, state: ScreenState) -> List[str]:
         """Render success / warning / error status screens."""
-        icon_map = {"success": "\x00", "warning": "!", "error": "X"}  # \x00 = custom char on real LCD
-        icon = icon_map.get(state.context.get("status_icon", ""), " ")
-        title = state.context.get("title", "")
+        status_type = state.context.get("status_type", "success")
+        icon_map = {
+            "success": "✓",
+            "warning": "⚠",
+            "dire_warning": "‼",
+            "error": "✕"
+        }
+        icon = icon_map.get(status_type, " ")
+        
+        title = state.context.get("top_nav", {}).get("title", "Status")
+        title_line = self._title_row(title, "")
+        
+        warning_edges = state.context.get("warning_edges", False)
+        edge_char = "!" if warning_edges else " "
 
-        lines = [self._center(f"{icon} {title}")]
+        content_lines = [title_line]
 
         headline = state.context.get("status_headline", "")
         if headline:
-            lines.append(self._center(headline))
+            headline_text = f"{icon} {headline}"
+            if len(headline_text) > self.cols:
+                words = headline_text.split()
+                wrapped_headline = []
+                current = ""
+                for word in words:
+                    if current and len(current) + 1 + len(word) > self.cols:
+                        wrapped_headline.append(self._center(current))
+                        current = word
+                    elif not current:
+                        current = word
+                    else:
+                        current += " " + word
+                if current:
+                    wrapped_headline.append(self._center(current))
+                content_lines.extend(wrapped_headline)
+            else:
+                content_lines.append(self._center(headline_text))
 
         text = state.context.get("text", "")
         if text:
             # Word-wrap text into available rows
-            wrapped = self._word_wrap(text)
-            lines.extend(wrapped)
+            # Reserve space for edge chars if warning_edges is True
+            wrap_cols = self.cols - 2 if warning_edges else self.cols
+            words = text.split()
+            wrapped_lines = []
+            current = ""
+            for word in words:
+                if current and len(current) + 1 + len(word) > wrap_cols:
+                    wrapped_lines.append(current.center(wrap_cols))
+                    current = word
+                elif not current:
+                    current = word
+                else:
+                    current += " " + word
+            if current:
+                wrapped_lines.append(current.center(wrap_cols))
+            
+            for line in wrapped_lines:
+                if warning_edges:
+                    content_lines.append(f"{edge_char}{line}{edge_char}")
+                else:
+                    content_lines.append(self._center(line))
+
+        # Determine available lines for content
+        # We always reserve 1 line for the button if state.items exists
+        button_space = 1 if state.items else 0
+        window_height = self.rows - button_space
+        
+        # Tell state how far it can scroll
+        state.max_scroll_offset = max(0, len(content_lines) - window_height)
+        
+        # Slice the content based on scroll_offset
+        lines = content_lines[state.scroll_offset : state.scroll_offset + window_height]
+
+        if state.items:
+            item = state.items[state.selected_index]
+            label = item.get("label", "")
+            button_line = self._center(f"[ {label} ]")
+            
+            # Pad content if it doesn't fill the window
+            while len(lines) < window_height:
+                lines.append(" " * self.cols)
+                
+            lines.append(button_line)
 
         return self._pad_rows(lines)
 
@@ -158,12 +227,30 @@ class TextRenderer:
             title = title[: avail - 2] + ".."
         return self._fixed(f"{title:<{avail}}{suffix}")
 
-    def _item_row(self, label: str, selected: bool) -> str:
-        """Build an item row with a `> ` or `  ` prefix."""
+    def _item_row(self, label: str, selected: bool, state: ScreenState = None) -> str:
+        """Build an item row with a `> ` or `  ` prefix, sliding horizontally if selected and too long."""
         prefix = "> " if selected else "  "
         max_label = self.cols - len(prefix)
+        
         if len(label) > max_label:
-            label = label[: max_label - 2] + ".."
+            if selected and state is not None:
+                # Marquee logic
+                diff = len(label) - max_label
+                # 5 ticks pause at start, diff ticks scrolling, 5 ticks pause at end
+                total_frames = diff + 10
+                frame = state.marquee_tick % total_frames
+                
+                if frame < 5:
+                    offset = 0
+                elif frame >= 5 + diff:
+                    offset = diff
+                else:
+                    offset = frame - 5
+                    
+                label = label[offset : offset + max_label]
+            else:
+                label = label[: max_label - 2] + ".."
+                
         return self._fixed(f"{prefix}{label}")
 
     def _center(self, text: str) -> str:
