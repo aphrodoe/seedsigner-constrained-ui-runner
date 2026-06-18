@@ -50,13 +50,15 @@ class TestBlockPagination16x2:
         # Title should be truncated, position indicator must be visible
         assert "1/1" in lines[0]
 
-    def test_long_label_truncation(self):
+    def test_long_label_marquee(self):
+        # We test a selected item to verify marquee slicing
         state = _make_state(["Persistent Settings Override"], visible_rows=1)
         lines = self.renderer.render(state)
 
         assert len(lines[1]) == 16
         assert lines[1].startswith("> ")
-        assert ".." in lines[1]
+        assert ".." not in lines[1]
+        assert "Persistent Set" in lines[1]
 
     def test_single_item(self):
         state = _make_state(["Only"], visible_rows=1)
@@ -157,6 +159,15 @@ class TestSlidingWindow20x4:
         assert "  B" in lines[2]
         assert "  C" in lines[3]
 
+    def test_unselected_long_label_truncation(self):
+        """Unselected long items should truncate with .."""
+        state = _make_state(["Selected", "Persistent Settings Override"], visible_rows=3)
+        lines = self.renderer.render(state)
+
+        assert len(lines[2]) == 20
+        assert lines[2].startswith("  ")
+        assert ".." in lines[2]
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  ROW WIDTH INVARIANTS
@@ -250,3 +261,54 @@ class TestStatusRenderer:
         assert "✓" in lines[1]
         assert "Success!" in lines[1]
         assert "[ OK ]" in lines[3]
+
+    def test_warning_screen(self):
+        context = {
+            "top_nav": {"title": "Privacy Leak!"},
+            "status_type": "warning",
+            "status_headline": "Warning!",
+            "text": "Data exposed.",
+            "warning_edges": True
+        }
+        state = ScreenState("large_icon_status_screen", context, visible_rows=1)
+        renderer = TextRenderer(rows=4, cols=20)
+        lines = renderer.render(state)
+        
+        assert "Privacy Leak!" in lines[0]
+        assert "⚠" in lines[1]
+        assert "Warning!" in lines[1]
+        assert lines[2].startswith("!") and lines[2].endswith("!")
+
+    def test_dire_warning_screen(self):
+        context = {
+            "top_nav": {"title": "DANGER"},
+            "status_type": "dire_warning",
+            "status_headline": "Stop!",
+            "text": "Funds will be lost.",
+            "warning_edges": True
+        }
+        state = ScreenState("large_icon_status_screen", context, visible_rows=1)
+        renderer = TextRenderer(rows=4, cols=20)
+        lines = renderer.render(state)
+        
+        assert "DANGER" in lines[0]
+        assert "‼" in lines[1]
+        assert "Stop!" in lines[1]
+        assert lines[2].startswith("!") and lines[2].endswith("!")
+
+    def test_error_screen(self):
+        context = {
+            "top_nav": {"title": "Error"},
+            "status_type": "error",
+            "status_headline": "Failed to Sign",
+            "text": "Invalid PSBT.",
+            "warning_edges": False
+        }
+        state = ScreenState("large_icon_status_screen", context, visible_rows=1)
+        renderer = TextRenderer(rows=4, cols=20)
+        lines = renderer.render(state)
+        
+        assert "Error" in lines[0]
+        assert "✕" in lines[1]
+        assert "Failed to Sign" in lines[1]
+        assert not lines[1].startswith("!")
