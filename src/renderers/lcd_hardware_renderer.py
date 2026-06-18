@@ -20,9 +20,17 @@ class LCDHardwareRenderer(BaseRenderer):
         # Get the formatted lines from the TextRenderer
         lines = self.text_renderer.render(state)
         
+        # Translate Unicode icons to CGRAM byte locations
+        translated_lines = []
+        cgram_map = {"✓": chr(0), "⚠": chr(1), "‼": chr(2), "✕": chr(3)}
+        for line in lines:
+            for uni, cgram in cgram_map.items():
+                line = line.replace(uni, cgram)
+            translated_lines.append(line)
+        
         # Write them to the hardware
-        self.lcd.write_lines(lines)
-        return lines
+        self.lcd.write_lines(translated_lines)
+        return translated_lines
 
     def clear(self):
         """Clear the hardware LCD."""

@@ -41,6 +41,23 @@ class LCDI2C:
         self._lcd_byte(0x28, LCD_CMD) # 101000 Data length, number of lines, font size
         self._lcd_byte(0x01, LCD_CMD) # 000001 Clear display
         time.sleep(E_DELAY)
+        
+        # Load custom character bitmaps into CGRAM slots 0-3
+        custom_chars = {
+            0: [0b00000, 0b00001, 0b00011, 0b10110, 0b11100, 0b01000, 0b00000, 0b00000], # ✓ (Success)
+            1: [0b00100, 0b01010, 0b01110, 0b01110, 0b11111, 0b00000, 0b00100, 0b00000], # ⚠ (Warning - Exclamation Triangle)
+            2: [0b01010, 0b01010, 0b01010, 0b01010, 0b00000, 0b01010, 0b01010, 0b00000], # ‼ (Dire Warning)
+            3: [0b00000, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b00000, 0b00000]  # ✕ (Error)
+        }
+        for loc, charmap in custom_chars.items():
+            self.load_custom_character(loc, charmap)
+
+    def load_custom_character(self, location: int, charmap: list):
+        """Load a custom 5x8 character into CGRAM (location 0-7)"""
+        location &= 0x07  # restrict to 0-7
+        self._lcd_byte(0x40 | (location << 3), LCD_CMD)
+        for i in range(8):
+            self._lcd_byte(charmap[i], LCD_CHR)
 
     def _lcd_byte(self, bits, mode):
         """Send byte to data pins
