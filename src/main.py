@@ -4,6 +4,7 @@ from src.display_manager import DisplayManager
 from src.utils.json_parser import JSONParser
 from src.screen_state import ScreenState
 from src.input.keyboard_input import KeyboardInput, InputEvent
+from src.renderers.audio_renderer import AudioRenderer
 
 def main():
     parser = argparse.ArgumentParser(description="SeedSigner Constrained UI Runner")
@@ -40,11 +41,13 @@ def main():
             sys.exit(1)
 
     state = ScreenState(args.scenario, context, visible_rows=renderer.visible_rows)
+    audio = AudioRenderer(pin=18)
     
     # Event Loop
     with KeyboardInput() as keyboard:
         # Initial render
         renderer.render(state)
+        audio.render_state(state)
         
         while True:
             event = keyboard.read_event(timeout=0.3)
@@ -58,15 +61,28 @@ def main():
                 renderer.clear()
                 break
             elif event == InputEvent.UP:
+                audio.play_move()
                 needs_render = state.move_up()
             elif event == InputEvent.DOWN:
+                audio.play_move()
                 needs_render = state.move_down()
             elif event == InputEvent.LEFT:
-                needs_render = state.page_up()
+                audio.play_move()
+                needs_render = state.move_left()
             elif event == InputEvent.RIGHT:
-                needs_render = state.page_down()
+                audio.play_move()
+                needs_render = state.move_right()
             elif event == InputEvent.ENTER:
-                if state.items and state.selected_index < len(state.items):
+                audio.play_select()
+                if state.screen_type.is_keyboard():
+                    action = state.on_enter()
+                    if action == "UPDATE":
+                        needs_render = True
+                    elif action == "SUBMIT":
+                        renderer.clear()
+                        print(f"Submitted Text: {state.entered_text}")
+                        break
+                elif state.items and state.selected_index < len(state.items):
                     selected = state.items[state.selected_index]
                     label = selected.get("label", "Unknown")
                     value = selected.get("value", "Unknown")
