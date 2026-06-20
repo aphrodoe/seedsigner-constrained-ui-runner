@@ -71,6 +71,26 @@ python3 -m src.main --display lcd_16x2 --scenario button_list_screen
 python3 -m src.main --display lcd_20x4 --scenario large_icon_status_screen --variation dire_warning
 ```
 
+**Testing Audio (Buzzer):**
+```bash
+python3 -m src.main --display lcd_16x2 --audio --scenario button_list_screen
+```
+
+## Interactive Dual Runner (Developer Tool)
+
+For rapid design validation, you can run the side-by-side interactive Tkinter application. This loads the generated LVGL screenshots from the upstream repository alongside the live `16x2` and `20x4` simulators.
+
+```bash
+python3 tools/dual_runner.py
+```
+*Note: You can pass `--lvgl-dir` to point to custom screenshot directories.*
+
+* Keyboard controls: `W`, `A`, `S`, `D` to navigate, `Space` to select. 
+
+## Documentation
+
+* **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for block pagination, sliding windows, truncations, and icon mapping.
+
 ## Running Tests
 
 ```bash
