@@ -12,6 +12,7 @@ class ScreenType(Enum):
     TOOLS_COIN_FLIP_ENTRY = "tools_coin_flip_entry_screen"
     SEED_BIP85_SELECT_CHILD_INDEX = "seed_bip85_select_child_index_screen"
     SEED_EXPORT_XPUB_CUSTOM_DERIVATION = "seed_export_xpub_custom_derivation_screen"
+    SYNTHETIC_ENTRY = "synthetic_entry_screen"
     
     def is_keyboard(self):
         return self in [
@@ -19,7 +20,8 @@ class ScreenType(Enum):
             ScreenType.TOOLS_DICE_ENTROPY_ENTRY,
             ScreenType.TOOLS_COIN_FLIP_ENTRY,
             ScreenType.SEED_BIP85_SELECT_CHILD_INDEX,
-            ScreenType.SEED_EXPORT_XPUB_CUSTOM_DERIVATION
+            ScreenType.SEED_EXPORT_XPUB_CUSTOM_DERIVATION,
+            ScreenType.SYNTHETIC_ENTRY
         ]
     
     @classmethod
@@ -74,6 +76,8 @@ class ScreenState:
             self.keyboard_modes[i] = (name, chars)
         
     def _extract_items(self) -> List[Any]:
+        if "items" in self.context:
+            return self.context["items"]
         if "button_list" in self.context:
             return self.context["button_list"]
         if "button_grid" in self.context:

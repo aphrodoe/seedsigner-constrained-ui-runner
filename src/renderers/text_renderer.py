@@ -33,14 +33,11 @@ class TextRenderer:
         elif state.screen_type.is_keyboard():
             return self._render_keyboard(state)
         elif state.screen_type == ScreenType.SPLASH:
-            return self._pad_rows([
-                self._center(""),
-                self._center("SEEDSIGNER"),
-            ][:self.rows])
+            return self._render_splash(state)
         elif state.screen_type == ScreenType.SCREENSAVER:
             return self._pad_rows([
                 self._center(""),
-                self._center("..."),
+                self._center("SeedSigner"),
             ][:self.rows])
         else:
             return self._pad_rows([self._center("Unsupported")])
@@ -57,7 +54,7 @@ class TextRenderer:
         else:
             pos = ""
 
-        title_line = self._title_row(title, pos)
+        title_line = self._title_row(title, pos, state)
 
         if self.item_rows == 1:
             # ── Block Pagination (16x2) ─────────────────────────────
@@ -112,10 +109,17 @@ class TextRenderer:
     # ── main_menu_screen ────────────────────────────────────────────
 
     def _render_main_menu(self, state: ScreenState) -> List[str]:
-        """Render the 4-icon main menu as a numbered list, with pagination."""
+        """Render the 4-icon main menu with text-based icons."""
         total = len(state.items)
         pos = f" {state.selected_index + 1}/{total}" if total > 0 else ""
-        title_line = self._title_row("SeedSigner", pos)
+        title_line = self._title_row("SeedSigner", pos, state)
+
+        icon_map = {
+            "Scan": "▦",
+            "Seeds": "⚿",
+            "Tools": "⚒",
+            "Settings": "⚙"
+        }
 
         if self.item_rows == 1:
             # Block pagination — show only the selected item
@@ -123,8 +127,8 @@ class TextRenderer:
                 return self._pad_rows([title_line])
             item = state.items[state.selected_index]
             label = item.get("label", "")
-            prefix = ">" if state.selected_index == state.selected_index else " "
-            entry = f"> {state.selected_index + 1}.{label}"
+            icon = icon_map.get(label, "[-]")
+            entry = f"> {icon} {label}"
             return [title_line, self._fixed(entry)]
         else:
             # Sliding window
@@ -135,7 +139,8 @@ class TextRenderer:
                 item = state.items[i]
                 label = item.get("label", "")
                 prefix = ">" if i == state.selected_index else " "
-                entry = f"{prefix}{i + 1}.{label}"
+                icon = icon_map.get(label, "[-]")
+                entry = f"{prefix}{icon} {label}"
                 lines.append(self._fixed(entry))
             return self._pad_rows(lines)
 
@@ -143,7 +148,13 @@ class TextRenderer:
 
     def _render_keyboard(self, state: ScreenState) -> List[str]:
         title = state.context.get("top_nav", {}).get("title", "Input")
-        title_line = self._title_row(title, "")
+        
+        # Append length counter if target is specified
+        target = state.context.get("entropy_target")
+        if target:
+            title = f"{title} {len(state.entered_text)}/{target}"
+            
+        title_line = self._title_row(title, "", state)
         
         mode_name, chars = state.keyboard_modes[state.active_mode_index]
         char = chars[state.char_index]
@@ -184,33 +195,45 @@ class TextRenderer:
         icon = icon_map.get(status_type, " ")
         
         title = state.context.get("top_nav", {}).get("title", "Status")
-        title_line = self._title_row(title, "")
+        title_line = self._title_row(title, "", state)
         
         warning_edges = state.context.get("warning_edges", False)
-        edge_char = "!" if warning_edges else " "
+        animated = state.context.get("animated", False)
+        
+        if warning_edges:
+            if animated:
+                # Toggle every 2 ticks (approx 600ms)
+                edge_char = "!" if (state.marquee_tick // 2) % 2 == 0 else " "
+            else:
+                edge_char = "!"
+        else:
+            edge_char = " "
 
         content_lines = [title_line]
 
         headline = state.context.get("status_headline", "")
         if headline:
             headline_text = f"{icon} {headline}"
-            if len(headline_text) > self.cols:
-                words = headline_text.split()
-                wrapped_headline = []
-                current = ""
-                for word in words:
-                    if current and len(current) + 1 + len(word) > self.cols:
-                        wrapped_headline.append(self._center(current))
-                        current = word
-                    elif not current:
-                        current = word
-                    else:
-                        current += " " + word
-                if current:
-                    wrapped_headline.append(self._center(current))
-                content_lines.extend(wrapped_headline)
-            else:
-                content_lines.append(self._center(headline_text))
+            wrap_cols = self.cols - 2 if warning_edges else self.cols
+            words = headline_text.split()
+            wrapped_headline = []
+            current = ""
+            for word in words:
+                if current and len(current) + 1 + len(word) > wrap_cols:
+                    wrapped_headline.append(current.center(wrap_cols))
+                    current = word
+                elif not current:
+                    current = word
+                else:
+                    current += " " + word
+            if current:
+                wrapped_headline.append(current.center(wrap_cols))
+                
+            for line in wrapped_headline:
+                if warning_edges:
+                    content_lines.append(f"{edge_char}{line}{edge_char}")
+                else:
+                    content_lines.append(self._center(line))
 
         text = state.context.get("text", "")
         if text:
@@ -242,11 +265,15 @@ class TextRenderer:
         button_space = 1 if state.items else 0
         window_height = self.rows - button_space
         
-        # Tell state how far it can scroll
-        state.max_scroll_offset = max(0, len(content_lines) - window_height)
+        # Tell state how far it can scroll without shrinking previous renderer constraints
+        new_max = max(0, len(content_lines) - window_height)
+        state.max_scroll_offset = max(getattr(state, 'max_scroll_offset', 0), new_max)
         
-        # Slice the content based on scroll_offset
-        lines = content_lines[state.scroll_offset : state.scroll_offset + window_height]
+        # Clamp the start index so we don't scroll past the end on larger displays
+        start = min(state.scroll_offset, new_max)
+        
+        # Slice the content based on clamped scroll_offset
+        lines = content_lines[start : start + window_height]
 
         if state.items:
             item = state.items[state.selected_index]
@@ -263,11 +290,26 @@ class TextRenderer:
 
     # ── helpers ─────────────────────────────────────────────────────
 
-    def _title_row(self, title: str, suffix: str) -> str:
-        """Build a title row: title left-aligned, suffix right-aligned."""
+    def _title_row(self, title: str, suffix: str, state: ScreenState = None) -> str:
+        """Build a title row: title left-aligned, suffix right-aligned. Marquee if too long."""
         avail = self.cols - len(suffix)
         if len(title) > avail:
-            title = title[: avail - 2] + ".."
+            if state is not None:
+                diff = len(title) - avail
+                total_frames = diff + 10
+                frame = state.marquee_tick % total_frames
+                
+                if frame < 5:
+                    offset = 0
+                elif frame >= 5 + diff:
+                    offset = diff
+                else:
+                    offset = frame - 5
+                    
+                title_visible = title[offset : offset + avail]
+                return self._fixed(f"{title_visible}{suffix}")
+            else:
+                title = title[: avail - 2] + ".."
         return self._fixed(f"{title:<{avail}}{suffix}")
 
     def _item_row(self, label: str, selected: bool, state: ScreenState = None) -> str:
@@ -290,11 +332,60 @@ class TextRenderer:
                 else:
                     offset = frame - 5
                     
-                label = label[offset : offset + max_label]
+                visible = label[offset : offset + max_label]
+                return f"{prefix}{visible}"
             else:
                 label = label[: max_label - 2] + ".."
                 
         return self._fixed(f"{prefix}{label}")
+
+    def _render_splash(self, state: ScreenState) -> List[str]:
+        """Render the Splash Screen with versions and partners."""
+        lines = []
+        
+        # Center "SEEDSIGNER" on the first available row
+        if self.rows > 2:
+            lines.append(self._center(""))
+        lines.append(self._center("SEEDSIGNER"))
+        
+        version = state.context.get("version", "")
+        show_partners = state.context.get("show_partner_logos", False)
+        sponsor_text = state.context.get("sponsor_text", "")
+        boot_logo_only = state.context.get("boot_logo_only", False)
+        
+        # Build the bottom line string
+        bottom_text = ""
+        if not boot_logo_only:
+            if version:
+                bottom_text += version
+                
+            if show_partners and sponsor_text:
+                if bottom_text:
+                    bottom_text += " | "
+                bottom_text += f"{sponsor_text} Human Rights Foundation"
+            
+        if not bottom_text:
+            return self._pad_rows(lines)
+            
+        # Marquee logic if bottom_text exceeds columns
+        if len(bottom_text) > self.cols:
+            diff = len(bottom_text) - self.cols
+            total_frames = diff + 10
+            frame = state.marquee_tick % total_frames
+            
+            if frame < 5:
+                offset = 0
+            elif frame >= 5 + diff:
+                offset = diff
+            else:
+                offset = frame - 5
+                
+            visible = bottom_text[offset : offset + self.cols]
+            lines.append(self._fixed(visible))
+        else:
+            lines.append(self._center(bottom_text))
+            
+        return self._pad_rows(lines)
 
     def _center(self, text: str) -> str:
         if len(text) > self.cols:

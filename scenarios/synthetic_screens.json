@@ -1,84 +1,51 @@
 {
-  "main_menu_screen": {
-    "context": {
-      "button_grid": [
-        {"label": "Scan", "icon": "scan"},
-        {"label": "Seeds", "icon": "seeds"},
-        {"label": "Settings", "icon": "settings"},
-        {"label": "Tools", "icon": "tools"}
-      ]
-    }
-  },
-  "large_icon_status_screen": {
-    "context": {
-      "title": "Success!",
-      "status_icon": "success",
-      "status_color": "success",
-      "status_headline": "",
-      "text": "The operation completed successfully.",
-      "button_data": ["OK"]
-    },
+  "synthetic_entry_screen": {
+    "context": {},
     "variations": [
       {
-        "name": "warning",
+        "name": "dice_roll",
         "context": {
-          "title": "Caution",
-          "status_icon": "warning",
-          "status_color": "warning",
-          "status_headline": "Privacy Leak!",
-          "text": "Your data may be exposed if you continue.",
-          "button_data": ["I understand", "Cancel"]
+          "top_nav": { "title": "Dice Roll" },
+          "charset_modes": {
+            "dice": "123456"
+          },
+          "initial_mode": "dice",
+          "entropy_target": 50
         }
       },
       {
-        "name": "error",
+        "name": "coin_flip",
         "context": {
-          "title": "Error",
-          "status_icon": "error",
-          "status_color": "error",
-          "status_headline": "Failed to Sign",
-          "text": "The PSBT could not be processed. Please check your MicroSD card and try again.",
-          "button_data": ["Back"]
+          "top_nav": { "title": "Coin Flip" },
+          "charset_modes": {
+            "coin": "10"
+          },
+          "initial_mode": "coin",
+          "entropy_target": 256
+        }
+      },
+      {
+        "name": "bip85_index",
+        "context": {
+          "top_nav": { "title": "BIP85 Index" },
+          "charset_modes": {
+            "digits": "0123456789"
+          },
+          "initial_mode": "digits",
+          "initial_text": "0"
+        }
+      },
+      {
+        "name": "custom_derivation",
+        "context": {
+          "top_nav": { "title": "Derivation" },
+          "charset_modes": {
+            "path": "m/0123456789'"
+          },
+          "initial_mode": "path",
+          "initial_text": "m/"
         }
       }
     ]
-  },
-  "tools_dice_entropy_entry_screen": {
-    "context": {
-      "top_nav": { "title": "Dice Roll" },
-      "charset_modes": {
-        "dice": "123456"
-      },
-      "initial_mode": "dice"
-    }
-  },
-  "tools_coin_flip_entry_screen": {
-    "context": {
-      "top_nav": { "title": "Coin Flip" },
-      "charset_modes": {
-        "coin": "10"
-      },
-      "initial_mode": "coin"
-    }
-  },
-  "seed_bip85_select_child_index_screen": {
-    "context": {
-      "top_nav": { "title": "BIP85 Index" },
-      "charset_modes": {
-        "digits": "0123456789"
-      },
-      "initial_mode": "digits",
-      "initial_text": "0"
-    }
-  },
-  "seed_export_xpub_custom_derivation_screen": {
-    "context": {
-      "top_nav": { "title": "Derivation" },
-      "charset_modes": {
-        "path": "m/0123456789'"
-      },
-      "initial_mode": "path",
-      "initial_text": "m/"
-    }
   }
 }

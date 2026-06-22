@@ -22,7 +22,10 @@ class LCDHardwareRenderer(BaseRenderer):
         
         # Translate Unicode icons to CGRAM byte locations
         translated_lines = []
-        cgram_map = {"✓": chr(0), "⚠": chr(1), "‼": chr(2), "✕": chr(3)}
+        cgram_map = {
+            "✓": chr(0), "⚠": chr(1), "‼": chr(2), "✕": chr(3),
+            "▦": chr(4), "⚿": chr(5), "⚒": chr(6), "⚙": chr(7)
+        }
         for line in lines:
             for uni, cgram in cgram_map.items():
                 line = line.replace(uni, cgram)
