@@ -42,5 +42,43 @@
         }
       }
     ]
+  },
+  "tools_dice_entropy_entry_screen": {
+    "context": {
+      "top_nav": { "title": "Dice Roll" },
+      "charset_modes": {
+        "dice": "123456"
+      },
+      "initial_mode": "dice"
+    }
+  },
+  "tools_coin_flip_entry_screen": {
+    "context": {
+      "top_nav": { "title": "Coin Flip" },
+      "charset_modes": {
+        "coin": "10"
+      },
+      "initial_mode": "coin"
+    }
+  },
+  "seed_bip85_select_child_index_screen": {
+    "context": {
+      "top_nav": { "title": "BIP85 Index" },
+      "charset_modes": {
+        "digits": "0123456789"
+      },
+      "initial_mode": "digits",
+      "initial_text": "0"
+    }
+  },
+  "seed_export_xpub_custom_derivation_screen": {
+    "context": {
+      "top_nav": { "title": "Derivation" },
+      "charset_modes": {
+        "path": "m/0123456789'"
+      },
+      "initial_mode": "path",
+      "initial_text": "m/"
+    }
   }
 }

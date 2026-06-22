@@ -312,3 +312,77 @@ class TestStatusRenderer:
         assert "✕" in lines[1]
         assert "Failed to Sign" in lines[1]
         assert not lines[1].startswith("!")
+
+# ═══════════════════════════════════════════════════════════════════
+#  KEYBOARD SCREEN
+# ═══════════════════════════════════════════════════════════════════
+
+class TestKeyboardRenderer:
+    def setup_method(self):
+        self.renderer_16x2 = TextRenderer(rows=2, cols=16)
+        self.renderer_20x4 = TextRenderer(rows=4, cols=20)
+
+    def test_basic_keyboard_render(self):
+        context = {
+            "top_nav": {"title": "Dice Roll"},
+            "charset_modes": {"dice": "123456"},
+            "initial_mode": "dice",
+            "initial_text": "123"
+        }
+        state = ScreenState("tools_dice_entropy_entry_screen", context, visible_rows=1)
+        
+        # 16x2
+        lines = self.renderer_16x2.render(state)
+        assert len(lines) == 2
+        assert "Dice Roll" in lines[0]
+        # Text "123" + cursor "[1]" -> "123[1]" padded to 16
+        assert "123[1]          " == lines[1]
+        
+        # 20x4
+        lines = self.renderer_20x4.render(state)
+        assert len(lines) == 4
+        assert "Dice Roll" in lines[0]
+        # 20 cols minus " (dice)" (7 chars) = 13 chars for text
+        assert "123[1]        (dice)" == lines[1]
+
+    def test_keyboard_input_overflow(self):
+        context = {
+            "top_nav": {"title": "Derivation"},
+            "charset_modes": {"path": "m/0123456789'"},
+            "initial_mode": "path",
+            "initial_text": "m/84'/0'/0'/0/"
+        }
+        state = ScreenState("seed_export_xpub_custom_derivation_screen", context, visible_rows=1)
+        
+        lines = self.renderer_16x2.render(state)
+        # 16 cols. "m/84'/0'/0'/0/" + "[m]" = 17 chars.
+        # It should truncate the left side: "..4'/0'/0'/0/[m]"
+        assert ".." in lines[1]
+        assert "[m]" in lines[1]
+        assert len(lines[1]) == 16
+
+    def test_coin_flip_render(self):
+        context = {
+            "top_nav": {"title": "Coin Flip"},
+            "charset_modes": {"coin": "10"},
+            "initial_mode": "coin",
+            "initial_text": ""
+        }
+        state = ScreenState("tools_coin_flip_entry_screen", context, visible_rows=1)
+        lines = self.renderer_16x2.render(state)
+        assert len(lines) == 2
+        assert "Coin Flip" in lines[0]
+        assert "[1]             " == lines[1]
+
+    def test_bip85_render(self):
+        context = {
+            "top_nav": {"title": "BIP85 Index"},
+            "charset_modes": {"digits": "0123456789"},
+            "initial_mode": "digits",
+            "initial_text": "0"
+        }
+        state = ScreenState("seed_bip85_select_child_index_screen", context, visible_rows=1)
+        lines = self.renderer_16x2.render(state)
+        assert len(lines) == 2
+        assert "BIP85 Index" in lines[0]
+        assert "0[0]            " == lines[1]

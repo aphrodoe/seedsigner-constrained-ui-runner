@@ -30,6 +30,18 @@ class TextRenderer:
             return self._render_main_menu(state)
         elif state.screen_type == ScreenType.LARGE_ICON_STATUS:
             return self._render_status(state)
+        elif state.screen_type.is_keyboard():
+            return self._render_keyboard(state)
+        elif state.screen_type == ScreenType.SPLASH:
+            return self._pad_rows([
+                self._center(""),
+                self._center("SEEDSIGNER"),
+            ][:self.rows])
+        elif state.screen_type == ScreenType.SCREENSAVER:
+            return self._pad_rows([
+                self._center(""),
+                self._center("..."),
+            ][:self.rows])
         else:
             return self._pad_rows([self._center("Unsupported")])
 
@@ -126,6 +138,37 @@ class TextRenderer:
                 entry = f"{prefix}{i + 1}.{label}"
                 lines.append(self._fixed(entry))
             return self._pad_rows(lines)
+
+    # ── keyboard_screen ─────────────────────────────────────────────
+
+    def _render_keyboard(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Input")
+        title_line = self._title_row(title, "")
+        
+        mode_name, chars = state.keyboard_modes[state.active_mode_index]
+        char = chars[state.char_index]
+        
+        mask_input = state.context.get("mask_input", False)
+        entered = state.entered_text
+        if mask_input:
+            entered = "*" * len(entered)
+            
+        cursor_str = f"[{char}]"
+        input_str = f"{entered}{cursor_str}"
+        
+        if len(mode_name) > 0 and self.cols == 20:
+            mode_indicator = f" ({mode_name})"
+            available = self.cols - len(mode_indicator)
+            if len(input_str) > available:
+                input_str = ".." + input_str[-(available - 2):]
+            input_line = input_str.ljust(available) + mode_indicator
+        else:
+            if len(input_str) > self.cols:
+                input_str = ".." + input_str[-(self.cols - 2):]
+            input_line = self._fixed(input_str)
+            
+        lines = [title_line, input_line]
+        return self._pad_rows(lines)
 
     # ── large_icon_status_screen ────────────────────────────────────
 
