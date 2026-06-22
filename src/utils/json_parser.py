@@ -78,5 +78,8 @@ class JSONParser:
             
         if "button_grid" in context:
             context["button_grid"] = self._normalize_button_list(context["button_grid"])
-
+            
+        if "button_data" in context:
+            context["button_data"] = self._normalize_button_list(context["button_data"])
+            
         return context
