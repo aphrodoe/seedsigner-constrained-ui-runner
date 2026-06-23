@@ -261,7 +261,7 @@ class DualRunnerApp:
             elif key == InputEvent.RIGHT:
                 needs_render = self.current_state.move_right()
             elif key == InputEvent.ENTER:
-                if self.current_state.screen_type.is_keyboard():
+                if self.current_state.screen_type.is_keyboard() or self.current_state.screen_type.name == "SEED_MNEMONIC_ENTRY":
                     action = self.current_state.on_enter()
                     if action == "UPDATE":
                         needs_render = True

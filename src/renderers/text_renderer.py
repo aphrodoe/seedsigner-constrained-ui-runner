@@ -25,22 +25,33 @@ class TextRenderer:
     def render(self, state: ScreenState) -> List[str]:
         """Return exactly `self.rows` strings, each exactly `self.cols` chars wide."""
         if state.screen_type == ScreenType.BUTTON_LIST:
-            return self._render_button_list(state)
+            lines = self._render_button_list(state)
         elif state.screen_type == ScreenType.MAIN_MENU:
-            return self._render_main_menu(state)
+            lines = self._render_main_menu(state)
         elif state.screen_type == ScreenType.LARGE_ICON_STATUS:
-            return self._render_status(state)
+            lines = self._render_status(state)
+        elif state.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            lines = self._render_seed_mnemonic_entry(state)
         elif state.screen_type.is_keyboard():
-            return self._render_keyboard(state)
+            lines = self._render_keyboard(state)
         elif state.screen_type == ScreenType.SPLASH:
-            return self._render_splash(state)
+            lines = self._render_splash(state)
         elif state.screen_type == ScreenType.SCREENSAVER:
-            return self._pad_rows([
+            lines = self._pad_rows([
                 self._center(""),
                 self._center("SeedSigner"),
             ][:self.rows])
         else:
-            return self._pad_rows([self._center("Unsupported")])
+            lines = self._pad_rows([self._center("Unsupported")])
+            
+        toast_msg = state.context.get("toast")
+        if toast_msg:
+            toast_text = f"[{toast_msg}]"
+            if len(toast_text) > self.cols:
+                toast_text = f"[{toast_msg[:self.cols-3]}..]"
+            lines[-1] = self._center(toast_text)
+            
+        return lines
 
     # ── button_list_screen ──────────────────────────────────────────
 
@@ -142,6 +153,88 @@ class TextRenderer:
                 icon = icon_map.get(label, "[-]")
                 entry = f"{prefix}{icon} {label}"
                 lines.append(self._fixed(entry))
+            return self._pad_rows(lines)
+
+    # ── seed_mnemonic_entry_screen ──────────────────────────────────
+    
+    def _render_seed_mnemonic_entry(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Enter Word")
+        entered = state.context.get("entered_text", "")
+        suggestions = state.context.get("suggestions", [])
+        total = len(suggestions)
+        
+        # Position indicator for the top right (e.g. " 1/12")
+        pos = f" {state.selected_index + 1}/{total}" if total > 0 else ""
+        
+        # Row 0 MUST be the standard title row
+        title_line = self._title_row(title, pos, state)
+        
+        # Build the keyboard string (e.g. "for[c]defgh...")
+        alphabet = getattr(state, "alphabet", [])
+        char_index = getattr(state, "char_index", 0)
+        
+        kb_str = entered
+        if alphabet:
+            avail = self.cols - len(entered)
+            char = alphabet[char_index]
+            
+            focus = getattr(state, "focus", "keyboard")
+            cursor_str = f"[{char}]" if focus == "keyboard" else f" {char} "
+            
+            if len(cursor_str) < avail:
+                trailing = ""
+                for i in range(1, avail - len(cursor_str) + 1):
+                    idx = (char_index + i) % len(alphabet)
+                    trailing += alphabet[idx]
+                cursor_str += trailing
+            cursor_str = cursor_str[:avail]
+            kb_str = f"{entered}{cursor_str}"
+        else:
+            kb_str = f"{entered}_"
+            
+        kb_line = self._fixed(kb_str)
+        
+        if self.item_rows == 1:
+            # 16x2 Display
+            # With only 1 content row, if we have suggestions we should show the active suggestion.
+            # But the user still needs to see what they are typing. 
+            # We will show the active suggestion, but prepend the entered text!
+            if not suggestions:
+                return [title_line, kb_line]
+            else:
+                sugg = suggestions[state.selected_index] if state.selected_index < total else ""
+                focus = getattr(state, "focus", "keyboard")
+                
+                if focus == "keyboard":
+                    combined = f"{entered}[{alphabet[char_index]}] {sugg}"
+                else:
+                    combined = f"{entered} {alphabet[char_index]}  >{sugg}"
+                    
+                if len(combined) > self.cols:
+                    combined = combined[:self.cols]
+                return [title_line, self._fixed(combined)]
+                
+        else:
+            # 20x4 Display
+            # Row 0: Title
+            # Row 1: Keyboard (for[c]defghij)
+            # Row 2-3: Suggestions
+            lines = [title_line, kb_line]
+            
+            if not suggestions:
+                lines.append(self._fixed("  (no match)"))
+                return self._pad_rows(lines)
+                
+            start = state.scroll_offset
+            # We have (self.rows - 2) lines left for suggestions
+            avail_rows = self.rows - 2
+            end = min(len(suggestions), start + avail_rows)
+            
+            for i in range(start, end):
+                sugg = suggestions[i]
+                prefix = "> " if i == state.selected_index else "  "
+                lines.append(self._fixed(f"{prefix}{sugg}"))
+                
             return self._pad_rows(lines)
 
     # ── keyboard_screen ─────────────────────────────────────────────

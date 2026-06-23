@@ -21,7 +21,9 @@ from seedsigner.gui.screens.screen import (
     KeyboardScreen, BaseTopNavScreen
 )
 from seedsigner.views.screensaver import OpeningSplashScreen
-from seedsigner.gui.screens.seed_screens import SeedAddPassphraseScreen
+from seedsigner.gui.screens.seed_screens import SeedAddPassphraseScreen, SeedMnemonicEntryScreen
+from seedsigner.gui.screens.psbt_screens import PSBTOverviewScreen, PSBTMathScreen
+from seedsigner.gui.screens.screen import QRDisplayScreen
 
 EXPORT_DIR = os.path.join(runner_dir, "tools", "screenshots_export")
 os.makedirs(EXPORT_DIR, exist_ok=True)
@@ -62,8 +64,17 @@ def map_screen_to_state(screen_obj) -> ScreenState:
         context["status_icon_name"] = getattr(screen_obj, 'status_icon_name', '')
         context["status_headline"] = getattr(screen_obj, 'status_headline', '')
         context["text"] = getattr(screen_obj, 'text', '')
-        if getattr(screen_obj, 'status_color', '') == '#FF4D4D':
+        
+        color = getattr(screen_obj, 'status_color', '').upper()
+        if color == '#FF1B0A' or color == '#FF4D4D':
+            context["status_type"] = "error"
+        elif color == '#FF5700':
+            context["status_type"] = "error"
             context["is_dire_warning"] = True
+        elif color == '#FFD60A' or color == '#FFD600' or color == 'ORANGE':
+            context["status_type"] = "warning"
+        else:
+            context["status_type"] = "success"
             
         items = []
         for btn in getattr(screen_obj, 'button_data', []):
@@ -73,6 +84,43 @@ def map_screen_to_state(screen_obj) -> ScreenState:
                 items.append({"label": btn.button_label})
         context["items"] = items
         state = ScreenState(screen_name, context)
+        return state
+
+    elif isinstance(screen_obj, PSBTOverviewScreen):
+        screen_name = "button_list_screen"
+        items = []
+        items.append({"label": f"Spend: {screen_obj.spend_amount}"})
+        items.append({"label": f"Fee: {screen_obj.fee_amount}"})
+        items.append({"label": f"Change: {screen_obj.change_amount}"})
+        items.append({"label": f"Inputs: {screen_obj.num_inputs}"})
+        items.append({"label": f"Outputs: {len(screen_obj.destination_addresses) if screen_obj.destination_addresses else 0}"})
+        
+        btns = getattr(screen_obj, 'button_data', getattr(screen_obj, 'buttons', []))
+        for btn in btns:
+            label = getattr(btn, 'button_label', getattr(btn, 'text', 'Item'))
+            items.append({"label": label, "value": label})
+            
+        context["items"] = items
+        state = ScreenState(screen_name, context)
+        state.selected_index = getattr(screen_obj, 'selected_button', 0)
+        return state
+
+    elif isinstance(screen_obj, PSBTMathScreen):
+        screen_name = "button_list_screen"
+        items = []
+        items.append({"label": f"In: {screen_obj.input_amount}"})
+        items.append({"label": f"Out: {screen_obj.spend_amount}"})
+        items.append({"label": f"Fee: {screen_obj.fee_amount}"})
+        items.append({"label": f"Change: {screen_obj.change_amount}"})
+        
+        btns = getattr(screen_obj, 'button_data', getattr(screen_obj, 'buttons', []))
+        for btn in btns:
+            label = getattr(btn, 'button_label', getattr(btn, 'text', 'Item'))
+            items.append({"label": label, "value": label})
+            
+        context["items"] = items
+        state = ScreenState(screen_name, context)
+        state.selected_index = getattr(screen_obj, 'selected_button', 0)
         return state
 
     elif isinstance(screen_obj, ButtonListScreen):
@@ -93,13 +141,34 @@ def map_screen_to_state(screen_obj) -> ScreenState:
     elif isinstance(screen_obj, KeyboardScreen):
         screen_name = "synthetic_entry_screen"
         context["top_nav"]["title"] = title
-        if isinstance(screen_obj, SeedAddPassphraseScreen):
-            screen_name = "seed_add_passphrase_screen"
+        state = ScreenState(screen_name, context)
+        return state
+        
+    elif isinstance(screen_obj, SeedAddPassphraseScreen):
+        screen_name = "seed_add_passphrase_screen"
+        context["top_nav"]["title"] = title
+        context["initial_text"] = getattr(screen_obj, 'passphrase', '')
         state = ScreenState(screen_name, context)
         return state
 
     elif isinstance(screen_obj, OpeningSplashScreen):
         screen_name = "splash_screen"
+        state = ScreenState(screen_name, context)
+        return state
+
+    elif isinstance(screen_obj, SeedMnemonicEntryScreen):
+        screen_name = "seed_mnemonic_entry_screen"
+        context["entered_text"] = "".join(getattr(screen_obj, 'letters', [])).strip()
+        context["suggestions"] = getattr(screen_obj, 'possible_words', [])
+        if hasattr(screen_obj, 'keyboard'):
+            context["active_keys"] = getattr(screen_obj.keyboard, 'active_keys', "")
+        
+        state = ScreenState(screen_name, context)
+        return state
+
+    elif isinstance(screen_obj, QRDisplayScreen):
+        screen_name = "button_list_screen"
+        context["items"] = [{"label": "[Scan QR Code on Device]"}]
         state = ScreenState(screen_name, context)
         return state
 
@@ -126,6 +195,17 @@ def patched_show_image(self, image=None, alpha_overlay=None, is_background_threa
             
             if screen_obj:
                 state = map_screen_to_state(screen_obj)
+                
+                # Check for toast thread in generator frame
+                frame_g = frame
+                while frame_g:
+                    if 'screenshot_config' in frame_g.f_locals:
+                        config = frame_g.f_locals['screenshot_config']
+                        if getattr(config, 'toast_thread', None) is not None:
+                            toast = config.toast_thread
+                            state.context["toast"] = getattr(toast, 'message', getattr(toast, 'text', 'Toast Event'))
+                        break
+                    frame_g = frame_g.f_back
                 
                 # Copy original image to our export dir
                 full_path = os.path.join(self.screenshot_path, self.screenshot_filename)

@@ -13,6 +13,7 @@ class ScreenType(Enum):
     SEED_BIP85_SELECT_CHILD_INDEX = "seed_bip85_select_child_index_screen"
     SEED_EXPORT_XPUB_CUSTOM_DERIVATION = "seed_export_xpub_custom_derivation_screen"
     SYNTHETIC_ENTRY = "synthetic_entry_screen"
+    SEED_MNEMONIC_ENTRY = "seed_mnemonic_entry_screen"
     
     def is_keyboard(self):
         return self in [
@@ -33,6 +34,8 @@ class ScreenType(Enum):
 
 
 class ScreenState:
+    _bip39_wordlist = None
+
     def __init__(self, screen_type_str: str, context: Dict[str, Any], visible_rows: int = 1):
         self.screen_type = ScreenType.from_str(screen_type_str)
         self.context = context
@@ -50,6 +53,8 @@ class ScreenState:
         
         if self.screen_type.is_keyboard():
             self._init_keyboard()
+        elif self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self._init_mnemonic_entry()
         
         self.items = self._extract_items()
         
@@ -74,6 +79,28 @@ class ScreenState:
             chars = list(charset)
             chars.extend(["[DEL]", "[OK]"])
             self.keyboard_modes[i] = (name, chars)
+
+    def _init_mnemonic_entry(self):
+        if ScreenState._bip39_wordlist is None:
+            import os
+            wordlist_path = os.path.join(os.path.dirname(__file__), "bip39_english.txt")
+            if os.path.exists(wordlist_path):
+                with open(wordlist_path, "r") as f:
+                    ScreenState._bip39_wordlist = [line.strip() for line in f if line.strip() and not line.startswith("Source:") and not line.startswith("---")]
+            else:
+                ScreenState._bip39_wordlist = []
+                
+        self.entered_text = self.context.get("entered_text", "")
+        self.alphabet = list("abcdefghijklmnopqrstuvwxyz") + ["[DEL]", "[OK]"]
+        self.char_index = 0
+        self._update_mnemonic_suggestions()
+
+    def _update_mnemonic_suggestions(self):
+        if not self.entered_text:
+            self.context["suggestions"] = []
+        else:
+            self.context["suggestions"] = [w for w in ScreenState._bip39_wordlist if w.startswith(self.entered_text)]
+        self.selected_index = 0
         
     def _extract_items(self) -> List[Any]:
         if "items" in self.context:
@@ -99,6 +126,25 @@ class ScreenState:
                 self.char_index = 0
                 return True
             return False
+            
+            
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "keyboard":
+                self.focus = "suggestions"
+                return True
+                
+            suggestions = self.context.get("suggestions", [])
+            if suggestions and self.selected_index > 0:
+                self.selected_index -= 1
+                self._adjust_scroll()
+                return True
+            elif self.scroll_offset > 0:
+                self.scroll_offset -= 1
+                return True
+            else:
+                self.focus = "keyboard"
+                return True
 
         changed = False
         if self.items and self.selected_index > 0:
@@ -119,6 +165,22 @@ class ScreenState:
                 self.char_index = 0
                 return True
             return False
+            
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "keyboard":
+                self.focus = "suggestions"
+                return True
+                
+            suggestions = self.context.get("suggestions", [])
+            if suggestions and self.selected_index < len(suggestions) - 1:
+                self.selected_index += 1
+                self._adjust_scroll()
+                return True
+            elif self.scroll_offset < self.max_scroll_offset:
+                self.scroll_offset += 1
+                return True
+            return False
 
         changed = False
         if self.items and self.selected_index < len(self.items) - 1:
@@ -137,6 +199,14 @@ class ScreenState:
             _, chars = self.keyboard_modes[self.active_mode_index]
             self.char_index = (self.char_index - 1) % len(chars)
             return True
+            
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "suggestions":
+                self.focus = "keyboard"
+                return True
+            self.char_index = (self.char_index - 1) % len(self.alphabet)
+            return True
         return self.page_up()
 
     def move_right(self) -> bool:
@@ -144,6 +214,14 @@ class ScreenState:
         if self.screen_type.is_keyboard():
             _, chars = self.keyboard_modes[self.active_mode_index]
             self.char_index = (self.char_index + 1) % len(chars)
+            return True
+            
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "suggestions":
+                self.focus = "keyboard"
+                return True
+            self.char_index = (self.char_index + 1) % len(self.alphabet)
             return True
         return self.page_down()
 
@@ -192,4 +270,30 @@ class ScreenState:
             else:
                 self.entered_text += char
                 return "UPDATE"
+                
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            
+            if self.focus == "suggestions":
+                suggestions = self.context.get("suggestions", [])
+                if suggestions:
+                    self.entered_text = suggestions[self.selected_index]
+                    self.context["entered_text"] = self.entered_text
+                return "SUBMIT"
+                
+            char = self.alphabet[self.char_index]
+            if char == "[DEL]":
+                self.entered_text = self.entered_text[:-1]
+                self._update_mnemonic_suggestions()
+                self.context["entered_text"] = self.entered_text
+                return "UPDATE"
+            elif char == "[OK]":
+                # If they explicitly click OK, submit the current word
+                return "SUBMIT"
+            else:
+                self.entered_text += char
+                self._update_mnemonic_suggestions()
+                self.context["entered_text"] = self.entered_text
+                return "UPDATE"
+                
         return "SELECT"

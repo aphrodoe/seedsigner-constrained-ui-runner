@@ -57,6 +57,7 @@ def generate_html():
         if st_str == "button_list": st_str = "button_list_screen"
         if st_str == "main_menu": st_str = "main_menu_screen"
         if st_str == "large_icon_status": st_str = "large_icon_status_screen"
+        if st_str == "seed_mnemonic_entry": st_str = "seed_mnemonic_entry_screen"
         if st_str == "synthetic_entry": st_str = "synthetic_entry_screen"
         if st_str == "seed_add_passphrase": st_str = "seed_add_passphrase_screen"
         
