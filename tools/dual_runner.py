@@ -16,7 +16,7 @@ class DualRunnerApp:
     def __init__(self, root, lvgl_dir=None, scenarios_file=None):
         self.root = root
         self.root.title("SeedSigner Dual Runner")
-        self.root.geometry("750x520")
+        self.root.geometry("1100x650")
         
         # Colors
         self.bg_color = "#151515"
@@ -35,6 +35,8 @@ class DualRunnerApp:
         # Renderers
         self.renderer_16x2 = TextRenderer(rows=2, cols=16)
         self.renderer_20x4 = TextRenderer(rows=4, cols=20)
+        self.renderer_16x8 = TextRenderer(rows=8, cols=16)
+        self.renderer_25x16 = TextRenderer(rows=16, cols=25)
         
         # State
         self.parser = JSONParser(self.scenarios_file)
@@ -128,17 +130,31 @@ class DualRunnerApp:
         text_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(2, 0))
         ttk.Label(text_container, text="Constrained UI", style='Panel.TLabel', font=('Helvetica', 11, 'bold')).pack(pady=(15, 10))
         
+        # Tier Selector
+        self.tier_var = tk.StringVar(value="Tier 3: E-Paper 200x200")
+        
+        self.tier_selector = tk.OptionMenu(text_container, self.tier_var, 
+                                          "Tier 0: 16x2 LCD", "Tier 1: 20x4 LCD", 
+                                          "Tier 2: 128x64 OLED", "Tier 3: E-Paper 200x200",
+                                          command=self.on_tier_selected)
+                                          
+        self.tier_selector.config(bg="#222222", fg="white", activebackground="#444444", 
+                                  activeforeground="white", highlightthickness=0, bd=0, indicatoron=0)
+        self.tier_selector["menu"].config(bg="#222222", fg="white", activebackground="#444444", activeforeground="white")
+        
+        self.tier_selector.pack(pady=(0, 10))
+
         # Center the LCDs
-        lcd_wrapper = ttk.Frame(text_container, style='Panel.TFrame')
-        lcd_wrapper.pack(expand=True)
+        self.lcd_wrapper = ttk.Frame(text_container, style='Panel.TFrame')
+        self.lcd_wrapper.pack(expand=True)
         
-        ttk.Label(lcd_wrapper, text="16x2 LCD", style='Panel.TLabel').pack(pady=(0, 2))
-        self.lcd_16x2_label = tk.Label(lcd_wrapper, text="", font=('Courier', 14, 'bold'), bg='#0000aa', fg='#ffffff', width=16, height=2, justify=tk.LEFT, anchor='nw')
-        self.lcd_16x2_label.pack()
+        self.lcd_16x2_label = tk.Label(self.lcd_wrapper, text="", font=('Courier', 12, 'bold'), bg='#0000aa', fg='#ffffff', width=16, height=2, justify=tk.LEFT, anchor='nw')
+        self.lcd_20x4_label = tk.Label(self.lcd_wrapper, text="", font=('Courier', 12, 'bold'), bg='#0000aa', fg='#ffffff', width=20, height=4, justify=tk.LEFT, anchor='nw')
+        self.lcd_16x8_label = tk.Label(self.lcd_wrapper, text="", font=('Courier', 12, 'bold'), bg='#000000', fg='#ffffff', width=16, height=8, justify=tk.LEFT, anchor='nw')
+        self.lcd_25x16_label = tk.Label(self.lcd_wrapper, text="", font=('Courier', 12, 'bold'), bg='#cccccc', fg='#000000', width=25, height=16, justify=tk.LEFT, anchor='nw')
         
-        ttk.Label(lcd_wrapper, text="20x4 LCD", style='Panel.TLabel').pack(pady=(20, 2))
-        self.lcd_20x4_label = tk.Label(lcd_wrapper, text="", font=('Courier', 14, 'bold'), bg='#0000aa', fg='#ffffff', width=20, height=4, justify=tk.LEFT, anchor='nw')
-        self.lcd_20x4_label.pack(pady=(0, 20))
+        self.active_tier_label = None
+        self.on_tier_selected()
         
         # Bottom half of content pane: Controls
         controls_container = ttk.Frame(content_frame, style='Panel.TFrame')
@@ -164,6 +180,35 @@ class DualRunnerApp:
         self.root.bind('<d>', lambda e: self.handle_input(InputEvent.RIGHT))
         self.root.bind('<Return>', lambda e: self.handle_input(InputEvent.ENTER))
         self.root.bind('<space>', lambda e: self.handle_input(InputEvent.ENTER))
+
+    def on_tier_selected(self, event=None):
+        if self.active_tier_label:
+            self.active_tier_label.pack_forget()
+            
+        selection = self.tier_var.get()
+        visible_rows = 1
+        if "Tier 0" in selection:
+            self.active_tier_label = self.lcd_16x2_label
+            visible_rows = 1
+        elif "Tier 1" in selection:
+            self.active_tier_label = self.lcd_20x4_label
+            visible_rows = 3
+        elif "Tier 2" in selection:
+            self.active_tier_label = self.lcd_16x8_label
+            visible_rows = 7
+        else:
+            self.active_tier_label = self.lcd_25x16_label
+            visible_rows = 15
+            
+        if hasattr(self, 'current_state') and self.current_state:
+            self.current_state.visible_rows = visible_rows
+            self.current_state._adjust_scroll()
+            self.update_displays()
+            
+        self.active_tier_label.pack(padx=10, pady=20)
+        
+        # Return focus to root so keybindings continue working
+        self.root.focus_set()
 
     def populate_sidebar(self):
         self.scenario_map = []
@@ -203,7 +248,15 @@ class DualRunnerApp:
         
         try:
             ctx = self.parser.get_scenario_context(self.current_screen_name, self.current_variation_name)
-            self.current_state = ScreenState(self.current_screen_name, ctx)
+            
+            selection = self.tier_var.get()
+            visible_rows = 1
+            if "Tier 0" in selection: visible_rows = 1
+            elif "Tier 1" in selection: visible_rows = 3
+            elif "Tier 2" in selection: visible_rows = 7
+            else: visible_rows = 15
+            
+            self.current_state = ScreenState(self.current_screen_name, ctx, visible_rows=visible_rows)
             self.update_displays()
             self.load_lvgl_image(s_name, v_name)
         except Exception as e:
@@ -219,6 +272,12 @@ class DualRunnerApp:
         
         lines_20x4 = self.renderer_20x4.render(self.current_state)
         self.lcd_20x4_label.config(text="\n".join(lines_20x4))
+        
+        lines_16x8 = self.renderer_16x8.render(self.current_state)
+        self.lcd_16x8_label.config(text="\n".join(lines_16x8))
+        
+        lines_25x16 = self.renderer_25x16.render(self.current_state)
+        self.lcd_25x16_label.config(text="\n".join(lines_25x16))
         
     def load_lvgl_image(self, s_name, v_name):
         self.lvgl_canvas.delete("all")

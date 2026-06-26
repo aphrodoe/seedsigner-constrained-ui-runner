@@ -21,16 +21,18 @@ def generate_html():
         
     r16 = TextRenderer(2, 16)
     r20 = TextRenderer(4, 20)
+    r16x8 = TextRenderer(8, 16)
+    r25x16 = TextRenderer(16, 25)
     
     html = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Constrained UI Screen Comparisons</title>
+        <title>Constrained UI Screen Comparisons (All Tiers)</title>
         <style>
             body { font-family: sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
             h1 { text-align: center; color: #64B5F6; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(800px, 1fr)); gap: 40px; margin-top: 40px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(1400px, 1fr)); gap: 40px; margin-top: 40px; }
             .card { background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #333; }
             .card h3 { margin-top: 0; margin-bottom: 20px; font-family: monospace; color: #90CAF9; border-bottom: 1px solid #333; padding-bottom: 10px; }
             .comparison { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
@@ -46,7 +48,7 @@ def generate_html():
         </style>
     </head>
     <body>
-        <h1>SeedSigner UI: LVGL vs 16x2 vs 20x4</h1>
+        <h1>SeedSigner UI: LVGL vs 4 Adaptive Tiers</h1>
         <div class="grid">
     """
     
@@ -67,9 +69,13 @@ def generate_html():
         
         lines_16 = r16.render(state)
         lines_20 = r20.render(state)
+        lines_16x8 = r16x8.render(state)
+        lines_25x16 = r25x16.render(state)
         
         text_16 = "\n".join([line.replace('<', '&lt;').replace('>', '&gt;') for line in lines_16])
         text_20 = "\n".join([line.replace('<', '&lt;').replace('>', '&gt;') for line in lines_20])
+        text_16x8 = "\n".join([line.replace('<', '&lt;').replace('>', '&gt;') for line in lines_16x8])
+        text_25x16 = "\n".join([line.replace('<', '&lt;').replace('>', '&gt;') for line in lines_25x16])
         
         html += f"""
         <div class="card">
@@ -80,12 +86,20 @@ def generate_html():
                     <img src="{s['image_path']}" />
                 </div>
                 <div class="view">
-                    <span class="view-title">Constrained UI (16x2)</span>
+                    <span class="view-title">Tier 0 (16x2)</span>
                     <pre>{text_16}</pre>
                 </div>
                 <div class="view">
-                    <span class="view-title">Constrained UI (20x4)</span>
+                    <span class="view-title">Tier 1 (20x4)</span>
                     <pre>{text_20}</pre>
+                </div>
+                <div class="view">
+                    <span class="view-title">Tier 2 (16x8 OLED)</span>
+                    <pre style="background: #000; color: #fff;">{text_16x8}</pre>
+                </div>
+                <div class="view">
+                    <span class="view-title">Tier 3 (25x16 E-Paper)</span>
+                    <pre style="background: #ccc; color: #000;">{text_25x16}</pre>
                 </div>
             </div>
         </div>
