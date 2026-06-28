@@ -221,8 +221,8 @@ class TestMainMenuRenderer:
         lines = renderer.render(state)
 
         assert "SeedSigner" in lines[0]
-        assert ">1.Scan" in lines[1]
-        assert " 2.Seeds" in lines[2]
+        assert ">▦ Scan" in lines[1]
+        assert " ⚿ Seeds" in lines[2]
 
     def test_16x2_block_pagination(self):
         state = ScreenState("main_menu_screen", self._menu_context(), visible_rows=1)
@@ -231,7 +231,7 @@ class TestMainMenuRenderer:
 
         assert "SeedSigner" in lines[0]
         assert "1/4" in lines[0]
-        assert "> 1.Scan" in lines[1]
+        assert "> ▦ Scan" in lines[1]
 
     def test_16x2_scroll_down(self):
         state = ScreenState("main_menu_screen", self._menu_context(), visible_rows=1)
@@ -241,7 +241,7 @@ class TestMainMenuRenderer:
         lines = renderer.render(state)
 
         assert "2/4" in lines[0]
-        assert "> 2.Seeds" in lines[1]
+        assert "> ⚿ Seeds" in lines[1]
 
 
 class TestStatusRenderer:
@@ -386,3 +386,88 @@ class TestKeyboardRenderer:
         assert len(lines) == 2
         assert "BIP85 Index" in lines[0]
         assert "0[0]            " == lines[1]
+
+
+class TestTierDetection:
+    """Verify the tier auto-detection logic."""
+    def test_tier_0_16x2(self):
+        r = TextRenderer(rows=2, cols=16)
+        assert r.tier == 0
+
+    def test_tier_0_16x1(self):
+        r = TextRenderer(rows=1, cols=16)
+        assert r.tier == 0
+
+    def test_tier_1_20x4(self):
+        r = TextRenderer(rows=4, cols=20)
+        assert r.tier == 1
+
+    def test_tier_1_16x3(self):
+        r = TextRenderer(rows=3, cols=16)
+        assert r.tier == 1
+
+    def test_tier_2_16x8(self):
+        r = TextRenderer(rows=8, cols=16)
+        assert r.tier == 2
+
+    def test_tier_2_21x5(self):
+        r = TextRenderer(rows=5, cols=21)
+        assert r.tier == 2
+
+    def test_tier_3_25x16(self):
+        r = TextRenderer(rows=16, cols=25)
+        assert r.tier == 3
+
+
+class TestTier2Comfortable:
+    """Tier 2: rows 5-8, sliding window with more visible items."""
+    def setup_method(self):
+        self.renderer = TextRenderer(rows=8, cols=16)
+
+    def test_button_list_shows_7_items(self):
+        """Tier 2 with 8 rows → 7 item rows visible."""
+        state = _make_state(list("ABCDEFGHIJ"), visible_rows=7)
+        lines = self.renderer.render(state)
+        assert len(lines) == 8
+        # Row 0 is title, rows 1-7 are items
+        assert ">" in lines[1]  # Selected item has cursor
+
+    def test_back_indicator(self):
+        context = {"top_nav": {"title": "Menu", "show_back_button": True}}
+        state = ScreenState("button_list_screen", context, visible_rows=7)
+        lines = self.renderer.render(state)
+        assert "[<] Menu" in lines[0]
+
+
+class TestTier3Spacious:
+    """Tier 3: rows >= 9, full list view for typical menus."""
+    def setup_method(self):
+        self.renderer = TextRenderer(rows=16, cols=25)
+
+    def test_all_4_settings_visible(self):
+        """A 4-item menu fits entirely without scrolling."""
+        state = _make_state(["Language", "Network", "Camera", "Display"], visible_rows=15)
+        lines = self.renderer.render(state)
+        assert len(lines) == 16
+        # All 4 items should be visible (no pagination needed)
+
+
+class TestPixelToTextAdapter:
+    """Verify pixel-to-text mapping."""
+    def test_128x32_small_font(self):
+        from src.utils.pixel_to_text import PixelToTextAdapter
+        cols, rows = PixelToTextAdapter.map(128, 32, "small")
+        assert cols == 21
+        assert rows == 4
+
+    def test_128x64_small_font(self):
+        from src.utils.pixel_to_text import PixelToTextAdapter
+        cols, rows = PixelToTextAdapter.map(128, 64, "small")
+        assert cols == 21
+        assert rows == 8
+
+    def test_200x200_medium_font(self):
+        from src.utils.pixel_to_text import PixelToTextAdapter
+        cols, rows = PixelToTextAdapter.map(200, 200, "medium")
+        assert cols == 25
+        assert rows == 16

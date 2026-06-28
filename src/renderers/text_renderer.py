@@ -19,6 +19,17 @@ class TextRenderer:
         self.cols = cols
         # Number of rows available for items (row 0 is always the title)
         self.item_rows = rows - 1
+        self.tier = self._determine_tier()
+
+    def _determine_tier(self) -> int:
+        if self.rows <= 2:
+            return 0  # Minimal: 16x2
+        elif self.rows <= 4:
+            return 1  # Compact: 20x4, 16x4
+        elif self.rows <= 8:
+            return 2  # Comfortable: 128x64 OLED
+        else:
+            return 3  # Spacious: E-Paper, Nokia 5110
 
     # ── public API ──────────────────────────────────────────────────
 
@@ -37,18 +48,21 @@ class TextRenderer:
         elif state.screen_type == ScreenType.SPLASH:
             lines = self._render_splash(state)
         elif state.screen_type == ScreenType.SCREENSAVER:
-            lines = self._pad_rows([
-                self._center(""),
-                self._center("SeedSigner"),
-            ][:self.rows])
+            lines = []
+            padding_top = max(0, (self.rows - 1) // 2)
+            for _ in range(padding_top):
+                lines.append(self._center(""))
+            lines.append(self._center("SeedSigner"))
+            lines = self._pad_rows(lines[:self.rows])
         else:
             lines = self._pad_rows([self._center("Unsupported")])
             
         toast_msg = state.context.get("toast")
         if toast_msg:
+            toast_msg = toast_msg.replace("\n", " ").strip()
             toast_text = f"[{toast_msg}]"
             if len(toast_text) > self.cols:
-                toast_text = f"[{toast_msg[:self.cols-3]}..]"
+                toast_text = f"[{toast_msg[:self.cols-5]}...]"
             lines[-1] = self._center(toast_text)
             
         return lines
@@ -67,11 +81,11 @@ class TextRenderer:
 
         title_line = self._title_row(title, pos, state)
 
-        if self.item_rows == 1:
+        if self.tier == 0:
             # ── Block Pagination (16x2) ─────────────────────────────
             return self._render_block_pagination(state, title_line)
         else:
-            # ── Sliding Window (20x4) ───────────────────────────────
+            # ── Sliding Window (20x4 and up) ───────────────────────────────
             return self._render_sliding_window(state, title_line)
 
     def _render_block_pagination(self, state: ScreenState, title_line: str) -> List[str]:
@@ -90,17 +104,37 @@ class TextRenderer:
             display = label
 
         item_line = self._item_row(display, selected=True, state=state)
-        return [title_line, item_line]
+        
+        lines = [title_line]
+        text = state.context.get("text", "")
+        if text:
+            # For 16x2 we can't really fit text and button, but let's try to show the first line of text
+            # if we are focused on it, otherwise just show the button. Actually 16x2 is too small.
+            # But let's just append it. If it gets padded, it will be cropped.
+            # But we can alternate between text and button if we wanted.
+            pass # 16x2 is too small for extra text
+            
+        lines.append(item_line)
+        return lines
 
     def _render_sliding_window(self, state: ScreenState, title_line: str) -> List[str]:
         """20x4 mode: rows 1..N form a sliding window over the item list."""
         lines = [title_line]
 
+        text = state.context.get("text", "")
+        extra_lines = []
+        if text:
+            for line in text.split('\n'):
+                extra_lines.append(self._center(line[:self.cols]))
+        
+        lines.extend(extra_lines)
+
         if not state.items:
             return self._pad_rows(lines)
 
+        available_item_rows = max(1, self.item_rows - len(extra_lines))
         start = state.scroll_offset
-        end = min(len(state.items), start + self.item_rows)
+        end = min(len(state.items), start + available_item_rows)
 
         for i in range(start, end):
             item = state.items[i]
@@ -132,7 +166,7 @@ class TextRenderer:
             "Settings": "⚙"
         }
 
-        if self.item_rows == 1:
+        if self.tier == 0:
             # Block pagination — show only the selected item
             if not state.items:
                 return self._pad_rows([title_line])
@@ -177,24 +211,27 @@ class TextRenderer:
         if alphabet:
             avail = self.cols - len(entered)
             char = alphabet[char_index]
-            
             focus = getattr(state, "focus", "keyboard")
-            cursor_str = f"[{char}]" if focus == "keyboard" else f" {char} "
             
-            if len(cursor_str) < avail:
-                trailing = ""
-                for i in range(1, avail - len(cursor_str) + 1):
-                    idx = (char_index + i) % len(alphabet)
-                    trailing += alphabet[idx]
-                cursor_str += trailing
-            cursor_str = cursor_str[:avail]
-            kb_str = f"{entered}{cursor_str}"
+            if self.tier >= 3:
+                # Full grid, no need for sliding preview in input line
+                kb_str = entered
+            else:
+                cursor_str = f"[{char}]" if focus == "keyboard" else f" {char} "
+                if len(cursor_str) < avail:
+                    trailing = ""
+                    for i in range(1, avail - len(cursor_str) + 1):
+                        idx = (char_index + i) % len(alphabet)
+                        trailing += alphabet[idx]
+                    cursor_str += trailing
+                cursor_str = cursor_str[:avail]
+                kb_str = f"{entered}{cursor_str}"
         else:
             kb_str = f"{entered}_"
             
         kb_line = self._fixed(kb_str)
         
-        if self.item_rows == 1:
+        if self.tier == 0:
             # 16x2 Display
             # With only 1 content row, if we have suggestions we should show the active suggestion.
             # But the user still needs to see what they are typing. 
@@ -214,11 +251,54 @@ class TextRenderer:
                     combined = combined[:self.cols]
                 return [title_line, self._fixed(combined)]
                 
+        elif self.tier >= 3:
+            lines = [title_line, kb_line]
+            grid_lines = []
+            current_line_items = []
+            current_len = 0
+            focus = getattr(state, "focus", "keyboard")
+            
+            for i, c in enumerate(alphabet):
+                is_selected = (i == char_index and focus == "keyboard")
+                if c.startswith("[") and c.endswith("]"):
+                    display = c.replace("[", "<").replace("]", ">") if is_selected else c
+                else:
+                    display = f"[{c}]" if is_selected else f" {c} "
+                    
+                item_len = len(display)
+                space_needed = item_len if current_len == 0 else item_len + 1
+                
+                if current_len + space_needed > self.cols:
+                    line_str = " ".join(current_line_items)
+                    grid_lines.append(self._center(line_str))
+                    current_line_items = [display]
+                    current_len = item_len
+                else:
+                    current_line_items.append(display)
+                    current_len += space_needed
+                    
+            if current_line_items:
+                line_str = " ".join(current_line_items)
+                grid_lines.append(self._center(line_str))
+                
+            lines.extend(grid_lines)
+            
+            if not suggestions:
+                lines.append(self._fixed("  (no match)"))
+            else:
+                avail_rows = self.rows - len(lines)
+                start = state.scroll_offset
+                end = min(len(suggestions), start + avail_rows)
+                
+                for i in range(start, end):
+                    sugg = suggestions[i]
+                    prefix = "> " if (i == state.selected_index and focus == "suggestions") else "  "
+                    lines.append(self._fixed(f"{prefix}{sugg}"))
+                    
+            return self._pad_rows(lines)
+
         else:
-            # 20x4 Display
-            # Row 0: Title
-            # Row 1: Keyboard (for[c]defghij)
-            # Row 2-3: Suggestions
+            # 20x4 Display and 16x8 Display
             lines = [title_line, kb_line]
             
             if not suggestions:
@@ -226,13 +306,13 @@ class TextRenderer:
                 return self._pad_rows(lines)
                 
             start = state.scroll_offset
-            # We have (self.rows - 2) lines left for suggestions
             avail_rows = self.rows - 2
             end = min(len(suggestions), start + avail_rows)
             
             for i in range(start, end):
                 sugg = suggestions[i]
-                prefix = "> " if i == state.selected_index else "  "
+                focus = getattr(state, "focus", "keyboard")
+                prefix = "> " if (i == state.selected_index and focus == "suggestions") else "  "
                 lines.append(self._fixed(f"{prefix}{sugg}"))
                 
             return self._pad_rows(lines)
@@ -272,7 +352,48 @@ class TextRenderer:
             input_line = self._fixed(input_str)
             
         lines = [title_line, input_line]
-        return self._pad_rows(lines)
+        
+        if self.tier >= 2:
+            grid_lines = []
+            current_line_items = []
+            current_len = 0
+            
+            for i, c in enumerate(chars):
+                is_selected = (i == state.char_index)
+                
+                if c.startswith("[") and c.endswith("]"):
+                    display = c.replace("[", "<").replace("]", ">") if is_selected else c
+                else:
+                    display = f"[{c}]" if is_selected else f" {c} "
+                    
+                item_len = len(display)
+                space_needed = item_len if current_len == 0 else item_len + 1
+                
+                if current_len + space_needed > self.cols:
+                    line_str = " ".join(current_line_items)
+                    grid_lines.append(self._center(line_str))
+                    current_line_items = [display]
+                    current_len = item_len
+                else:
+                    current_line_items.append(display)
+                    current_len += space_needed
+                    
+            if current_line_items:
+                line_str = " ".join(current_line_items)
+                grid_lines.append(self._center(line_str))
+                
+            used_rows = 2 + len(grid_lines)
+            padding = max(0, self.rows - used_rows)
+            top_pad = padding // 2
+            
+            for _ in range(top_pad):
+                lines.append(self._center(""))
+                
+            lines.extend(grid_lines)
+            return self._pad_rows(lines)
+            
+        else:
+            return self._pad_rows(lines)
 
     # ── large_icon_status_screen ────────────────────────────────────
 
@@ -295,7 +416,6 @@ class TextRenderer:
         
         if warning_edges:
             if animated:
-                # Toggle every 2 ticks (approx 600ms)
                 edge_char = "!" if (state.marquee_tick // 2) % 2 == 0 else " "
             else:
                 edge_char = "!"
@@ -303,58 +423,36 @@ class TextRenderer:
             edge_char = " "
 
         content_lines = [title_line]
+        wrap_cols = self.cols - 2 if warning_edges else self.cols
+        import textwrap
 
         headline = state.context.get("status_headline", "")
         if headline:
             headline_text = f"{icon} {headline}"
-            wrap_cols = self.cols - 2 if warning_edges else self.cols
-            words = headline_text.split()
-            wrapped_headline = []
-            current = ""
-            for word in words:
-                if current and len(current) + 1 + len(word) > wrap_cols:
-                    wrapped_headline.append(current.center(wrap_cols))
-                    current = word
-                elif not current:
-                    current = word
-                else:
-                    current += " " + word
-            if current:
-                wrapped_headline.append(current.center(wrap_cols))
-                
-            for line in wrapped_headline:
+            wrapped = textwrap.wrap(headline_text, width=wrap_cols)
+            for line in wrapped:
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{line}{edge_char}")
+                    content_lines.append(f"{edge_char}{line.center(wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(line))
 
         text = state.context.get("text", "")
         if text:
-            # Word-wrap text into available rows
-            # Reserve space for edge chars if warning_edges is True
-            wrap_cols = self.cols - 2 if warning_edges else self.cols
-            words = text.split()
-            wrapped_lines = []
-            current = ""
-            for word in words:
-                if current and len(current) + 1 + len(word) > wrap_cols:
-                    wrapped_lines.append(current.center(wrap_cols))
-                    current = word
-                elif not current:
-                    current = word
-                else:
-                    current += " " + word
-            if current:
-                wrapped_lines.append(current.center(wrap_cols))
-            
-            for line in wrapped_lines:
+            if headline and self.tier >= 2:
+                # Add spacing between headline and text on larger screens
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{line}{edge_char}")
+                    content_lines.append(f"{edge_char}{' '*wrap_cols}{edge_char}")
+                else:
+                    content_lines.append(self._center(""))
+                    
+            wrapped = textwrap.wrap(text, width=wrap_cols)
+            for line in wrapped:
+                if warning_edges:
+                    content_lines.append(f"{edge_char}{line.center(wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(line))
 
         # Determine available lines for content
-        # We always reserve 1 line for the button if state.items exists
         button_space = 1 if state.items else 0
         window_height = self.rows - button_space
         
@@ -362,10 +460,7 @@ class TextRenderer:
         new_max = max(0, len(content_lines) - window_height)
         state.max_scroll_offset = max(getattr(state, 'max_scroll_offset', 0), new_max)
         
-        # Clamp the start index so we don't scroll past the end on larger displays
         start = min(state.scroll_offset, new_max)
-        
-        # Slice the content based on clamped scroll_offset
         lines = content_lines[start : start + window_height]
 
         if state.items:
@@ -373,9 +468,11 @@ class TextRenderer:
             label = item.get("label", "")
             button_line = self._center(f"[ {label} ]")
             
-            # Pad content if it doesn't fill the window
             while len(lines) < window_height:
-                lines.append(" " * self.cols)
+                if warning_edges:
+                    lines.append(f"{edge_char}{' '*wrap_cols}{edge_char}")
+                else:
+                    lines.append(" " * self.cols)
                 
             lines.append(button_line)
 
@@ -385,6 +482,9 @@ class TextRenderer:
 
     def _title_row(self, title: str, suffix: str, state: ScreenState = None) -> str:
         """Build a title row: title left-aligned, suffix right-aligned. Marquee if too long."""
+        if self.tier >= 2 and state and state.context.get("top_nav", {}).get("show_back_button", False):
+            title = f"[<] {title}"
+            
         avail = self.cols - len(suffix)
         if len(title) > avail:
             if state is not None:
@@ -434,51 +534,69 @@ class TextRenderer:
 
     def _render_splash(self, state: ScreenState) -> List[str]:
         """Render the Splash Screen with versions and partners."""
-        lines = []
-        
-        # Center "SEEDSIGNER" on the first available row
-        if self.rows > 2:
-            lines.append(self._center(""))
-        lines.append(self._center("SEEDSIGNER"))
-        
         version = state.context.get("version", "")
         show_partners = state.context.get("show_partner_logos", False)
         sponsor_text = state.context.get("sponsor_text", "")
         boot_logo_only = state.context.get("boot_logo_only", False)
         
-        # Build the bottom line string
-        bottom_text = ""
-        if not boot_logo_only:
-            if version:
-                bottom_text += version
+        if self.tier >= 2:
+            lines = []
+            total_content_rows = 2 if not version else 3
+            if not boot_logo_only and show_partners and sponsor_text:
+                total_content_rows += 4
                 
-            if show_partners and sponsor_text:
-                if bottom_text:
-                    bottom_text += " | "
-                bottom_text += f"{sponsor_text} Human Rights Foundation"
-            
-        if not bottom_text:
+            padding_top = max(0, (self.rows - total_content_rows) // 2)
+            for _ in range(padding_top):
+                lines.append(self._center(""))
+                
+            lines.append(self._center("SEEDSIGNER"))
+            if version:
+                lines.append(self._center(version))
+                
+            if not boot_logo_only and show_partners and sponsor_text:
+                lines.append(self._center(""))
+                lines.append(self._center(sponsor_text))
+                lines.append(self._center("Human Rights Foundation"))
+                
             return self._pad_rows(lines)
             
-        # Marquee logic if bottom_text exceeds columns
-        if len(bottom_text) > self.cols:
-            diff = len(bottom_text) - self.cols
-            total_frames = diff + 10
-            frame = state.marquee_tick % total_frames
-            
-            if frame < 5:
-                offset = 0
-            elif frame >= 5 + diff:
-                offset = diff
-            else:
-                offset = frame - 5
-                
-            visible = bottom_text[offset : offset + self.cols]
-            lines.append(self._fixed(visible))
         else:
-            lines.append(self._center(bottom_text))
+            lines = []
+            if self.rows > 2:
+                lines.append(self._center(""))
+            lines.append(self._center("SEEDSIGNER"))
             
-        return self._pad_rows(lines)
+            bottom_text = ""
+            if not boot_logo_only:
+                if version:
+                    bottom_text += version
+                    
+                if show_partners and sponsor_text:
+                    if bottom_text:
+                        bottom_text += " | "
+                    bottom_text += f"{sponsor_text} Human Rights Foundation"
+                
+            if not bottom_text:
+                return self._pad_rows(lines)
+                
+            if len(bottom_text) > self.cols:
+                diff = len(bottom_text) - self.cols
+                total_frames = diff + 10
+                frame = state.marquee_tick % total_frames
+                
+                if frame < 5:
+                    offset = 0
+                elif frame >= 5 + diff:
+                    offset = diff
+                else:
+                    offset = frame - 5
+                    
+                visible = bottom_text[offset : offset + self.cols]
+                lines.append(self._center(visible))
+            else:
+                lines.append(self._center(bottom_text))
+                
+            return self._pad_rows(lines)
 
     def _center(self, text: str) -> str:
         if len(text) > self.cols:
