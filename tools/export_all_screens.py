@@ -40,7 +40,11 @@ def map_screen_to_state(screen_obj) -> ScreenState:
     if hasattr(screen_obj, 'top_nav') and hasattr(screen_obj.top_nav, 'title'):
         title = screen_obj.top_nav.title
         
-    if hasattr(title, 'text'):
+    if type(title).__name__ == 'IconTextLine':
+        lbl = getattr(title, 'label_text', '') or ''
+        val = getattr(title, 'value_text', '') or ''
+        title = f"{lbl} {val}".strip()
+    elif hasattr(title, 'text'):
         title = title.text
     elif not isinstance(title, str):
         title = str(title)
@@ -63,7 +67,26 @@ def map_screen_to_state(screen_obj) -> ScreenState:
         context["title"] = title
         context["status_icon_name"] = getattr(screen_obj, 'status_icon_name', '')
         context["status_headline"] = getattr(screen_obj, 'status_headline', '')
-        context["text"] = getattr(screen_obj, 'text', '')
+        
+        extra_text = []
+        if getattr(screen_obj, 'text', ''):
+            extra_text.append(getattr(screen_obj, 'text'))
+            
+        for comp in getattr(screen_obj, 'components', []):
+            if type(comp).__name__ == 'IconTextLine':
+                lbl = getattr(comp, 'label_text', '') or ''
+                val = getattr(comp, 'value_text', '') or ''
+                txt = f"{lbl} {val}".strip()
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'TextArea':
+                txt = getattr(comp, 'text', '') or ''
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'FormattedAddress':
+                txt = getattr(comp, 'address', '') or ''
+                if txt: extra_text.append(txt)
+                
+        if extra_text:
+            context["text"] = "\n".join(extra_text)
         
         color = getattr(screen_obj, 'status_color', '').upper()
         if color == '#FF1B0A' or color == '#FF4D4D':
@@ -133,6 +156,33 @@ def map_screen_to_state(screen_obj) -> ScreenState:
             items.append({"label": label, "value": val})
         context["items"] = items
         
+        extra_text = []
+        
+        if hasattr(screen_obj, 'amount') and getattr(screen_obj, 'amount') is not None:
+            extra_text.append(f"Amount: {getattr(screen_obj, 'amount')} sats")
+            
+        if hasattr(screen_obj, 'address') and getattr(screen_obj, 'address'):
+            extra_text.append(getattr(screen_obj, 'address'))
+        
+        if hasattr(screen_obj, 'words') and getattr(screen_obj, 'words'):
+            extra_text.extend(getattr(screen_obj, 'words'))
+            
+        for comp in getattr(screen_obj, 'components', []):
+            if type(comp).__name__ == 'IconTextLine':
+                lbl = getattr(comp, 'label_text', '') or ''
+                val = getattr(comp, 'value_text', '') or ''
+                txt = f"{lbl} {val}".strip()
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'TextArea':
+                txt = getattr(comp, 'text', '') or ''
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'FormattedAddress':
+                txt = getattr(comp, 'address', '') or ''
+                if txt: extra_text.append(txt)
+                
+        if extra_text:
+            context["text"] = "\n".join(extra_text)
+        
         state = ScreenState(screen_name, context)
         state.selected_index = getattr(screen_obj, 'selected_button', 0)
         state.scroll_offset = max(0, state.selected_index - 1)
@@ -141,6 +191,19 @@ def map_screen_to_state(screen_obj) -> ScreenState:
     elif isinstance(screen_obj, KeyboardScreen):
         screen_name = "synthetic_entry_screen"
         context["top_nav"]["title"] = title
+        
+        charset = None
+        if hasattr(screen_obj, 'keys_to_values') and screen_obj.keys_to_values:
+            charset = "".join(list(screen_obj.keys_to_values.values()))
+        elif hasattr(screen_obj, 'keys_charset') and screen_obj.keys_charset:
+            charset = screen_obj.keys_charset
+            
+        if charset:
+            context["charset_modes"] = {
+                "default": charset
+            }
+            context["initial_mode"] = "default"
+            
         state = ScreenState(screen_name, context)
         return state
         
@@ -148,6 +211,17 @@ def map_screen_to_state(screen_obj) -> ScreenState:
         screen_name = "seed_add_passphrase_screen"
         context["top_nav"]["title"] = title
         context["initial_text"] = getattr(screen_obj, 'passphrase', '')
+        
+        initial_kb = getattr(screen_obj, 'initial_keyboard', None)
+        if initial_kb == SeedAddPassphraseScreen.KEYBOARD__LOWERCASE_BUTTON_TEXT:
+            context["initial_mode"] = "lower"
+        elif initial_kb == SeedAddPassphraseScreen.KEYBOARD__UPPERCASE_BUTTON_TEXT:
+            context["initial_mode"] = "upper"
+        elif initial_kb == SeedAddPassphraseScreen.KEYBOARD__DIGITS_BUTTON_TEXT:
+            context["initial_mode"] = "digits"
+        elif initial_kb in (SeedAddPassphraseScreen.KEYBOARD__SYMBOLS_1_BUTTON_TEXT, SeedAddPassphraseScreen.KEYBOARD__SYMBOLS_2_BUTTON_TEXT):
+            context["initial_mode"] = "symbols"
+            
         state = ScreenState(screen_name, context)
         return state
 
@@ -171,6 +245,27 @@ def map_screen_to_state(screen_obj) -> ScreenState:
         context["items"] = [{"label": "[Scan QR Code on Device]"}]
         state = ScreenState(screen_name, context)
         return state
+
+    elif isinstance(screen_obj, BaseTopNavScreen):
+        screen_name = "button_list_screen"
+        extra_text = []
+        for comp in getattr(screen_obj, 'components', []):
+            if type(comp).__name__ == 'IconTextLine':
+                lbl = getattr(comp, 'label_text', '') or ''
+                val = getattr(comp, 'value_text', '') or ''
+                txt = f"{lbl} {val}".strip()
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'TextArea':
+                txt = getattr(comp, 'text', '') or ''
+                if txt: extra_text.append(txt)
+            elif type(comp).__name__ == 'FormattedAddress':
+                txt = getattr(comp, 'address', '') or ''
+                if txt: extra_text.append(txt)
+                
+        if extra_text:
+            context["text"] = "\n".join(extra_text)
+            
+        return ScreenState(screen_name, context)
 
     return ScreenState("button_list_screen", context)
 
@@ -202,15 +297,11 @@ def patched_show_image(self, image=None, alpha_overlay=None, is_background_threa
                     if 'screenshot_config' in frame_g.f_locals:
                         config = frame_g.f_locals['screenshot_config']
                         if getattr(config, 'toast_thread', None) is not None:
-                            toast = config.toast_thread
-                            state.context["toast"] = getattr(toast, 'message', getattr(toast, 'text', 'Toast Event'))
+                            toast_thread = config.toast_thread
+                            toast_overlay = getattr(toast_thread, 'toast', None)
+                            state.context["toast"] = getattr(toast_thread, 'label_text', getattr(toast_overlay, 'label_text', getattr(toast_thread, 'message', getattr(toast_thread, 'text', 'Toast Event'))))
                         break
                     frame_g = frame_g.f_back
-                
-                # Copy original image to our export dir
-                full_path = os.path.join(self.screenshot_path, self.screenshot_filename)
-                target_img = os.path.join(IMG_DIR, fname)
-                shutil.copy2(full_path, target_img)
                 
                 all_screens_data.append({
                     "id": fname.replace('.png', ''),
@@ -221,6 +312,14 @@ def patched_show_image(self, image=None, alpha_overlay=None, is_background_threa
                     "scroll_offset": state.scroll_offset
                 })
                 print(f"Exported data for: {fname}")
+            
+            # Always copy the original image to our export dir, even if screen_obj is None.
+            # This is crucial for Toasts, which run in a background thread and raise
+            # ScreenshotComplete without a Screen object in the frame, but they DO update
+            # the underlying image on disk.
+            full_path = os.path.join(self.screenshot_path, self.screenshot_filename)
+            target_img = os.path.join(IMG_DIR, fname)
+            shutil.copy2(full_path, target_img)
             
         raise e
 
