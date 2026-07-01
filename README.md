@@ -6,12 +6,13 @@ This repository contains the standalone Python runner for constrained hardware i
 
 Instead of directly drawing pixels to a 240x240 screen, this engine consumes JSON payloads that describe the *intent* of a screen (e.g., a list of buttons, a warning, or a QR code) and renders them optimally for the connected hardware.
 
-Supported outputs:
-* Desktop Terminal (Simulator)
-* 16x2 Character LCD (I2C)
-* 20x4 Character LCD (I2C)
-* 128x32 OLED (I2C)
-* Audio Navigation cues (PWM Buzzer)
+Supported outputs (Categorized by Tier):
+* **Desktop Terminal (Simulator)**
+* **Tier 0**: 16x2 Character LCD (I2C)
+* **Tier 1**: 20x4 Character LCD (I2C)
+* **Tier 2**: 128x64 OLED (via Pixel-to-Text adapter)
+* **Tier 3**: 200x200 E-Paper (via Pixel-to-Text adapter)
+* **Audio**: Navigation cues (PWM Buzzer)
 
 ## Setup
 
@@ -42,14 +43,19 @@ python3 -m src.main --display simulator --scenario main_menu_screen
 
 These simulate the exact character output that would appear on a physical LCD:
 
-**16x2 LCD (Block Pagination)** — shows one item at a time:
+**Tier 0: 16x2 LCD (Block Pagination)** — shows one item at a time:
 ```bash
 python3 -m src.main --display lcd_16x2_sim --scenario button_list_screen
 ```
 
-**20x4 LCD (Sliding Window)** — shows a 3-item scrollable window:
+**Tier 1: 20x4 LCD (Sliding Window)** — shows a 3-item scrollable window:
 ```bash
 python3 -m src.main --display lcd_20x4_sim --scenario button_list_screen --variation scroll_many
+```
+
+**Tier 2: 128x64 OLED (Expansive View)** — shows up to 7 items:
+```bash
+python3 -m src.main --display lcd_16x8_sim --scenario button_list_screen --variation scroll_many
 ```
 
 **Testing Status Screens (Simulators):**
@@ -89,7 +95,7 @@ python3 tools/dual_runner.py
 
 ## Documentation
 
-* **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for block pagination, sliding windows, truncations, and icon mapping.
+* **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for architectural tiers (Tier 0-3), block pagination, sliding windows, and 2D spatial layouts.
 
 ## Running Tests
 
