@@ -1,62 +1,28 @@
 {
-  "synthetic_entry_screen": {
-    "context": {},
-    "variations": [
-      {
-        "name": "dice_roll",
-        "context": {
-          "top_nav": { "title": "Dice Roll" },
-          "charset_modes": {
-            "dice": "123456"
-          },
-          "initial_mode": "dice",
-          "entropy_target": 50
-        }
-      },
-      {
-        "name": "coin_flip",
-        "context": {
-          "top_nav": { "title": "Coin Flip" },
-          "charset_modes": {
-            "coin": "10"
-          },
-          "initial_mode": "coin",
-          "entropy_target": 256
-        }
-      },
-      {
-        "name": "bip85_index",
-        "context": {
-          "top_nav": { "title": "BIP85 Index" },
-          "charset_modes": {
-            "digits": "0123456789"
-          },
-          "initial_mode": "digits",
-          "initial_text": "0"
-        }
-      },
-      {
-        "name": "custom_derivation",
-        "context": {
-          "top_nav": { "title": "Derivation" },
-          "charset_modes": {
-            "path": "m/0123456789'"
-          },
-          "initial_mode": "path",
-          "initial_text": "m/"
-        }
-      }
-    ]
-  },
   "seed_mnemonic_entry_screen": {
     "context": {},
     "variations": [
       {
         "name": "typing_word_1",
         "context": {
-          "top_nav": { "title": "Seed Word #1" },
+          "top_nav": {
+            "title": "Seed Word #1"
+          },
           "entered_text": "for",
-          "suggestions": ["force", "forest", "forge", "forget", "forgive", "fork", "form", "format", "fort", "fortune", "forum", "forward"]
+          "suggestions": [
+            "force",
+            "forest",
+            "forge",
+            "forget",
+            "forgive",
+            "fork",
+            "form",
+            "format",
+            "fort",
+            "fortune",
+            "forum",
+            "forward"
+          ]
         }
       }
     ]

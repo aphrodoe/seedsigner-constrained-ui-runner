@@ -189,7 +189,7 @@ def map_screen_to_state(screen_obj) -> ScreenState:
         return state
         
     elif isinstance(screen_obj, KeyboardScreen):
-        screen_name = "synthetic_entry_screen"
+        screen_name = "keyboard_screen"
         context["top_nav"]["title"] = title
         
         charset = None
@@ -199,10 +199,7 @@ def map_screen_to_state(screen_obj) -> ScreenState:
             charset = screen_obj.keys_charset
             
         if charset:
-            context["charset_modes"] = {
-                "default": charset
-            }
-            context["initial_mode"] = "default"
+            context["keys"] = list(charset)
             
         state = ScreenState(screen_name, context)
         return state
