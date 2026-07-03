@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Dict, Any, List
+import uuid
 
 class ScreenType(Enum):
     BUTTON_LIST = "button_list_screen"
@@ -12,8 +13,15 @@ class ScreenType(Enum):
     TOOLS_COIN_FLIP_ENTRY = "tools_coin_flip_entry_screen"
     SEED_BIP85_SELECT_CHILD_INDEX = "seed_bip85_select_child_index_screen"
     SEED_EXPORT_XPUB_CUSTOM_DERIVATION = "seed_export_xpub_custom_derivation_screen"
-    SYNTHETIC_ENTRY = "synthetic_entry_screen"
+    KEYBOARD = "keyboard_screen"
     SEED_MNEMONIC_ENTRY = "seed_mnemonic_entry_screen"
+    SEED_FINALIZE = "seed_finalize_screen"
+    LOADING = "loading_screen"
+    LOCALE_PICKER = "locale_picker_screen"
+    PSBT_OVERVIEW = "psbt_overview_screen"
+    PSBT_ADDRESS_DETAILS = "psbt_address_details_screen"
+    PSBT_CHANGE_DETAILS = "psbt_change_details_screen"
+    PSBT_MATH = "psbt_math_screen"
     
     def is_keyboard(self):
         return self in [
@@ -22,7 +30,7 @@ class ScreenType(Enum):
             ScreenType.TOOLS_COIN_FLIP_ENTRY,
             ScreenType.SEED_BIP85_SELECT_CHILD_INDEX,
             ScreenType.SEED_EXPORT_XPUB_CUSTOM_DERIVATION,
-            ScreenType.SYNTHETIC_ENTRY
+            ScreenType.KEYBOARD
         ]
     
     @classmethod
@@ -39,6 +47,7 @@ class ScreenState:
     def __init__(self, screen_type_str: str, context: Dict[str, Any], visible_rows: int = 1):
         self.screen_type = ScreenType.from_str(screen_type_str)
         self.context = context
+        self.state_id = uuid.uuid4().hex
         self.visible_rows = visible_rows
         
         self.selected_index = 0
@@ -46,10 +55,14 @@ class ScreenState:
         self.max_scroll_offset = 0
         self.marquee_tick = 0
         
+        self.selected_index = self.context.get("initial_selected_index", 0)
+        self.checked_buttons = self.context.get("checked_buttons", [])
+        
         self.entered_text = self.context.get("initial_text", "")
         self.keyboard_modes = []
         self.active_mode_index = 0
         self.char_index = 0
+        self.keyboard_cols = 0
         
         if self.screen_type.is_keyboard():
             self._init_keyboard()
@@ -58,27 +71,53 @@ class ScreenState:
         
         self.items = self._extract_items()
         
-    def _init_keyboard(self):
-        # Default charsets if none provided (for seed_add_passphrase_screen)
-        charsets = self.context.get("charset_modes", {
-            "lower": "abcdefghijklmnopqrstuvwxyz ",
-            "upper": "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-            "digits": "0123456789",
-            "symbols": "!@#$%^&*()-_=+[]{}|;:,.<>/?"
-        })
-        self.keyboard_modes = list(charsets.items())
+        if self.selected_index > 0:
+            self._adjust_scroll()
         
-        initial_mode = self.context.get("initial_mode", "")
-        for i, (name, _) in enumerate(self.keyboard_modes):
-            if name == initial_mode:
-                self.active_mode_index = i
-                break
-                
-        # Append [DEL] and [OK] to every charset as selectable items
-        for i, (name, charset) in enumerate(self.keyboard_modes):
-            chars = list(charset)
-            chars.extend(["[DEL]", "[OK]"])
-            self.keyboard_modes[i] = (name, chars)
+    def _init_keyboard(self):
+        if self.screen_type == ScreenType.KEYBOARD:
+            keys = list(self.context.get("keys", []))
+            
+            # Map PUA FontAwesome icons to text for constrained UI
+            pua_map = {
+                "\uf525": "1", # Dice 1
+                "\uf528": "2", # Dice 2
+                "\uf527": "3", # Dice 3
+                "\uf524": "4", # Dice 4
+                "\uf526": "5", # Dice 5
+                "\uf523": "6"  # Dice 6
+            }
+            keys = [pua_map.get(k, k) for k in keys]
+            
+            if self.context.get("show_save_button", False):
+                keys.extend(["[DEL]", "[OK]"])
+            else:
+                keys.append("[DEL]")
+            
+            self.keyboard_modes = [("default", keys)]
+            self.active_mode_index = 0
+            self.entered_text = self.context.get("initial_value", "")
+        else:
+            # Default charsets if none provided (for seed_add_passphrase_screen)
+            charsets = self.context.get("charset_modes", {
+                "lower": "abcdefghijklmnopqrstuvwxyz ",
+                "upper": "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
+                "digits": "0123456789",
+                "symbols": "!@#$%^&*()-_=+[]{}|;:,.<>/?"
+            })
+            self.keyboard_modes = list(charsets.items())
+            
+            initial_mode = self.context.get("initial_mode", "")
+            for i, (name, _) in enumerate(self.keyboard_modes):
+                if name == initial_mode:
+                    self.active_mode_index = i
+                    break
+                    
+            # Append [DEL] and [OK] to every charset as selectable items
+            for i, (name, charset) in enumerate(self.keyboard_modes):
+                chars = list(charset)
+                chars.extend(["[DEL]", "[OK]"])
+                self.keyboard_modes[i] = (name, chars)
 
     def _init_mnemonic_entry(self):
         if ScreenState._bip39_wordlist is None:
@@ -121,7 +160,24 @@ class ScreenState:
     def move_up(self) -> bool:
         """Move cursor up. Returns True if selection changed or scrolled."""
         if self.screen_type.is_keyboard():
-            if len(self.keyboard_modes) > 1:
+            if self.visible_rows < 7:
+                return False
+                
+            grids = getattr(self, "keyboard_grid_layouts", {})
+            active_tier = 3 if self.visible_rows > 7 else 2
+            grid = grids.get(active_tier, grids.get(3, grids.get(2)))
+            
+            if grid:
+                curr_r, curr_c = 0, 0
+                for r, row in enumerate(grid):
+                    if self.char_index in row:
+                        curr_r, curr_c = r, row.index(self.char_index)
+                        break
+                new_r = max(0, curr_r - 1)
+                new_c = min(curr_c, len(grid[new_r]) - 1)
+                self.char_index = grid[new_r][new_c]
+                return True
+            elif len(self.keyboard_modes) > 1:
                 self.active_mode_index = (self.active_mode_index - 1) % len(self.keyboard_modes)
                 self.char_index = 0
                 return True
@@ -160,7 +216,24 @@ class ScreenState:
     def move_down(self) -> bool:
         """Move cursor down. Returns True if selection changed or scrolled."""
         if self.screen_type.is_keyboard():
-            if len(self.keyboard_modes) > 1:
+            if self.visible_rows < 7:
+                return False
+                
+            grids = getattr(self, "keyboard_grid_layouts", {})
+            active_tier = 3 if self.visible_rows > 7 else 2
+            grid = grids.get(active_tier, grids.get(3, grids.get(2)))
+            
+            if grid:
+                curr_r, curr_c = 0, 0
+                for r, row in enumerate(grid):
+                    if self.char_index in row:
+                        curr_r, curr_c = r, row.index(self.char_index)
+                        break
+                new_r = min(len(grid) - 1, curr_r + 1)
+                new_c = min(curr_c, len(grid[new_r]) - 1)
+                self.char_index = grid[new_r][new_c]
+                return True
+            elif len(self.keyboard_modes) > 1:
                 self.active_mode_index = (self.active_mode_index + 1) % len(self.keyboard_modes)
                 self.char_index = 0
                 return True
@@ -196,8 +269,10 @@ class ScreenState:
     def move_left(self) -> bool:
         """Move cursor left. For keyboard, cycles chars left. For lists, pages up."""
         if self.screen_type.is_keyboard():
-            _, chars = self.keyboard_modes[self.active_mode_index]
-            self.char_index = (self.char_index - 1) % len(chars)
+            chars = getattr(self, "keyboard_chars", None)
+            if not chars:
+                _, chars = self.keyboard_modes[self.active_mode_index]
+            self.char_index = max(0, self.char_index - 1)
             return True
             
         if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
@@ -212,8 +287,10 @@ class ScreenState:
     def move_right(self) -> bool:
         """Move cursor right. For keyboard, cycles chars right. For lists, pages down."""
         if self.screen_type.is_keyboard():
-            _, chars = self.keyboard_modes[self.active_mode_index]
-            self.char_index = (self.char_index + 1) % len(chars)
+            chars = getattr(self, "keyboard_chars", None)
+            if not chars:
+                _, chars = self.keyboard_modes[self.active_mode_index]
+            self.char_index = min(len(chars) - 1, self.char_index + 1)
             return True
             
         if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
@@ -257,18 +334,47 @@ class ScreenState:
             # Scroll down to reveal the item
             self.scroll_offset = self.selected_index - self.visible_rows + 1
 
+    def _update_dynamic_title(self):
+        """Dynamically update titles like 'Dice Roll 1/50' based on entered_text length."""
+        top_nav = self.context.get("top_nav")
+        if not top_nav: return
+        title = top_nav.get("title", "")
+        
+        import re
+        if "/" in title and re.search(r'\d+/\d+', title):
+            new_count = len(self.entered_text) + 1
+            new_title = re.sub(r'\d+(/\d+)', rf'{new_count}\1', title)
+            top_nav["title"] = new_title
+
     def on_enter(self) -> str:
         """Handle ENTER key. Returns 'SUBMIT' if finished, 'UPDATE' if text changed, or 'SELECT'."""
         if self.screen_type.is_keyboard():
-            _, chars = self.keyboard_modes[self.active_mode_index]
+            chars = getattr(self, "keyboard_chars", None)
+            if not chars:
+                _, chars = self.keyboard_modes[self.active_mode_index]
+            
             char = chars[self.char_index]
             if char == "[DEL]":
                 self.entered_text = self.entered_text[:-1]
+                self._update_dynamic_title()
                 return "UPDATE"
             elif char == "[OK]":
                 return "SUBMIT"
+            elif char.startswith("[") and char.endswith("]") and char != "[ ]":
+                # Mode toggle!
+                for i, (name, _) in enumerate(self.keyboard_modes):
+                    if f"[{name}]" == char:
+                        self.active_mode_index = i
+                        self.char_index = 0
+                        return "UPDATE"
+                self.active_mode_index = (self.active_mode_index + 1) % len(self.keyboard_modes)
+                self.char_index = 0
+                return "UPDATE"
             else:
+                if char == "[ ]":
+                    char = " "
                 self.entered_text += char
+                self._update_dynamic_title()
                 return "UPDATE"
                 
         if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
