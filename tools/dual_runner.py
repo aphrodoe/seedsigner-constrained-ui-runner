@@ -134,6 +134,7 @@ class DualRunnerApp:
         self.tier_var = tk.StringVar(value="Tier 3: E-Paper 200x200")
         
         self.tier_selector = tk.OptionMenu(text_container, self.tier_var, 
+                                          "All Tiers (Side-by-Side)",
                                           "Tier 0: 16x2 LCD", "Tier 1: 20x4 LCD", 
                                           "Tier 2: 128x64 OLED", "Tier 3: E-Paper 200x200",
                                           command=self.on_tier_selected)
@@ -183,30 +184,50 @@ class DualRunnerApp:
 
     def on_tier_selected(self, event=None):
         if self.active_tier_label:
-            self.active_tier_label.pack_forget()
+            try: self.active_tier_label.pack_forget()
+            except: pass
+            try: self.active_tier_label.grid_forget()
+            except: pass
+        
+        # Hide all labels to reset
+        for label in (self.lcd_16x2_label, self.lcd_20x4_label, self.lcd_16x8_label, self.lcd_25x16_label):
+            try: label.pack_forget()
+            except: pass
+            try: label.grid_forget()
+            except: pass
             
         selection = self.tier_var.get()
         visible_rows = 1
-        if "Tier 0" in selection:
+        
+        if "All Tiers" in selection:
+            self.lcd_16x2_label.grid(row=0, column=0, padx=10, pady=10)
+            self.lcd_20x4_label.grid(row=0, column=1, padx=10, pady=10)
+            self.lcd_16x8_label.grid(row=1, column=0, padx=10, pady=10)
+            self.lcd_25x16_label.grid(row=1, column=1, padx=10, pady=10)
+            self.active_tier_label = None
+            visible_rows = 15
+        elif "Tier 0" in selection:
             self.active_tier_label = self.lcd_16x2_label
             visible_rows = 1
+            self.active_tier_label.pack(padx=10, pady=20)
         elif "Tier 1" in selection:
             self.active_tier_label = self.lcd_20x4_label
             visible_rows = 3
+            self.active_tier_label.pack(padx=10, pady=20)
         elif "Tier 2" in selection:
             self.active_tier_label = self.lcd_16x8_label
             visible_rows = 7
+            self.active_tier_label.pack(padx=10, pady=20)
         else:
             self.active_tier_label = self.lcd_25x16_label
             visible_rows = 15
+            self.active_tier_label.pack(padx=10, pady=20)
             
         if hasattr(self, 'current_state') and self.current_state:
             self.current_state.visible_rows = visible_rows
             self.current_state._adjust_scroll()
             self.update_displays()
             
-        self.active_tier_label.pack(padx=10, pady=20)
-        
         # Return focus to root so keybindings continue working
         self.root.focus_set()
 
@@ -251,7 +272,8 @@ class DualRunnerApp:
             
             selection = self.tier_var.get()
             visible_rows = 1
-            if "Tier 0" in selection: visible_rows = 1
+            if "All Tiers" in selection: visible_rows = 15
+            elif "Tier 0" in selection: visible_rows = 1
             elif "Tier 1" in selection: visible_rows = 3
             elif "Tier 2" in selection: visible_rows = 7
             else: visible_rows = 15
@@ -267,17 +289,47 @@ class DualRunnerApp:
         if not self.current_state:
             return
         
-        lines_16x2 = self.renderer_16x2.render(self.current_state)
-        self.lcd_16x2_label.config(text="\n".join(lines_16x2))
-        
-        lines_20x4 = self.renderer_20x4.render(self.current_state)
-        self.lcd_20x4_label.config(text="\n".join(lines_20x4))
-        
-        lines_16x8 = self.renderer_16x8.render(self.current_state)
-        self.lcd_16x8_label.config(text="\n".join(lines_16x8))
-        
-        lines_25x16 = self.renderer_25x16.render(self.current_state)
-        self.lcd_25x16_label.config(text="\n".join(lines_25x16))
+        selection = self.tier_var.get()
+        if "All Tiers" in selection:
+            # 16x2
+            self.current_state.visible_rows = 1
+            self.current_state._adjust_scroll()
+            lines_16x2 = self.renderer_16x2.render(self.current_state)
+            self.lcd_16x2_label.config(text="\n".join(lines_16x2))
+            
+            # 20x4
+            self.current_state.visible_rows = 3
+            self.current_state._adjust_scroll()
+            lines_20x4 = self.renderer_20x4.render(self.current_state)
+            self.lcd_20x4_label.config(text="\n".join(lines_20x4))
+            
+            # 16x8 OLED
+            self.current_state.visible_rows = 7
+            self.current_state._adjust_scroll()
+            lines_16x8 = self.renderer_16x8.render(self.current_state)
+            self.lcd_16x8_label.config(text="\n".join(lines_16x8))
+            
+            # 25x16 E-Paper
+            self.current_state.visible_rows = 15
+            self.current_state._adjust_scroll()
+            lines_25x16 = self.renderer_25x16.render(self.current_state)
+            self.lcd_25x16_label.config(text="\n".join(lines_25x16))
+            
+            # Reset
+            self.current_state.visible_rows = 15
+            self.current_state._adjust_scroll()
+        else:
+            lines_16x2 = self.renderer_16x2.render(self.current_state)
+            self.lcd_16x2_label.config(text="\n".join(lines_16x2))
+            
+            lines_20x4 = self.renderer_20x4.render(self.current_state)
+            self.lcd_20x4_label.config(text="\n".join(lines_20x4))
+            
+            lines_16x8 = self.renderer_16x8.render(self.current_state)
+            self.lcd_16x8_label.config(text="\n".join(lines_16x8))
+            
+            lines_25x16 = self.renderer_25x16.render(self.current_state)
+            self.lcd_25x16_label.config(text="\n".join(lines_25x16))
         
     def load_lvgl_image(self, s_name, v_name):
         self.lvgl_canvas.delete("all")
@@ -311,6 +363,14 @@ class DualRunnerApp:
     def handle_input(self, key: InputEvent):
         if self.current_state:
             needs_render = False
+            
+            # Disable Up/Down for keyboards in All Tiers mode since grids conflict
+            is_all_tiers = "All Tiers" in self.tier_var.get()
+            is_kbd = self.current_state.screen_type.is_keyboard()
+            
+            if (key == InputEvent.UP or key == InputEvent.DOWN) and is_all_tiers and is_kbd:
+                return # Block 2D jumps when state is shared across different grids
+                
             if key == InputEvent.UP:
                 needs_render = self.current_state.move_up()
             elif key == InputEvent.DOWN:
@@ -333,8 +393,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Constrained UI Dual Runner")
     parser.add_argument("--lvgl-dir", help="Path to LVGL screenshots/img directory", 
                         default=os.path.abspath(os.path.join(os.path.dirname(__file__), '../../seedsigner-c-modules/tools/apps/screenshot_generator/screenshots/img')))
-    parser.add_argument("--scenarios-file", help="Path to upstream scenarios.json",
-                        default=os.path.abspath(os.path.join(os.path.dirname(__file__), '../../seedsigner-c-modules/tools/scenarios/scenarios.json')))
+    parser.add_argument("--scenarios-file", help="Path to scenarios.json",
+                        default=os.path.abspath(os.path.join(os.path.dirname(__file__), '../scenarios/scenarios.json')))
     
     args = parser.parse_args()
     
