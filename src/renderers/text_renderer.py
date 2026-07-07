@@ -136,17 +136,43 @@ class TextRenderer:
         if not all_content:
             return self._pad_rows(lines)
 
-        selected_idx = num_text_lines + state.selected_index
-        current_scroll = getattr(state, "_unified_scroll_offset", 0)
-
-        if selected_idx < current_scroll:
-            current_scroll = selected_idx
-        elif selected_idx >= current_scroll + self.item_rows:
-            current_scroll = selected_idx - self.item_rows + 1
-
         max_scroll = max(0, len(all_content) - self.item_rows)
+        
+        if not hasattr(state, "tier_max_scroll"):
+            state.tier_max_scroll = {}
+        state.tier_max_scroll[self.tier] = max_scroll
+
+        selected_idx = num_text_lines + state.selected_index
+        
+        if not hasattr(state, "tier_unified_scroll"):
+            state.tier_unified_scroll = {}
+            
+        current_scroll = state.tier_unified_scroll.get(self.tier, 0)
+        
+        if num_text_lines > 0:
+            state.prioritize_scroll = True
+            
+            last_selected = getattr(state, "_last_selected_idx", state.selected_index)
+            selection_changed = (state.selected_index != last_selected)
+            setattr(state, "_last_selected_idx", state.selected_index)
+            
+            if selection_changed:
+                if selected_idx < state.scroll_offset:
+                    state.scroll_offset = selected_idx
+                elif selected_idx >= state.scroll_offset + self.item_rows:
+                    state.scroll_offset = selected_idx - self.item_rows + 1
+                    
+            current_scroll = state.scroll_offset
+        else:
+            state.prioritize_scroll = False
+            
+            if selected_idx < current_scroll:
+                current_scroll = selected_idx
+            elif selected_idx >= current_scroll + self.item_rows:
+                current_scroll = selected_idx - self.item_rows + 1
+                
         current_scroll = min(current_scroll, max_scroll)
-        setattr(state, "_unified_scroll_offset", current_scroll)
+        state.tier_unified_scroll[self.tier] = current_scroll
 
         end = min(len(all_content), current_scroll + self.item_rows)
         lines.extend(all_content[current_scroll:end])
@@ -538,15 +564,18 @@ class TextRenderer:
         ascii_art = []
         if status_type == "custom":
             icon = ""
-            if self.tier >= 3:
-                if custom_icon == "\ue91f": #  microSD
+            if custom_icon == "\ue91f": #  microSD
+                if self.tier >= 3:
                     ascii_art = [
                         " .-------. ",
                         " |SD   _ | ",
                         " |    (_)| ",
                         " '-------' "
                     ]
-                elif custom_icon == "\ue921": #  Pen
+                else:
+                    icon = "[SD]"
+            elif custom_icon == "\ue921": #  Pen
+                if self.tier >= 3:
                     ascii_art = [
                         "    //     ",
                         "   //      ",
@@ -554,6 +583,8 @@ class TextRenderer:
                         " //_       ",
                         " `-'       "
                     ]
+                else:
+                    icon = "[PEN]"
         
         title = state.context.get("top_nav", {}).get("title", "Status")
         title_line = self._title_row(title, "", state)
@@ -574,8 +605,15 @@ class TextRenderer:
         
         if ascii_art:
             for art_line in ascii_art:
-                content_lines.append(self._center(art_line))
-            content_lines.append(self._center(""))
+                if warning_edges:
+                    content_lines.append(f"{edge_char}{art_line.center(wrap_cols)}{edge_char}")
+                else:
+                    content_lines.append(self._center(art_line))
+            
+            if warning_edges:
+                content_lines.append(f"{edge_char}{' '*wrap_cols}{edge_char}")
+            else:
+                content_lines.append(self._center(""))
 
         import textwrap
 
@@ -631,7 +669,10 @@ class TextRenderer:
             
         # Tell state how far it can scroll without shrinking previous renderer constraints
         new_max = max(0, len(content_lines) - window_height)
-        state.max_scroll_offset = max(getattr(state, 'max_scroll_offset', 0), new_max)
+        
+        if not hasattr(state, "tier_max_scroll"):
+            state.tier_max_scroll = {}
+        state.tier_max_scroll[self.tier] = new_max
         
         # Auto-scroll if it's a long message and no manual scrolling has occurred
         start = min(state.scroll_offset, new_max)
@@ -657,6 +698,17 @@ class TextRenderer:
 
         return self._pad_rows(lines)
 
+    def _pad_text_above_buttons(self, text_lines: List[str], num_buttons: int) -> List[str]:
+        """Pads text lines vertically so they are centered in the space above buttons."""
+        total_lines = len(text_lines) + num_buttons
+        if total_lines < self.rows - 1:
+            space_above = self.rows - 1 - num_buttons
+            padding_top = (space_above - len(text_lines)) // 2
+            padding_bottom = space_above - len(text_lines) - padding_top
+            
+            return [self._center("")] * padding_top + text_lines + [self._center("")] * padding_bottom
+        return text_lines
+
     # ── seed_finalize_screen ────────────────────────────────────────
 
     def _render_seed_finalize(self, state: ScreenState) -> List[str]:
@@ -666,32 +718,46 @@ class TextRenderer:
         fingerprint = state.context.get("fingerprint", "")
         fingerprint_label = state.context.get("fingerprint_label", "")
         
-        all_content = []
+        text_lines = []
         if fingerprint:
-            all_content.append(self._center(fingerprint_label))
-            # Optional: formatting it like [ 8c65eb9f ] or similar if we want to mimic a border
-            all_content.append(self._center(fingerprint))
-            all_content.append(self._center(""))
+            for line in self._word_wrap(f"@ {fingerprint_label}"):
+                text_lines.append(self._center(line))
+            for line in self._word_wrap(fingerprint):
+                text_lines.append(self._center(line))
+            
+        text_lines = self._pad_text_above_buttons(text_lines, len(state.items))
+        all_content = text_lines
             
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
             selected = (i == state.selected_index)
             all_content.append(self._item_row(label, selected=selected, state=state, index=i))
             
-        return self._do_sliding_window(state, title_line, all_content, 0)
+        return self._do_sliding_window(state, title_line, all_content, len(text_lines))
 
     # ── loading_screen ──────────────────────────────────────────────
 
     def _render_loading(self, state: ScreenState) -> List[str]:
         text = state.context.get("text", "")
         
-        # Simulate a spinner using the marquee tick
-        spinner = ["|", "/", "-", "\\"]
-        spin_char = spinner[(state.marquee_tick // 2) % len(spinner)]
+        has_space = self.rows >= 4
+        frame = (state.marquee_tick // 2) % 4
+        
+        if has_space:
+            spinners = [
+                [" | ", " | ", " | "],
+                ["  /", " / ", "/  "],
+                ["   ", "---", "   "],
+                ["\\  ", " \\ ", "  \\"]
+            ]
+            spin_lines = spinners[frame]
+        else:
+            spinner = ["|", "/", "-", "\\"]
+            spin_lines = [spinner[frame]]
         
         lines = []
         # Centering vertically based on whether there is text
-        total_content = 2 if text else 1
+        total_content = len(spin_lines) + (1 if text else 0)
         padding_top = max(0, (self.rows - total_content) // 2)
         
         for _ in range(padding_top):
@@ -699,7 +765,9 @@ class TextRenderer:
             
         if text:
             lines.append(self._center(text))
-        lines.append(self._center(spin_char))
+            
+        for spin_line in spin_lines:
+            lines.append(self._center(spin_line))
         
         return self._pad_rows(lines)
 
@@ -763,16 +831,128 @@ class TextRenderer:
         if num_change > 0:
             content.append(f"Change outputs: {num_change}")
             
-        all_content = []
-        for line in content:
-            all_content.append(self._center(line))
+        if self.tier >= 3:
+            # Huge screen: Render ASCII flowchart diagram
+            all_content = []
+            if primary and unit:
+                all_content.append(self._center(f"{primary} {unit}"))
+                all_content.append(self._center(""))
+            
+            flow_lines = self._get_psbt_ascii_flow(state)
+            for line in flow_lines:
+                all_content.append(self._center(line))
+        else:
+            all_content = []
+            for line in content:
+                for wrapped in self._word_wrap(line):
+                    all_content.append(self._center(wrapped))
+                
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
             
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
             selected = (i == state.selected_index)
             all_content.append(self._item_row(label, selected=selected, state=state, index=i))
             
-        return self._do_sliding_window(state, title_line, all_content, num_text_lines=len(content))
+        return self._do_sliding_window(state, title_line, all_content, num_text_lines=num_text)
+
+    def _get_psbt_ascii_flow(self, state: ScreenState) -> List[str]:
+        num_inputs = state.context.get("num_inputs", 0)
+        dest_addrs = state.context.get("destination_addresses", [])
+        num_self = state.context.get("num_self_transfer_outputs", 0)
+        has_op = state.context.get("has_op_return", False)
+        num_change = state.context.get("num_change_outputs", 0)
+        
+        left = []
+        if num_inputs == 1: left.append("1 input")
+        elif num_inputs <= 4: left.extend([f"input {i}" for i in range(1, num_inputs + 1)])
+        else: left.extend(["input 1", "input 2", " [...] ", f"input {num_inputs-1}", f"input {num_inputs}"])
+        
+        right = []
+        if dest_addrs:
+            if len(dest_addrs) == 1: right.append("recipient")
+            elif len(dest_addrs) <= 2: right.extend([f"recipient {i}" for i in range(1, len(dest_addrs) + 1)])
+            else: right.extend(["recip 1", " [...] ", f"recip {len(dest_addrs)}"])
+        if num_self > 0: right.append("self-transfer")
+        if has_op: right.append("OP_RETURN")
+        if num_change > 0: right.append("change")
+        right.append("fee")
+        
+        max_h = max(len(left), len(right))
+        if max_h % 2 == 0: max_h += 1 # Force odd for a clear middle row
+        
+        while len(left) < max_h:
+            if len(left) % 2 == 0: left.append("")
+            else: left.insert(0, "")
+        while len(right) < max_h:
+            if len(right) % 2 == 0: right.append("")
+            else: right.insert(0, "")
+            
+        left_w = max((len(s) for s in left if s), default=0)
+        right_w = max((len(s) for s in right if s), default=0)
+        
+        available = self.cols - left_w - right_w
+        if available < 3: available = 3
+        
+        use_conn = available >= 5
+        if use_conn:
+            mid_w = available - 4
+        else:
+            mid_w = available - 2
+            
+        lines = []
+        anim_char = ["-", ">"][(state.marquee_tick // 2) % 2]
+        
+        mid_row = max_h // 2
+        l_first = next((i for i, s in enumerate(left) if s), mid_row)
+        l_last = max((i for i, s in enumerate(left) if s), default=mid_row)
+        r_first = next((i for i, s in enumerate(right) if s), mid_row)
+        r_last = max((i for i, s in enumerate(right) if s), default=mid_row)
+        
+        for i in range(max_h):
+            l_str = left[i].rjust(left_w)
+            r_str = right[i].ljust(right_w)
+            
+            # Left side tree
+            if left[i]:
+                if i == l_first and i == l_last: l_c = "-"
+                elif i == mid_row: l_c = "+"
+                elif i == l_first: l_c = "\\"
+                elif i == l_last: l_c = "/"
+                else: l_c = "|"
+            else:
+                if l_first <= i <= l_last:
+                    if i == mid_row: l_c = "+"
+                    else: l_c = "|"
+                else:
+                    l_c = " "
+                    
+            # Right side tree
+            if right[i]:
+                if i == r_first and i == r_last: r_c = "-"
+                elif i == mid_row: r_c = "+"
+                elif i == r_first: r_c = "/"
+                elif i == r_last: r_c = "\\"
+                else: r_c = "|"
+            else:
+                if r_first <= i <= r_last:
+                    if i == mid_row: r_c = "+"
+                    else: r_c = "|"
+                else:
+                    r_c = " "
+                    
+            if i == mid_row: mid_c = anim_char * mid_w
+            else: mid_c = " " * mid_w
+                
+            if use_conn:
+                l_conn = "-" if left[i] or (l_first<=i<=l_last and i==mid_row) else " "
+                r_conn = "-" if right[i] or (r_first<=i<=r_last and i==mid_row) else " "
+                lines.append(f"{l_str}{l_conn}{l_c}{mid_c}{r_c}{r_conn}{r_str}")
+            else:
+                lines.append(f"{l_str}{l_c}{mid_c}{r_c}{r_str}")
+                
+        return lines
 
     def _render_psbt_address_details(self, state: ScreenState) -> List[str]:
         title = state.context.get("top_nav", {}).get("title", "Verify Send Address")
@@ -784,15 +964,17 @@ class TextRenderer:
         
         all_content = []
         if primary and unit:
-            all_content.append(self._center(f"Amount: {primary} {unit}"))
-            all_content.append(self._center(""))
+            for line in self._word_wrap(f"Amount: {primary} {unit}"):
+                all_content.append(self._center(line))
             
         address = state.context.get("address", "")
         if address:
+            if all_content:
+                all_content.append(self._center(""))
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
-            all_content.append(self._center(""))
                 
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
@@ -814,21 +996,24 @@ class TextRenderer:
         primary = amount.get("primary", "")
         unit = amount.get("unit", "")
         if primary and unit:
-            all_content.append(self._center(f"{primary} {unit}"))
-            all_content.append(self._center(""))
+            for line in self._word_wrap(f"{primary} {unit}"):
+                all_content.append(self._center(line))
             
         address = state.context.get("address", "")
         if address:
+            if all_content:
+                all_content.append(self._center(""))
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
-            all_content.append(self._center(""))
             
         is_verified = state.context.get("is_verified", False)
         if is_verified:
             verified_text = state.context.get("verified_text", "Address verified!")
+            if all_content:
+                all_content.append(self._center(""))
             all_content.append(self._center(f"✓ {verified_text}"))
-            all_content.append(self._center(""))
             
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
@@ -861,11 +1046,9 @@ class TextRenderer:
         add_row("change", "-")
         add_row("fee", "=")
         
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
-        if num_text > 0:
-            all_content.append(self._center(""))
-            num_text += 1
-            
+        
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
             selected = (i == state.selected_index)
@@ -875,6 +1058,10 @@ class TextRenderer:
 
     def _title_row(self, title: str, suffix: str, state: ScreenState = None) -> str:
         """Build a title row: title left-aligned, suffix right-aligned. Marquee if too long."""
+        import re
+        if self.tier >= 2 and re.match(r'^\s*\d+/\d+$', suffix):
+            suffix = ""
+
         if state:
             top_nav = state.context.get("top_nav", {})
             icon = top_nav.get("icon")
@@ -1092,18 +1279,32 @@ class TextRenderer:
         return lines[: self.rows]
 
     def _word_wrap(self, text: str) -> List[str]:
-        """Simple greedy word-wrap into rows of `self.cols` width."""
+        """Simple greedy word-wrap into rows of `self.cols` width, breaking long words if needed."""
         words = text.split()
         lines: List[str] = []
         current = ""
         for word in words:
-            if current and len(current) + 1 + len(word) > self.cols:
-                lines.append(self._fixed(current))
-                current = word
-            elif not current:
-                current = word
+            if not current:
+                if len(word) > self.cols:
+                    # Break long word
+                    while len(word) > self.cols:
+                        lines.append(word[:self.cols])
+                        word = word[self.cols:]
+                    current = word
+                else:
+                    current = word
+            elif len(current) + 1 + len(word) > self.cols:
+                lines.append(current)
+                if len(word) > self.cols:
+                    # Break long word
+                    while len(word) > self.cols:
+                        lines.append(word[:self.cols])
+                        word = word[self.cols:]
+                    current = word
+                else:
+                    current = word
             else:
                 current += " " + word
         if current:
-            lines.append(self._fixed(current))
+            lines.append(current)
         return lines

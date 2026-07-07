@@ -62,6 +62,9 @@ class JSONParser:
         screen_def = self.scenarios[screen_name]
         context = screen_def.get("context", {}).copy()
 
+        if "screenshot" in screen_def and screen_def["screenshot"].get("animated"):
+            context["animated"] = True
+
         if variation_name:
             variations = screen_def.get("variations", [])
             variation = next((v for v in variations if v.get("name") == variation_name), None)
@@ -71,6 +74,9 @@ class JSONParser:
             # Apply variation overrides
             var_context = variation.get("context", {})
             context = self._merge_patch(context, var_context)
+
+            if "screenshot" in variation and variation["screenshot"].get("animated"):
+                context["animated"] = True
 
         # Normalize button lists if present
         if "button_list" in context:

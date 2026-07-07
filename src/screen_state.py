@@ -52,7 +52,6 @@ class ScreenState:
         
         self.selected_index = 0
         self.scroll_offset = 0
-        self.max_scroll_offset = 0
         self.marquee_tick = 0
         
         self.selected_index = self.context.get("initial_selected_index", 0)
@@ -73,6 +72,11 @@ class ScreenState:
         
         if self.selected_index > 0:
             self._adjust_scroll()
+
+    @property
+    def max_scroll_offset(self) -> int:
+        tier_scrolls = getattr(self, "tier_max_scroll", {})
+        return max(tier_scrolls.values()) if tier_scrolls else 0
         
     def _init_keyboard(self):
         if self.screen_type == ScreenType.KEYBOARD:
@@ -150,6 +154,8 @@ class ScreenState:
             return self.context["button_grid"]
         if "button_data" in self.context:
             return self.context["button_data"]
+        if "button" in self.context:
+            return [{"label": self.context["button"]}]
         return []
         
     def tick(self) -> bool:
@@ -202,15 +208,27 @@ class ScreenState:
                 self.focus = "keyboard"
                 return True
 
+        prioritize_scroll = getattr(self, "prioritize_scroll", False)
         changed = False
-        if self.items and self.selected_index > 0:
-            self.selected_index -= 1
-            self.marquee_tick = 0
-            self._adjust_scroll()
-            changed = True
-        elif self.scroll_offset > 0:
-            self.scroll_offset -= 1
-            changed = True
+        
+        if prioritize_scroll:
+            if self.scroll_offset > 0:
+                self.scroll_offset -= 1
+                changed = True
+            elif self.items and self.selected_index > 0:
+                self.selected_index -= 1
+                self.marquee_tick = 0
+                changed = True
+        else:
+            if self.items and self.selected_index > 0:
+                self.selected_index -= 1
+                self.marquee_tick = 0
+                self._adjust_scroll()
+                changed = True
+            elif self.scroll_offset > 0:
+                self.scroll_offset -= 1
+                changed = True
+                
         return changed
         
     def move_down(self) -> bool:
@@ -255,15 +273,27 @@ class ScreenState:
                 return True
             return False
 
+        prioritize_scroll = getattr(self, "prioritize_scroll", False)
         changed = False
-        if self.items and self.selected_index < len(self.items) - 1:
-            self.selected_index += 1
-            self.marquee_tick = 0
-            self._adjust_scroll()
-            changed = True
-        elif self.scroll_offset < self.max_scroll_offset:
-            self.scroll_offset += 1
-            changed = True
+        
+        if prioritize_scroll:
+            if self.scroll_offset < getattr(self, "max_scroll_offset", 0):
+                self.scroll_offset += 1
+                changed = True
+            elif self.items and self.selected_index < len(self.items) - 1:
+                self.selected_index += 1
+                self.marquee_tick = 0
+                changed = True
+        else:
+            if self.items and self.selected_index < len(self.items) - 1:
+                self.selected_index += 1
+                self.marquee_tick = 0
+                self._adjust_scroll()
+                changed = True
+            elif self.scroll_offset < getattr(self, "max_scroll_offset", 0):
+                self.scroll_offset += 1
+                changed = True
+                
         return changed
 
     def move_left(self) -> bool:
@@ -325,6 +355,13 @@ class ScreenState:
     def _adjust_scroll(self):
         """Adjusts the scroll offset to keep the selected index visible within the visible window."""
         if self.visible_rows <= 0:
+            return
+            
+        prioritize_scroll = getattr(self, "prioritize_scroll", False)
+        if prioritize_scroll:
+            return
+            
+        if not getattr(self, "items", None):
             return
 
         if self.selected_index < self.scroll_offset:
