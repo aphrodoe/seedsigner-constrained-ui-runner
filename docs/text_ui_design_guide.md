@@ -95,3 +95,16 @@ For larger matrix displays, the 1D carousel is inefficient. Future implementatio
 Because text displays compress 2D spatial layouts into 1D loops, upstream LVGL's top-left `<` button is difficult to reach via the D-Pad. To deal with this on a global scale:
 1. **Keyboard Screens**: We append `[BACK]` as an explicit item alongside `[DEL]` and `[OK]` within the character carousel.
 2. **Hardware Escape**: For immediate top-level escapes, it is recommended to bind one of the dedicated physical side buttons (e.g., Key3) exclusively to "Back/Cancel".
+
+## 6. PSBT Flow Validation
+
+Rendering complex Bitcoin transaction data (PSBTs) requires special layout handling to ensure maximum safety and legibility on small screens.
+
+### 6.1 Transaction Math Wraps
+Hardware constraints must never lead to loss of financial data. Instead of truncating large inputs/outputs, the math renderer dynamically evaluates available screen real estate. If the label (e.g., `recipients`) and the transaction amount cannot fit on a single line, the renderer automatically wraps the amount to the next row and right-aligns it, guaranteeing full precision for all numbers.
+
+### 6.2 Visual Address Chunking
+To aid in the manual verification of complex addresses, the renderer attempts to recreate the upstream SeedSigner UX by isolating distinct visual chunks. Bech32 addresses are analyzed, and their most critical segments (the prefix, first 8 characters, and last 7 characters) are wrapped in `[ ]` brackets and padded with spaces. This guarantees that `_word_wrap` breaks the address exactly at the optimal boundaries, allowing for quick and accurate human verification.
+
+### 6.3 Flow Diagrams
+When displaying the PSBT Overview, constrained displays lack the graphical capabilities to draw vectors. Instead, the UI dynamically generates an ASCII art representation of the transaction flow, correctly scaling the graphical margins based on the count of inputs and outputs. An animated marquee (e.g. `--->`) connects the inputs to the outputs to simulate flow over time.

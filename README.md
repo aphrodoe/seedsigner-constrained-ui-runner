@@ -84,7 +84,7 @@ python3 -m src.main --display lcd_16x2 --audio --scenario button_list_screen
 
 ## Interactive Dual Runner (Developer Tool)
 
-For rapid design validation, you can run the side-by-side interactive Tkinter application. This loads the generated LVGL screenshots from the upstream repository alongside the live `16x2` and `20x4` simulators.
+For rapid design validation, you can run the side-by-side interactive Tkinter application. This loads the generated LVGL screenshots from the upstream repository alongside the live `16x2`, `20x4`, `16x8`, and `25x16` text simulators.
 
 ```bash
 python3 tools/dual_runner.py
@@ -92,6 +92,7 @@ python3 tools/dual_runner.py
 *Note: You can pass `--lvgl-dir` to point to custom screenshot directories.*
 
 * Keyboard controls: `W`, `A`, `S`, `D` to navigate, `Space` to select. 
+* **Side-by-Side vs Isolated Mode**: By default, the Dual Runner renders all display tiers simultaneously. Because it shares a single virtual controller, it prioritizes the scrolling limits of the smallest display (Tier 0). You can use the dropdown menu to isolate a specific tier (e.g., "Tier 3: E-Paper"), which will immediately un-link the shared scroll constraints and allow you to interact with that tier's 1-to-1 native scrolling behavior.
 
 ## Documentation
 
