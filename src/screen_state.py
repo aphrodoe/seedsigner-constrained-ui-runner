@@ -76,7 +76,14 @@ class ScreenState:
     @property
     def max_scroll_offset(self) -> int:
         tier_scrolls = getattr(self, "tier_max_scroll", {})
-        return max(tier_scrolls.values()) if tier_scrolls else 0
+        if not tier_scrolls:
+            return 0
+            
+        active_tier = getattr(self, "active_tier_mode", -1)
+        if active_tier != -1 and active_tier in tier_scrolls:
+            return tier_scrolls[active_tier]
+            
+        return max(tier_scrolls.values())
         
     def _init_keyboard(self):
         if self.screen_type == ScreenType.KEYBOARD:
@@ -154,6 +161,8 @@ class ScreenState:
             return self.context["button_grid"]
         if "button_data" in self.context:
             return self.context["button_data"]
+        if "rows" in self.context:
+            return self.context["rows"]
         if "button" in self.context:
             return [{"label": self.context["button"]}]
         return []
@@ -359,6 +368,8 @@ class ScreenState:
             
         prioritize_scroll = getattr(self, "prioritize_scroll", False)
         if prioritize_scroll:
+            if hasattr(self, "max_scroll_offset"):
+                self.scroll_offset = min(self.scroll_offset, self.max_scroll_offset)
             return
             
         if not getattr(self, "items", None):

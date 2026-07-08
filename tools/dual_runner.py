@@ -198,6 +198,7 @@ class DualRunnerApp:
             
         selection = self.tier_var.get()
         visible_rows = 1
+        active_tier_mode = -1
         
         if "All Tiers" in selection:
             self.lcd_16x2_label.grid(row=0, column=0, padx=10, pady=10)
@@ -206,25 +207,31 @@ class DualRunnerApp:
             self.lcd_25x16_label.grid(row=1, column=1, padx=10, pady=10)
             self.active_tier_label = None
             visible_rows = 15
+            active_tier_mode = -1
         elif "Tier 0" in selection:
             self.active_tier_label = self.lcd_16x2_label
             visible_rows = 1
+            active_tier_mode = 0
             self.active_tier_label.pack(padx=10, pady=20)
         elif "Tier 1" in selection:
             self.active_tier_label = self.lcd_20x4_label
             visible_rows = 3
+            active_tier_mode = 1
             self.active_tier_label.pack(padx=10, pady=20)
         elif "Tier 2" in selection:
             self.active_tier_label = self.lcd_16x8_label
             visible_rows = 7
+            active_tier_mode = 2
             self.active_tier_label.pack(padx=10, pady=20)
         else:
             self.active_tier_label = self.lcd_25x16_label
             visible_rows = 15
+            active_tier_mode = 3
             self.active_tier_label.pack(padx=10, pady=20)
             
         if hasattr(self, 'current_state') and self.current_state:
             self.current_state.visible_rows = visible_rows
+            self.current_state.active_tier_mode = active_tier_mode
             self.current_state._adjust_scroll()
             self.update_displays()
             
@@ -272,13 +279,25 @@ class DualRunnerApp:
             
             selection = self.tier_var.get()
             visible_rows = 1
-            if "All Tiers" in selection: visible_rows = 15
-            elif "Tier 0" in selection: visible_rows = 1
-            elif "Tier 1" in selection: visible_rows = 3
-            elif "Tier 2" in selection: visible_rows = 7
-            else: visible_rows = 15
+            active_tier_mode = -1
+            if "All Tiers" in selection:
+                visible_rows = 15
+                active_tier_mode = -1
+            elif "Tier 0" in selection:
+                visible_rows = 1
+                active_tier_mode = 0
+            elif "Tier 1" in selection:
+                visible_rows = 3
+                active_tier_mode = 1
+            elif "Tier 2" in selection:
+                visible_rows = 7
+                active_tier_mode = 2
+            else:
+                visible_rows = 15
+                active_tier_mode = 3
             
             self.current_state = ScreenState(self.current_screen_name, ctx, visible_rows=visible_rows)
+            self.current_state.active_tier_mode = active_tier_mode
             self.update_displays()
             self.load_lvgl_image(s_name, v_name)
         except Exception as e:

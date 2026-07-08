@@ -967,10 +967,8 @@ class TextRenderer:
             for line in self._word_wrap(f"Amount: {primary} {unit}"):
                 all_content.append(self._center(line))
             
-        address = state.context.get("address", "")
+        address = self._highlight_address(state.context.get("address", ""))
         if address:
-            if all_content:
-                all_content.append(self._center(""))
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
                 
@@ -999,18 +997,14 @@ class TextRenderer:
             for line in self._word_wrap(f"{primary} {unit}"):
                 all_content.append(self._center(line))
             
-        address = state.context.get("address", "")
+        address = self._highlight_address(state.context.get("address", ""))
         if address:
-            if all_content:
-                all_content.append(self._center(""))
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
             
         is_verified = state.context.get("is_verified", False)
         if is_verified:
             verified_text = state.context.get("verified_text", "Address verified!")
-            if all_content:
-                all_content.append(self._center(""))
             all_content.append(self._center(f"✓ {verified_text}"))
             
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
@@ -1030,21 +1024,35 @@ class TextRenderer:
         labels = state.context.get("labels", {})
         
         all_content = []
-        def add_row(key: str, prefix: str = ""):
-            if key in amounts and key in labels:
-                val = amounts[key]
-                lbl = labels[key]
-                # left align label, right align amount
-                avail = self.cols - len(lbl) - len(prefix) - len(val) - 1
-                if avail < 1:
-                    avail = 1
-                row = f"{lbl}{' ' * avail}{prefix}{val}"
-                all_content.append(self._fixed(row[:self.cols]))
+        def add_row(amount_key: str, label_key: str, prefix: str = ""):
+            if amount_key in amounts and label_key in labels:
+                val = amounts[amount_key]
+                if val == "0" and amount_key == "spend":
+                    return # Omit 0 spend for self-transfers
+                lbl = labels[label_key]
                 
-        add_row("input")
-        add_row("spend", "-")
-        add_row("change", "-")
-        add_row("fee", "=")
+                amount_str = f"{prefix}{val}"
+                if len(lbl) + 1 + len(amount_str) > self.cols:
+                    # Too long to fit on one line, wrap amount to next line
+                    all_content.append(self._fixed(lbl[:self.cols]))
+                    # Right-align the amount on the new line
+                    avail = self.cols - len(amount_str)
+                    if avail < 0: avail = 0
+                    all_content.append(self._fixed(" " * avail + amount_str[:self.cols]))
+                else:
+                    # Fits on one line
+                    avail = self.cols - len(lbl) - len(amount_str)
+                    row = f"{lbl}{' ' * avail}{amount_str}"
+                    all_content.append(self._fixed(row))
+                
+        add_row("input", "inputs")
+        add_row("spend", "recipients", "-")
+        add_row("fee", "fee", "-")
+        
+        if self.tier > 0:
+            all_content.append("-" * self.cols)
+            
+        add_row("change", "change")
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1271,6 +1279,21 @@ class TextRenderer:
         if len(text) > self.cols:
             return text[: self.cols]
         return f"{text:<{self.cols}}"
+
+    def _highlight_address(self, address: str) -> str:
+        """Mimics SeedSigner's address chunking for visual verification."""
+        if not address:
+            return ""
+        if address.startswith("bc1") or address.startswith("tb1") or address.startswith("bcrt1"):
+            sep = address.rfind("1") + 2
+            prefix = address[:sep]
+            rest = address[sep:]
+            if len(rest) > 14:
+                return f"{prefix} [{rest[:7]}] {rest[7:-7]} [{rest[-7:]}]"
+        else:
+            if len(address) > 15:
+                return f"[{address[:8]}] {address[8:-7]} [{address[-7:]}]"
+        return address
 
     def _pad_rows(self, lines: List[str]) -> List[str]:
         """Ensure we return exactly `self.rows` lines, each `self.cols` wide."""
