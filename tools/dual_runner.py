@@ -247,9 +247,13 @@ class DualRunnerApp:
             self.listbox.itemconfig(tk.END, fg="#3478C6", bg="#151515") # Highlight header
             self.scenario_map.append(None) # Header isn't clickable
             
-            variations = s_def.get("variations", [{"name": "default"}])
+            # ALWAYS add a default variation
+            self.listbox.insert(tk.END, "    (default)")
+            self.scenario_map.append((s_name, "(default)"))
+            
+            variations = s_def.get("variations", [])
             for v in variations:
-                v_name = v.get("name", "default")
+                v_name = v.get("name", "variation")
                 self.listbox.insert(tk.END, f"    {v_name}")
                 self.scenario_map.append((s_name, v_name))
                 
@@ -272,7 +276,7 @@ class DualRunnerApp:
             
         s_name, v_name = mapped
         self.current_screen_name = s_name
-        self.current_variation_name = v_name if v_name != "default" else None
+        self.current_variation_name = v_name if v_name != "(default)" else None
         
         try:
             ctx = self.parser.get_scenario_context(self.current_screen_name, self.current_variation_name)
@@ -355,8 +359,9 @@ class DualRunnerApp:
         
         # Build path based on screenshot_gen output rules:
         # img/240x240/button_list_screen__scroll_many_240x240.png
+        # img/240x240/button_list_screen__scroll_many_240x240.png
         # img/240x240/button_list_screen_240x240.png
-        if v_name == "default":
+        if not v_name or v_name == "default" or v_name == "(default)":
             img_filename = f"{s_name}_240x240.png"
             gif_filename = f"{s_name}_240x240.gif"
         else:
