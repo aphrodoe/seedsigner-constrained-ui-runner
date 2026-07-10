@@ -3,36 +3,71 @@ from typing import Dict, Any, List
 import uuid
 
 class ScreenType(Enum):
+    # ── Core screens (existing) ─────────────────────────────────────
     BUTTON_LIST = "button_list_screen"
     MAIN_MENU = "main_menu_screen"
     LARGE_ICON_STATUS = "large_icon_status_screen"
     SEED_ADD_PASSPHRASE = "seed_add_passphrase_screen"
-    SPLASH = "splash_screen"
+    SPLASH = "opening_splash_screen"
     SCREENSAVER = "screensaver_screen"
-    TOOLS_DICE_ENTROPY_ENTRY = "tools_dice_entropy_entry_screen"
-    TOOLS_COIN_FLIP_ENTRY = "tools_coin_flip_entry_screen"
-    SEED_BIP85_SELECT_CHILD_INDEX = "seed_bip85_select_child_index_screen"
-    SEED_EXPORT_XPUB_CUSTOM_DERIVATION = "seed_export_xpub_custom_derivation_screen"
     KEYBOARD = "keyboard_screen"
     SEED_MNEMONIC_ENTRY = "seed_mnemonic_entry_screen"
     SEED_FINALIZE = "seed_finalize_screen"
-    LOADING = "loading_screen"
-    LOCALE_PICKER = "locale_picker_screen"
+    LOADING = "loading_spinner_screen"
+    LOCALE_PICKER = "settings_locale_picker_screen"
     PSBT_OVERVIEW = "psbt_overview_screen"
     PSBT_ADDRESS_DETAILS = "psbt_address_details_screen"
     PSBT_CHANGE_DETAILS = "psbt_change_details_screen"
     PSBT_MATH = "psbt_math_screen"
-    
+
+    # ── New text-renderable screens ─────────────────────────────────
+    TOAST_OVERLAY = "toast_overlay_screen"
+    SEED_EXPORT_XPUB_DETAILS = "seed_export_xpub_details_screen"
+    SEED_REVIEW_PASSPHRASE = "seed_review_passphrase_screen"
+    SEED_WORDS = "seed_words_screen"
+    MULTISIG_WALLET_DESCRIPTOR = "multisig_wallet_descriptor_screen"
+    SEED_SIGN_MESSAGE_CONFIRM_ADDRESS = "seed_sign_message_confirm_address_screen"
+    SEED_SIGN_MESSAGE_CONFIRM_MESSAGE = "seed_sign_message_confirm_message_screen"
+    SEED_ADDRESS_VERIFICATION = "seed_address_verification_screen"
+    SEED_ADDRESS_VERIFICATION_SUCCESS = "seed_address_verification_success_screen"
+    TOOLS_CALC_FINAL_WORD = "tools_calc_final_word_screen"
+    TOOLS_CALC_FINAL_WORD_DONE = "tools_calc_final_word_done_screen"
+    TOOLS_ADDRESS_EXPLORER_ADDRESS_LIST = "tools_address_explorer_address_list_screen"
+    TOOLS_ADDRESS_EXPLORER_ADDRESS_TYPE = "tools_address_explorer_address_type_screen"
+    POWER_OPTIONS = "power_options_screen"
+    RESET = "reset_screen"
+    POWER_OFF_NOT_REQUIRED = "power_off_not_required_screen"
+    DONATE = "donate_screen"
+    PSBT_OP_RETURN = "psbt_op_return_screen"
+
+    # ── Visual-only screens (no text-UI equivalent) ─────────────────
+    CAMERA_PREVIEW_OVERLAY = "camera_preview_overlay_screen"
+    CAMERA_ENTROPY_OVERLAY = "camera_entropy_overlay_screen"
+    QR_DISPLAY = "qr_display_screen"
+    SEED_TRANSCRIBE_ZOOMED_QR = "seed_transcribe_zoomed_qr_screen"
+    SEED_TRANSCRIBE_WHOLE_QR = "seed_transcribe_whole_qr_screen"
+    SEED_TRANSCRIBE_SEEDQR_FORMAT = "seed_transcribe_seedqr_format_screen"
+    SETTINGS_QR_CONFIRMATION = "settings_qr_confirmation_screen"
+    IO_TEST = "io_test_screen"
+
     def is_keyboard(self):
         return self in [
             ScreenType.SEED_ADD_PASSPHRASE,
-            ScreenType.TOOLS_DICE_ENTROPY_ENTRY,
-            ScreenType.TOOLS_COIN_FLIP_ENTRY,
-            ScreenType.SEED_BIP85_SELECT_CHILD_INDEX,
-            ScreenType.SEED_EXPORT_XPUB_CUSTOM_DERIVATION,
             ScreenType.KEYBOARD
         ]
-    
+
+    def is_visual_only(self):
+        return self in [
+            ScreenType.CAMERA_PREVIEW_OVERLAY,
+            ScreenType.CAMERA_ENTROPY_OVERLAY,
+            ScreenType.QR_DISPLAY,
+            ScreenType.SEED_TRANSCRIBE_ZOOMED_QR,
+            ScreenType.SEED_TRANSCRIBE_WHOLE_QR,
+            ScreenType.SEED_TRANSCRIBE_SEEDQR_FORMAT,
+            ScreenType.SETTINGS_QR_CONFIRMATION,
+            ScreenType.IO_TEST,
+        ]
+
     @classmethod
     def from_str(cls, value: str):
         for member in cls:
@@ -140,29 +175,53 @@ class ScreenState:
             else:
                 ScreenState._bip39_wordlist = []
                 
-        self.entered_text = self.context.get("entered_text", "")
+        self.entered_text = self.context.get("initial_letters", self.context.get("entered_text", ""))
+        self.context["entered_text"] = self.entered_text
         self.alphabet = list("abcdefghijklmnopqrstuvwxyz") + ["[DEL]", "[OK]"]
         self.char_index = 0
         self._update_mnemonic_suggestions()
+        
+        initial_selected = self.context.get("initial_selected_word")
+        if initial_selected and initial_selected in self.context.get("suggestions", []):
+            self.selected_index = self.context["suggestions"].index(initial_selected)
 
     def _update_mnemonic_suggestions(self):
+        wordlist = self.context.get("wordlist", ScreenState._bip39_wordlist)
         if not self.entered_text:
             self.context["suggestions"] = []
         else:
-            self.context["suggestions"] = [w for w in ScreenState._bip39_wordlist if w.startswith(self.entered_text)]
+            self.context["suggestions"] = [w for w in wordlist if w.startswith(self.entered_text)]
         self.selected_index = 0
         
+    def _normalize_items(self, items: List[Any]) -> List[Any]:
+        """Normalize item list: plain strings become {label: str, value: str}."""
+        normalized = []
+        for item in items:
+            if isinstance(item, str):
+                normalized.append({"label": item, "value": item})
+            elif isinstance(item, (list, tuple)) and len(item) == 2:
+                normalized.append({"label": str(item[0]), "value": item[1]})
+            elif isinstance(item, dict):
+                if "label" not in item:
+                    item["label"] = ""
+                if "value" not in item:
+                    item["value"] = item["label"]
+                normalized.append(item)
+            else:
+                normalized.append({"label": str(item), "value": str(item)})
+        return normalized
+
     def _extract_items(self) -> List[Any]:
         if "items" in self.context:
-            return self.context["items"]
+            return self._normalize_items(self.context["items"])
         if "button_list" in self.context:
-            return self.context["button_list"]
+            return self._normalize_items(self.context["button_list"])
         if "button_grid" in self.context:
-            return self.context["button_grid"]
+            return self._normalize_items(self.context["button_grid"])
         if "button_data" in self.context:
-            return self.context["button_data"]
+            return self._normalize_items(self.context["button_data"])
         if "rows" in self.context:
-            return self.context["rows"]
+            return self._normalize_items(self.context["rows"])
         if "button" in self.context:
             return [{"label": self.context["button"]}]
         return []
