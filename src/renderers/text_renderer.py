@@ -35,6 +35,14 @@ class TextRenderer:
 
     def render(self, state: ScreenState) -> List[str]:
         """Return exactly `self.rows` strings, each exactly `self.cols` chars wide."""
+        # Visual-only screens (camera, QR, I/O test) — not applicable to text UI
+        if state.screen_type.is_visual_only():
+            title = state.context.get("top_nav", {}).get("title", "Visual Only")
+            lines = [self._title_row(title, "", state)]
+            lines.append(self._center("[Visual Only]"))
+            lines.append(self._center("No text-UI"))
+            return self._pad_rows(lines)
+
         if state.screen_type == ScreenType.BUTTON_LIST:
             lines = self._render_button_list(state)
         elif state.screen_type == ScreenType.MAIN_MENU:
@@ -68,6 +76,39 @@ class TextRenderer:
                 lines.append(self._center(""))
             lines.append(self._center("SeedSigner"))
             lines = self._pad_rows(lines[:self.rows])
+        # ── New screen renderers ────────────────────────────────────
+        elif state.screen_type == ScreenType.TOAST_OVERLAY:
+            lines = self._render_toast_overlay(state)
+        elif state.screen_type == ScreenType.SEED_EXPORT_XPUB_DETAILS:
+            lines = self._render_seed_export_xpub_details(state)
+        elif state.screen_type == ScreenType.SEED_REVIEW_PASSPHRASE:
+            lines = self._render_seed_review_passphrase(state)
+        elif state.screen_type == ScreenType.SEED_WORDS:
+            lines = self._render_seed_words(state)
+        elif state.screen_type == ScreenType.MULTISIG_WALLET_DESCRIPTOR:
+            lines = self._render_multisig_wallet_descriptor(state)
+        elif state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_ADDRESS:
+            lines = self._render_seed_sign_message_confirm_address(state)
+        elif state.screen_type == ScreenType.SEED_ADDRESS_VERIFICATION:
+            lines = self._render_seed_address_verification(state)
+        elif state.screen_type == ScreenType.SEED_ADDRESS_VERIFICATION_SUCCESS:
+            lines = self._render_seed_address_verification_success(state)
+        elif state.screen_type == ScreenType.TOOLS_CALC_FINAL_WORD:
+            lines = self._render_tools_calc_final_word(state)
+        elif state.screen_type == ScreenType.TOOLS_CALC_FINAL_WORD_DONE:
+            lines = self._render_tools_calc_final_word_done(state)
+        elif state.screen_type == ScreenType.TOOLS_ADDRESS_EXPLORER_ADDRESS_LIST:
+            lines = self._render_tools_address_explorer_list(state)
+        elif state.screen_type == ScreenType.TOOLS_ADDRESS_EXPLORER_ADDRESS_TYPE:
+            lines = self._render_tools_address_explorer_type(state)
+        elif state.screen_type in (ScreenType.DONATE, ScreenType.RESET,
+                                    ScreenType.POWER_OFF_NOT_REQUIRED):
+            lines = self._render_text_only(state)
+        # ── Button-list fallback screens ────────────────────────────
+        elif state.screen_type in (ScreenType.POWER_OPTIONS,
+                                    ScreenType.PSBT_OP_RETURN,
+                                    ScreenType.SEED_SIGN_MESSAGE_CONFIRM_MESSAGE):
+            lines = self._render_button_list(state)
         else:
             lines = self._pad_rows([self._center("Unsupported")])
             
@@ -185,7 +226,8 @@ class TextRenderer:
         all_content = []
         if text:
             for line in text.split('\n'):
-                all_content.extend(self._word_wrap(line))
+                for wrapped in self._word_wrap(line):
+                    all_content.append(self._center(wrapped))
 
         num_text_lines = len(all_content)
 
@@ -1268,6 +1310,401 @@ class TextRenderer:
                 
             lines.append(_anim_center(bottom_text))
             return self._pad_rows(lines)
+
+    # ── text_only (reset, power_off_not_required, donate) ───────────
+
+    def _render_text_only(self, state: ScreenState) -> List[str]:
+        """Render screens with title + body text + optional URL, no buttons."""
+        title = state.context.get("top_nav", {}).get("title", "")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        text = state.context.get("text", "")
+        if text:
+            for paragraph in text.split('\n'):
+                paragraph = paragraph.strip()
+                if paragraph:
+                    for line in self._word_wrap(paragraph):
+                        all_content.append(self._center(line))
+                else:
+                    all_content.append(self._center(""))
+        
+        # donate_screen has a URL field
+        url = state.context.get("url", "")
+        if url:
+            all_content.append(self._center(""))
+            all_content.append(self._center(url))
+
+        return self._do_sliding_window(state, title_line, all_content, len(all_content))
+
+    # ── toast_overlay_screen ────────────────────────────────────────
+
+    def _render_toast_overlay(self, state: ScreenState) -> List[str]:
+        """Composite: render background screen, overlay toast banner on last row."""
+        severity = state.context.get("severity", "default")
+        label_text = state.context.get("label_text", "")
+        
+        icon_map = {
+            "success": "✓",
+            "warning": "⚠",
+            "dire_warning": "‼",
+            "error": "✕",
+            "info": "ℹ",
+            "default": "·",
+        }
+        icon = icon_map.get(severity, "·")
+        
+        # Try to render the background screen
+        bg_ctx = state.context.get("background", {})
+        bg_lines = None
+        if bg_ctx:
+            try:
+                # Determine the background screen type from its structure
+                if "button_list" in bg_ctx:
+                    bg_state = ScreenState("button_list_screen", bg_ctx, visible_rows=state.visible_rows)
+                elif bg_ctx.get("top_nav", {}).get("title") == "Home":
+                    bg_state = ScreenState("main_menu_screen", bg_ctx, visible_rows=state.visible_rows)
+                else:
+                    bg_state = ScreenState("button_list_screen", bg_ctx, visible_rows=state.visible_rows)
+                bg_lines = self.render(bg_state)
+            except Exception:
+                bg_lines = None
+        
+        if not bg_lines:
+            bg_lines = self._pad_rows([self._center("---")])
+        
+        # Build toast banner
+        toast_text = f"[{icon} {label_text}]"
+        if len(toast_text) > self.cols:
+            toast_text = f"[{icon} {label_text[:self.cols-6]}...]"
+        
+        # Overlay toast on last row (or last 2 rows with separator on larger tiers)
+        if self.tier >= 1 and len(bg_lines) >= 2:
+            bg_lines[-2] = self._fixed("-" * self.cols)
+            bg_lines[-1] = self._center(toast_text)
+        else:
+            bg_lines[-1] = self._center(toast_text)
+        
+        return bg_lines
+
+    # ── seed_export_xpub_details_screen ─────────────────────────────
+
+    def _render_seed_export_xpub_details(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Xpub Details")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        fp_label = state.context.get("fingerprint_label", "Fingerprint")
+        fp = state.context.get("fingerprint", "")
+        if fp:
+            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+        
+        deriv_label = state.context.get("derivation_label", "Derivation")
+        deriv = state.context.get("derivation_path", "")
+        if deriv:
+            all_content.append(self._fixed(f"{deriv_label}: {deriv}"))
+        
+        xpub_label = state.context.get("xpub_label", "Xpub")
+        xpub = state.context.get("xpub", "")
+        if xpub:
+            all_content.append(self._fixed(f"{xpub_label}:"))
+            for line in self._word_wrap(xpub):
+                all_content.append(self._fixed(f"  {line}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_review_passphrase_screen ───────────────────────────────
+
+    def _render_seed_review_passphrase(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Verify Passphrase")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        passphrase = state.context.get("passphrase", "")
+        if passphrase:
+            all_content.append(self._center(f'"{passphrase}"'))
+        
+        changes_label = state.context.get("changes_fingerprint_label", "changes fingerprint")
+        fp_without = state.context.get("fingerprint_without", "")
+        fp_with = state.context.get("fingerprint_with", "")
+        if fp_without and fp_with:
+            all_content.append(self._center(changes_label))
+            all_content.append(self._fixed(f"  {fp_without} -> {fp_with}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_words_screen ───────────────────────────────────────────
+
+    def _render_seed_words(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Seed Words")
+        title_line = self._title_row(title, "", state)
+        
+        words = state.context.get("words", [])
+        start_num = state.context.get("start_number", 1)
+        
+        all_content = []
+        for i, word in enumerate(words):
+            num = start_num + i
+            all_content.append(self._fixed(f" {num:>2}. {word}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── multisig_wallet_descriptor_screen ───────────────────────────
+
+    def _render_multisig_wallet_descriptor(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Descriptor")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        policy_label = state.context.get("policy_label", "Policy")
+        policy = state.context.get("policy", "")
+        if policy:
+            all_content.append(self._fixed(f"{policy_label}: {policy}"))
+        
+        keys_label = state.context.get("signing_keys_label", "Signing Keys")
+        fingerprints = state.context.get("fingerprints", [])
+        if fingerprints:
+            all_content.append(self._fixed(f"{keys_label}:"))
+            for fp in fingerprints:
+                all_content.append(self._fixed(f"  {fp}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_sign_message_confirm_address_screen ────────────────────
+
+    def _render_seed_sign_message_confirm_address(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Confirm Address")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        deriv_label = state.context.get("derivation_path_label", "derivation path")
+        deriv = state.context.get("derivation_path", "")
+        if deriv:
+            all_content.append(self._fixed(f"{deriv_label}:"))
+            all_content.append(self._fixed(f"  {deriv}"))
+        
+        address = self._highlight_address(state.context.get("address", ""))
+        if address:
+            for line in self._word_wrap(address):
+                all_content.append(self._center(line))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_address_verification_screen ────────────────────────────
+
+    def _render_seed_address_verification(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Verify Address")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        address = self._highlight_address(state.context.get("address", ""))
+        if address:
+            for line in self._word_wrap(address):
+                all_content.append(self._center(line))
+        
+        type_network = state.context.get("type_network", "")
+        network = state.context.get("network", "")
+        if type_network:
+            all_content.append(self._center(type_network))
+        if network and network != "mainnet":
+            all_content.append(self._center(f"[{network}]"))
+        
+        progress = state.context.get("progress_text", "")
+        if progress:
+            all_content.append(self._center(progress))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_address_verification_success_screen ────────────────────
+
+    def _render_seed_address_verification_success(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Success!")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        headline = state.context.get("status_headline", "")
+        if headline:
+            all_content.append(self._center(f"✓ {headline}"))
+        
+        address = self._highlight_address(state.context.get("address", ""))
+        if address:
+            for line in self._word_wrap(address):
+                all_content.append(self._center(line))
+        
+        addr_type = state.context.get("address_type_text", "")
+        index_text = state.context.get("index_text", "")
+        if addr_type:
+            all_content.append(self._center(addr_type))
+        if index_text:
+            all_content.append(self._center(index_text))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── tools_calc_final_word_screen ────────────────────────────────
+
+    def _render_tools_calc_final_word(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Final Word Calc")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        your_input = state.context.get("your_input_text", "")
+        if your_input:
+            for line in self._word_wrap(your_input):
+                all_content.append(self._fixed(line))
+        
+        final_word = state.context.get("final_word_text", "")
+        if final_word:
+            for line in self._word_wrap(final_word):
+                all_content.append(self._fixed(line))
+        
+        checksum_label = state.context.get("checksum_label", "Checksum")
+        selected_bits = state.context.get("selected_final_bits", "")
+        checksum_bits = state.context.get("checksum_bits", "")
+        if selected_bits or checksum_bits:
+            bits_display = f"{selected_bits}[{checksum_bits}]" if checksum_bits else selected_bits
+            all_content.append(self._fixed(f"{checksum_label}: {bits_display}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── tools_calc_final_word_done_screen ───────────────────────────
+
+    def _render_tools_calc_final_word_done(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Final Word")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        final_word = state.context.get("final_word", "")
+        if final_word:
+            all_content.append(self._center(f'Word: "{final_word}"'))
+        
+        fp_label = state.context.get("fingerprint_label", "fingerprint")
+        fp = state.context.get("fingerprint", "")
+        if fp:
+            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+        
+        word_len = state.context.get("mnemonic_word_length", "")
+        if word_len:
+            all_content.append(self._center(f"{word_len}-word mnemonic"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── tools_address_explorer_address_list_screen ──────────────────
+
+    def _render_tools_address_explorer_list(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Addresses")
+        title_line = self._title_row(title, "", state)
+        
+        addresses = state.context.get("addresses", [])
+        start_idx = state.context.get("start_index", 0)
+        next_label = state.context.get("next_label", "Next")
+        
+        all_content = []
+        for i, addr in enumerate(addresses):
+            num = start_idx + i
+            chunked = self._highlight_address(addr)
+            # Prefix with index number
+            addr_line = f"#{num}: {chunked}"
+            for line in self._word_wrap(addr_line):
+                all_content.append(self._fixed(line))
+        
+        num_text = len(all_content)
+        # The next_label acts as a navigable item
+        if next_label:
+            selected = (state.selected_index == len(addresses))
+            all_content.append(self._item_row(next_label, selected=selected, state=state, index=len(addresses)))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── tools_address_explorer_address_type_screen ──────────────────
+
+    def _render_tools_address_explorer_type(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Address Explorer")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        fp_label = state.context.get("fingerprint_label", "Fingerprint")
+        fp = state.context.get("fingerprint", "")
+        if fp:
+            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+        
+        deriv_label = state.context.get("derivation_label", "Derivation")
+        deriv = state.context.get("derivation_text", "")
+        if deriv:
+            all_content.append(self._fixed(f"{deriv_label}: {deriv}"))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── Utility helpers ─────────────────────────────────────────────
 
     def _center(self, text: str) -> str:
         if len(text) > self.cols:
