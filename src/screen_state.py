@@ -64,7 +64,6 @@ class ScreenType(Enum):
             ScreenType.SEED_TRANSCRIBE_ZOOMED_QR,
             ScreenType.SEED_TRANSCRIBE_WHOLE_QR,
             ScreenType.SEED_TRANSCRIBE_SEEDQR_FORMAT,
-            ScreenType.SETTINGS_QR_CONFIRMATION,
             ScreenType.IO_TEST,
         ]
 
@@ -189,9 +188,23 @@ class ScreenState:
         wordlist = self.context.get("wordlist", ScreenState._bip39_wordlist)
         if not self.entered_text:
             self.context["suggestions"] = []
+            self.valid_next_chars = set("abcdefghijklmnopqrstuvwxyz")
         else:
             self.context["suggestions"] = [w for w in wordlist if w.startswith(self.entered_text)]
+            self.valid_next_chars = set()
+            for w in self.context["suggestions"]:
+                if len(w) > len(self.entered_text):
+                    self.valid_next_chars.add(w[len(self.entered_text)])
         self.selected_index = 0
+        
+    def is_key_enabled(self, key: str) -> bool:
+        if self.screen_type != ScreenType.SEED_MNEMONIC_ENTRY:
+            return True
+        if getattr(self, "valid_next_chars", None) is None:
+            return True
+        if key in ["[DEL]", "[OK]"]:
+            return True
+        return key in self.valid_next_chars
         
     def _normalize_items(self, items: List[Any]) -> List[Any]:
         """Normalize item list: plain strings become {label: str, value: str}."""
@@ -224,6 +237,10 @@ class ScreenState:
             return self._normalize_items(self.context["rows"])
         if "button" in self.context:
             return [{"label": self.context["button"]}]
+        if "background" in self.context and isinstance(self.context["background"], dict):
+            bg = self.context["background"]
+            if "button_list" in bg:
+                return self._normalize_items(bg["button_list"])
         return []
         
     def tick(self) -> bool:
@@ -276,31 +293,37 @@ class ScreenState:
                 self.focus = "keyboard"
                 return True
 
-        prioritize_scroll = getattr(self, "prioritize_scroll", False)
+        self._user_has_moved = True
         changed = False
-        
-        if prioritize_scroll:
-            if self.scroll_offset > 0:
-                self.scroll_offset -= 1
+        if self.items and self.selected_index > 0:
+            self.selected_index -= 1
+            self.marquee_tick = 0
+            self._adjust_scroll()
+            changed = True
+        elif getattr(self, "items", None) is not None and self.selected_index == 0:
+            # Only allow scrolling up if at least one tier is not at the top
+            active_tier = getattr(self, "active_tier_mode", -1)
+            can_scroll = False
+            for tier, at_top in getattr(self, "tier_at_top", {}).items():
+                if active_tier != -1 and tier != active_tier:
+                    continue
+                if not at_top:
+                    can_scroll = True
+            
+            if can_scroll or not hasattr(self, "tier_at_top"):
+                if hasattr(self, "tier_text_intent"):
+                    for tier in self.tier_text_intent:
+                        if active_tier != -1 and tier != active_tier:
+                            continue
+                        self.tier_text_intent[tier] -= 1
                 changed = True
-            elif self.items and self.selected_index > 0:
-                self.selected_index -= 1
-                self.marquee_tick = 0
-                changed = True
-        else:
-            if self.items and self.selected_index > 0:
-                self.selected_index -= 1
-                self.marquee_tick = 0
-                self._adjust_scroll()
-                changed = True
-            elif self.scroll_offset > 0:
-                self.scroll_offset -= 1
-                changed = True
-                
+        elif not self.items and self.scroll_offset > 0:
+            self.scroll_offset -= 1
+            changed = True
         return changed
         
     def move_down(self) -> bool:
-        """Move cursor down. Returns True if selection changed or scrolled."""
+        """Move cursor down. Returns True if UI needs re-render."""
         if self.screen_type.is_keyboard():
             if self.visible_rows < 7:
                 return False
@@ -341,63 +364,70 @@ class ScreenState:
                 return True
             return False
 
-        prioritize_scroll = getattr(self, "prioritize_scroll", False)
+        self._user_has_moved = True
         changed = False
         
-        if prioritize_scroll:
-            if self.scroll_offset < getattr(self, "max_scroll_offset", 0):
-                self.scroll_offset += 1
-                changed = True
-            elif self.items and self.selected_index < len(self.items) - 1:
-                self.selected_index += 1
-                self.marquee_tick = 0
-                changed = True
-        else:
-            if self.items and self.selected_index < len(self.items) - 1:
-                self.selected_index += 1
-                self.marquee_tick = 0
-                self._adjust_scroll()
-                changed = True
-            elif self.scroll_offset < getattr(self, "max_scroll_offset", 0):
-                self.scroll_offset += 1
-                changed = True
+        if hasattr(self, "tier_text_intent"):
+            active_tier = getattr(self, "active_tier_mode", -1)
+            can_scroll_down = False
+            for tier, intent in self.tier_text_intent.items():
+                if active_tier != -1 and tier != active_tier:
+                    continue
+                if intent < 0:
+                    self.tier_text_intent[tier] += 1
+                    can_scroll_down = True
+            if can_scroll_down:
+                return True
+                
+        if self.items and self.selected_index < len(self.items) - 1:
+            self.selected_index += 1
+            self.marquee_tick = 0
+            self._adjust_scroll()
+            changed = True
+        elif not self.items and self.scroll_offset < getattr(self, "max_scroll_offset", 0):
+            self.scroll_offset += 1
+            changed = True
                 
         return changed
 
     def move_left(self) -> bool:
         """Move cursor left. For keyboard, cycles chars left. For lists, pages up."""
-        if self.screen_type.is_keyboard():
-            chars = getattr(self, "keyboard_chars", None)
-            if not chars:
-                _, chars = self.keyboard_modes[self.active_mode_index]
-            self.char_index = max(0, self.char_index - 1)
-            return True
-            
-        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
-            self.focus = getattr(self, "focus", "keyboard")
-            if self.focus == "suggestions":
+        if self.screen_type.is_keyboard() or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            if getattr(self, "focus", "keyboard") == "keyboard":
+                chars = getattr(self, "keyboard_chars", None)
+                if not chars:
+                    if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                        chars = self.alphabet
+                    else:
+                        _, chars = self.keyboard_modes[self.active_mode_index]
+                for _ in range(len(chars)):
+                    self.char_index = (self.char_index - 1) % len(chars)
+                    if self.is_key_enabled(chars[self.char_index]):
+                        break
+                return True
+            else:
                 self.focus = "keyboard"
                 return True
-            self.char_index = (self.char_index - 1) % len(self.alphabet)
-            return True
         return self.page_up()
 
     def move_right(self) -> bool:
         """Move cursor right. For keyboard, cycles chars right. For lists, pages down."""
-        if self.screen_type.is_keyboard():
-            chars = getattr(self, "keyboard_chars", None)
-            if not chars:
-                _, chars = self.keyboard_modes[self.active_mode_index]
-            self.char_index = min(len(chars) - 1, self.char_index + 1)
-            return True
-            
-        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
-            self.focus = getattr(self, "focus", "keyboard")
-            if self.focus == "suggestions":
+        if self.screen_type.is_keyboard() or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            if getattr(self, "focus", "keyboard") == "keyboard":
+                chars = getattr(self, "keyboard_chars", None)
+                if not chars:
+                    if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                        chars = self.alphabet
+                    else:
+                        _, chars = self.keyboard_modes[self.active_mode_index]
+                for _ in range(len(chars)):
+                    self.char_index = (self.char_index + 1) % len(chars)
+                    if self.is_key_enabled(chars[self.char_index]):
+                        break
+                return True
+            else:
                 self.focus = "keyboard"
                 return True
-            self.char_index = (self.char_index + 1) % len(self.alphabet)
-            return True
         return self.page_down()
 
     def page_up(self) -> bool:

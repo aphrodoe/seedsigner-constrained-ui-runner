@@ -89,6 +89,8 @@ class TextRenderer:
             lines = self._render_multisig_wallet_descriptor(state)
         elif state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_ADDRESS:
             lines = self._render_seed_sign_message_confirm_address(state)
+        elif state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_MESSAGE:
+            lines = self._render_seed_sign_message_confirm_message(state)
         elif state.screen_type == ScreenType.SEED_ADDRESS_VERIFICATION:
             lines = self._render_seed_address_verification(state)
         elif state.screen_type == ScreenType.SEED_ADDRESS_VERIFICATION_SUCCESS:
@@ -101,13 +103,14 @@ class TextRenderer:
             lines = self._render_tools_address_explorer_list(state)
         elif state.screen_type == ScreenType.TOOLS_ADDRESS_EXPLORER_ADDRESS_TYPE:
             lines = self._render_tools_address_explorer_type(state)
+        elif state.screen_type == ScreenType.SETTINGS_QR_CONFIRMATION:
+            lines = self._render_settings_qr_confirmation(state)
         elif state.screen_type in (ScreenType.DONATE, ScreenType.RESET,
                                     ScreenType.POWER_OFF_NOT_REQUIRED):
             lines = self._render_text_only(state)
         # ── Button-list fallback screens ────────────────────────────
         elif state.screen_type in (ScreenType.POWER_OPTIONS,
-                                    ScreenType.PSBT_OP_RETURN,
-                                    ScreenType.SEED_SIGN_MESSAGE_CONFIRM_MESSAGE):
+                                    ScreenType.PSBT_OP_RETURN):
             lines = self._render_button_list(state)
         else:
             lines = self._pad_rows([self._center("Unsupported")])
@@ -115,9 +118,18 @@ class TextRenderer:
         toast_msg = state.context.get("toast")
         if toast_msg:
             toast_msg = toast_msg.replace("\n", " ").strip()
-            toast_text = f"[{toast_msg}]"
-            if len(toast_text) > self.cols:
-                toast_text = f"[{toast_msg[:self.cols-5]}...]"
+            max_label = self.cols - 4
+            if len(toast_msg) > max_label:
+                diff = len(toast_msg) - max_label
+                total_frames = diff + 10
+                frame = state.marquee_tick % total_frames
+                if frame < 5: offset = 0
+                elif frame >= 5 + diff: offset = diff
+                else: offset = frame - 5
+                visible = toast_msg[offset : offset + max_label]
+                toast_text = f"[ {visible} ]"
+            else:
+                toast_text = f"[ {toast_msg} ]"
             lines[-1] = self._center(toast_text)
             
         return lines
@@ -190,28 +202,50 @@ class TextRenderer:
             
         current_scroll = state.tier_unified_scroll.get(self.tier, 0)
         
-        if num_text_lines > 0:
-            state.prioritize_scroll = True
+        if not hasattr(state, f"_opened_{self.tier}"):
+            setattr(state, f"_opened_{self.tier}", True)
+            state.tier_unified_scroll[self.tier] = 0
             
-            last_selected = getattr(state, "_last_selected_idx", state.selected_index)
-            selection_changed = (state.selected_index != last_selected)
-            setattr(state, "_last_selected_idx", state.selected_index)
-            
-            if selection_changed:
-                if selected_idx < state.scroll_offset:
-                    state.scroll_offset = selected_idx
-                elif selected_idx >= state.scroll_offset + self.item_rows:
-                    state.scroll_offset = selected_idx - self.item_rows + 1
-                    
-            current_scroll = state.scroll_offset
+        current_scroll = state.tier_unified_scroll.get(self.tier, 0)
+        
+        # Base sliding window calculation
+        if selected_idx < current_scroll:
+            current_scroll = selected_idx
+        elif selected_idx >= current_scroll + self.item_rows:
+            current_scroll = selected_idx - self.item_rows + 1
+
+        # Calculate natural min scroll needed to keep selected item visible
+        natural_min_scroll = selected_idx - self.item_rows + 1 if selected_idx >= self.item_rows else 0
+        
+        if not hasattr(state, "tier_text_intent"):
+            state.tier_text_intent = {}
+
+        # If the user hasn't moved yet, we want to stay at 0 to show the text!
+        if not getattr(state, "_user_has_moved", False):
+            current_scroll = 0
+            if state.selected_index == 0 and natural_min_scroll > 0:
+                # Initialize intent so the first 'down' scrolls sequentially
+                state.tier_text_intent[self.tier] = -natural_min_scroll
         else:
-            state.prioritize_scroll = False
+            if self.tier not in state.tier_text_intent:
+                state.tier_text_intent[self.tier] = 0
             
-            if selected_idx < current_scroll:
-                current_scroll = selected_idx
-            elif selected_idx >= current_scroll + self.item_rows:
-                current_scroll = selected_idx - self.item_rows + 1
-                
+        # Apply manual text scroll intent if the user is scrolling text at the top button
+        if state.selected_index == 0:
+            intent = state.tier_text_intent.get(self.tier, 0)
+            current_scroll += intent
+            
+            # Clamp locally, DO NOT mutate the global intent
+            if current_scroll < 0:
+                current_scroll = 0
+            elif current_scroll > natural_min_scroll:
+                current_scroll = natural_min_scroll
+
+        # Track if this tier has hit the top for ScreenState to prevent runaway intent
+        if not hasattr(state, "tier_at_top"):
+            state.tier_at_top = {}
+        state.tier_at_top[self.tier] = (current_scroll <= 0)
+
         current_scroll = min(current_scroll, max_scroll)
         state.tier_unified_scroll[self.tier] = current_scroll
 
@@ -251,7 +285,8 @@ class TextRenderer:
         """Render the 4-icon main menu with text-based icons."""
         total = len(state.items)
         pos = f" {state.selected_index + 1}/{total}" if total > 0 else ""
-        title_line = self._title_row("SeedSigner", pos, state)
+        title = state.context.get("top_nav", {}).get("title", "SeedSigner")
+        title_line = self._title_row(title, pos, state)
 
         icon_map = {
             "Scan": "▦",
@@ -308,8 +343,8 @@ class TextRenderer:
             if self.tier >= 3:
                 # Full grid, no need for sliding preview in input line
                 kb_str = entered
-            elif self.tier == 2:
-                # No trailing alphabet on Tier 2 as suggestions show below
+            elif self.tier >= 1:
+                # No trailing alphabet on Tier 1 and 2 as suggestions show below
                 cursor_str = f"[{char}]" if focus == "keyboard" else f" {char} "
                 kb_str = f"{entered}{cursor_str}"
             else:
@@ -356,10 +391,15 @@ class TextRenderer:
             
             for i, c in enumerate(alphabet):
                 is_selected = (i == char_index and focus == "keyboard")
+                is_enabled = state.is_key_enabled(c)
+                
                 if c.startswith("[") and c.endswith("]"):
                     display = c.replace("[", "<").replace("]", ">") if is_selected else c
                 else:
-                    display = f"[{c}]" if is_selected else f" {c} "
+                    if is_enabled:
+                        display = f"[{c}]" if is_selected else f" {c} "
+                    else:
+                        display = f"[{c}]" if is_selected else f" . "
                     
                 item_len = len(display)
                 space_needed = item_len if current_len == 0 else item_len + 1
@@ -380,7 +420,8 @@ class TextRenderer:
             lines.extend(grid_lines)
             
             if not suggestions:
-                lines.append(self._fixed("  (no match)"))
+                if entered:
+                    lines.append(self._fixed("  (no match)"))
             else:
                 avail_rows = self.rows - len(lines)
                 start = state.scroll_offset
@@ -398,7 +439,8 @@ class TextRenderer:
             lines = [title_line, kb_line]
             
             if not suggestions:
-                lines.append(self._fixed("  (no match)"))
+                if entered:
+                    lines.append(self._fixed("  (no match)"))
                 return self._pad_rows(lines)
                 
             start = state.scroll_offset
@@ -728,7 +770,9 @@ class TextRenderer:
         if state.items:
             item = state.items[state.selected_index]
             label = item.get("label", "")
-            button_line = self._center(f"[ {label} ]")
+            # Ensure it renders with marquee by leveraging the standard item row logic
+            state.context["is_button_text_centered"] = True
+            button_line = self._item_row(label, selected=True, state=state, index=state.selected_index)
             
             while len(lines) < window_height:
                 if warning_edges:
@@ -1342,7 +1386,7 @@ class TextRenderer:
     def _render_toast_overlay(self, state: ScreenState) -> List[str]:
         """Composite: render background screen, overlay toast banner on last row."""
         severity = state.context.get("severity", "default")
-        label_text = state.context.get("label_text", "")
+        label_text = state.context.get("label_text", "").replace("\n", " ").strip()
         
         icon_map = {
             "success": "✓",
@@ -1360,10 +1404,10 @@ class TextRenderer:
         if bg_ctx:
             try:
                 # Determine the background screen type from its structure
-                if "button_list" in bg_ctx:
-                    bg_state = ScreenState("button_list_screen", bg_ctx, visible_rows=state.visible_rows)
-                elif bg_ctx.get("top_nav", {}).get("title") == "Home":
+                if bg_ctx.get("top_nav", {}).get("title") == "Home":
                     bg_state = ScreenState("main_menu_screen", bg_ctx, visible_rows=state.visible_rows)
+                elif "button_list" in bg_ctx:
+                    bg_state = ScreenState("button_list_screen", bg_ctx, visible_rows=state.visible_rows)
                 else:
                     bg_state = ScreenState("button_list_screen", bg_ctx, visible_rows=state.visible_rows)
                 bg_lines = self.render(bg_state)
@@ -1373,10 +1417,20 @@ class TextRenderer:
         if not bg_lines:
             bg_lines = self._pad_rows([self._center("---")])
         
-        # Build toast banner
-        toast_text = f"[{icon} {label_text}]"
-        if len(toast_text) > self.cols:
-            toast_text = f"[{icon} {label_text[:self.cols-6]}...]"
+        # Build toast banner with marquee if needed
+        max_label = self.cols - 4
+        full_text = f"{icon} {label_text}" if icon else label_text
+        if len(full_text) > max_label:
+            diff = len(full_text) - max_label
+            total_frames = diff + 10
+            frame = state.marquee_tick % total_frames
+            if frame < 5: offset = 0
+            elif frame >= 5 + diff: offset = diff
+            else: offset = frame - 5
+            visible = full_text[offset : offset + max_label]
+            toast_text = f"[ {visible} ]"
+        else:
+            toast_text = f"[ {full_text} ]"
         
         # Overlay toast on last row (or last 2 rows with separator on larger tiers)
         if self.tier >= 1 and len(bg_lines) >= 2:
@@ -1394,31 +1448,60 @@ class TextRenderer:
         title_line = self._title_row(title, "", state)
         
         all_content = []
+        warning_edges = state.context.get("warning_edges", False)
+        usable_cols = self.cols - 2 if warning_edges else self.cols
+        
+        def _fmt(text: str) -> str:
+            if len(text) > usable_cols:
+                text = text[:usable_cols]
+            return f"{text:<{usable_cols}}"
+            
         fp_label = state.context.get("fingerprint_label", "Fingerprint")
         fp = state.context.get("fingerprint", "")
         if fp:
-            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+            all_content.append(_fmt(f"@ {fp_label}"))
+            all_content.append(_fmt(f"  {fp}"))
         
         deriv_label = state.context.get("derivation_label", "Derivation")
         deriv = state.context.get("derivation_path", "")
         if deriv:
-            all_content.append(self._fixed(f"{deriv_label}: {deriv}"))
+            all_content.append(_fmt(f"⎇ {deriv_label}"))
+            all_content.append(_fmt(f"  {deriv}"))
         
         xpub_label = state.context.get("xpub_label", "Xpub")
         xpub = state.context.get("xpub", "")
         if xpub:
-            all_content.append(self._fixed(f"{xpub_label}:"))
-            for line in self._word_wrap(xpub):
-                all_content.append(self._fixed(f"  {line}"))
+            all_content.append(_fmt(f"✕ {xpub_label}"))
+            if len(xpub) > 15:
+                xpub = xpub[:15] + ".."
+            all_content.append(_fmt(f"  {xpub}"))
         
+        # We need to temporarily override self.cols for button padding if warning_edges
+        old_cols = self.cols
+        self.cols = usable_cols
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
             selected = (i == state.selected_index)
             all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        self.cols = old_cols
         
-        return self._do_sliding_window(state, title_line, all_content, num_text)
+        lines = self._do_sliding_window(state, title_line, all_content, num_text)
+        
+        if warning_edges:
+            animated = state.context.get("animated", False)
+            if animated:
+                edge_char = "!" if (state.marquee_tick // 2) % 2 == 0 else " "
+            else:
+                edge_char = "!"
+                
+            for i in range(1, len(lines)):
+                # Take the first `usable_cols` characters to avoid erasing text
+                content = lines[i][:usable_cols]
+                lines[i] = f"{edge_char}{content}{edge_char}"
+                
+        return lines
 
     # ── seed_review_passphrase_screen ───────────────────────────────
 
@@ -1429,14 +1512,18 @@ class TextRenderer:
         all_content = []
         passphrase = state.context.get("passphrase", "")
         if passphrase:
-            all_content.append(self._center(f'"{passphrase}"'))
+            passphrase_display = passphrase.replace(" ", "·")
+            for line in self._word_wrap(f'"{passphrase_display}"'):
+                all_content.append(self._center(line))
         
         changes_label = state.context.get("changes_fingerprint_label", "changes fingerprint")
         fp_without = state.context.get("fingerprint_without", "")
         fp_with = state.context.get("fingerprint_with", "")
         if fp_without and fp_with:
-            all_content.append(self._center(changes_label))
-            all_content.append(self._fixed(f"  {fp_without} -> {fp_with}"))
+            for line in self._word_wrap(f"@ {changes_label}"):
+                all_content.append(self._center(line))
+            for line in self._word_wrap(f"{fp_without} -> {fp_with}"):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1461,14 +1548,35 @@ class TextRenderer:
             num = start_num + i
             all_content.append(self._fixed(f" {num:>2}. {word}"))
         
+        # We need to temporarily override self.cols for button padding if warning_edges
+        warning_edges = state.context.get("warning_edges", False)
+        usable_cols = self.cols - 2 if warning_edges else self.cols
+        old_cols = self.cols
+        self.cols = usable_cols
+        
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
         for i, item in enumerate(state.items):
             label = item.get("label", "") if isinstance(item, dict) else str(item)
             selected = (i == state.selected_index)
             all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+            
+        self.cols = old_cols
         
-        return self._do_sliding_window(state, title_line, all_content, num_text)
+        lines = self._do_sliding_window(state, title_line, all_content, num_text)
+        
+        if warning_edges:
+            animated = state.context.get("animated", False)
+            if animated:
+                edge_char = "!" if (state.marquee_tick // 2) % 2 == 0 else " "
+            else:
+                edge_char = "!"
+                
+            for i in range(1, len(lines)):
+                content = lines[i][:usable_cols]
+                lines[i] = f"{edge_char}{content}{edge_char}"
+                
+        return lines
 
     # ── multisig_wallet_descriptor_screen ───────────────────────────
 
@@ -1480,14 +1588,16 @@ class TextRenderer:
         policy_label = state.context.get("policy_label", "Policy")
         policy = state.context.get("policy", "")
         if policy:
-            all_content.append(self._fixed(f"{policy_label}: {policy}"))
+            all_content.append(self._center(policy_label))
+            all_content.append(self._center(policy))
         
         keys_label = state.context.get("signing_keys_label", "Signing Keys")
         fingerprints = state.context.get("fingerprints", [])
         if fingerprints:
-            all_content.append(self._fixed(f"{keys_label}:"))
-            for fp in fingerprints:
-                all_content.append(self._fixed(f"  {fp}"))
+            all_content.append(self._center(keys_label))
+            fp_str = " ".join(fingerprints)
+            for line in self._word_wrap(fp_str):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1508,13 +1618,40 @@ class TextRenderer:
         deriv_label = state.context.get("derivation_path_label", "derivation path")
         deriv = state.context.get("derivation_path", "")
         if deriv:
-            all_content.append(self._fixed(f"{deriv_label}:"))
-            all_content.append(self._fixed(f"  {deriv}"))
+            for line in self._word_wrap(f"⎇ {deriv_label}"):
+                all_content.append(self._center(line))
+            for line in self._word_wrap(deriv):
+                all_content.append(self._center(line))
         
         address = self._highlight_address(state.context.get("address", ""))
         if address:
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── seed_sign_message_confirm_message_screen ────────────────────
+
+    def _render_seed_sign_message_confirm_message(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Review Message")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        message = state.context.get("message", "")
+        if message:
+            for p in message.split("\n"):
+                if p.strip() == "":
+                    all_content.append(self._fixed(""))
+                else:
+                    for line in self._word_wrap(p):
+                        all_content.append(self._fixed(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1579,6 +1716,35 @@ class TextRenderer:
             all_content.append(self._center(addr_type))
         if index_text:
             all_content.append(self._center(index_text))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "") if isinstance(item, dict) else str(item)
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+        
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── settings_qr_confirmation_screen ─────────────────────────────
+
+    def _render_settings_qr_confirmation(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Settings QR")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        
+        config_name = state.context.get("config_name", "")
+        if config_name:
+            for line in self._word_wrap(f'"{config_name}"'):
+                all_content.append(self._center(line))
+                
+        status_msg = state.context.get("status_message", "")
+        if status_msg:
+            if config_name:
+                all_content.append(self._center(""))  # Blank line separator
+            for line in self._word_wrap(status_msg):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)

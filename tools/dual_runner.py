@@ -387,6 +387,16 @@ class DualRunnerApp:
     def handle_input(self, key: InputEvent):
         if self.current_state:
             needs_render = False
+            # Dismiss toast on any keypress to match hardware behavior
+            if self.current_state.screen_type.name == "TOAST_OVERLAY":
+                bg_ctx = self.current_state.context.get("background", {})
+                self.current_state.context.update(bg_ctx)
+                if bg_ctx.get("top_nav", {}).get("title") == "Home":
+                    self.current_state.screen_type = ScreenType.MAIN_MENU
+                else:
+                    self.current_state.screen_type = ScreenType.BUTTON_LIST
+                needs_render = True
+
             
             # Disable Up/Down for keyboards in All Tiers mode since grids conflict
             is_all_tiers = "All Tiers" in self.tier_var.get()

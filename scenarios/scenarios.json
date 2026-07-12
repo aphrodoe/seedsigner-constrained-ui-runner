@@ -168,31 +168,31 @@
           "button_list": [
             {
               "label": "CAMERA",
-              "icon": ""
+              "icon": "\uf030"
             },
             {
               "label": "DICE",
-              "icon": ""
+              "icon": "\uf522"
             },
             {
               "label": "FINGERPRINT",
-              "icon": ""
+              "icon": "\ue91a"
             },
             {
               "label": "KEYBOARD",
-              "icon": ""
+              "icon": "\uf11c"
             },
             {
               "label": "PLUS",
-              "icon": ""
+              "icon": "\ue90f"
             },
             {
               "label": "QRCODE",
-              "icon": ""
+              "icon": "\ue920"
             },
             {
               "label": "CHEVRON_RIGHT",
-              "right_icon": ""
+              "right_icon": "\ue90a"
             }
           ]
         }
@@ -208,12 +208,12 @@
           "button_list": [
             {
               "label": "Approve",
-              "icon": "",
+              "icon": "\ue913",
               "icon_color": "#30d158"
             },
             {
               "label": "Cancel",
-              "icon": "",
+              "icon": "\ue915",
               "icon_color": "#ff5555"
             }
           ]
@@ -294,7 +294,7 @@
           "top_nav": {
             "title": "6a4f e1b8",
             "icon_color": "#409cff",
-            "icon": "",
+            "icon": "\ue91a",
             "show_back_button": true,
             "show_power_button": false
           },
@@ -302,16 +302,16 @@
           "button_list": [
             {
               "label": "Scan a QR code",
-              "icon": ""
+              "icon": "\ue900"
             },
             {
               "label": "Export Xpub",
-              "icon": "",
-              "right_icon": ""
+              "icon": "\ue920",
+              "right_icon": "\ue90a"
             },
             {
               "label": "Sign a PSBT",
-              "icon": ""
+              "icon": "\ue921"
             }
           ]
         }
@@ -348,20 +348,20 @@
           "button_list": [
             {
               "label": "Scan",
-              "icon": ""
+              "icon": "\uf030"
             },
             {
               "label": "Verify",
-              "icon": ""
+              "icon": "\ue91a"
             },
             {
               "label": "Donate",
-              "icon": "",
-              "right_icon": ""
+              "icon": "\ue920",
+              "right_icon": "\ue90a"
             },
             {
               "label": "Cancel",
-              "icon": "",
+              "icon": "\ue90f",
               "label_color": "#ff0000"
             }
           ]
@@ -561,7 +561,7 @@
             "show_power_button": false
           },
           "status_type": "custom",
-          "icon": "",
+          "icon": "\ue921",
           "icon_color": "#409cff",
           "status_headline": "",
           "text": "Click to approve this transaction",
@@ -580,7 +580,7 @@
             "show_power_button": false
           },
           "status_type": "custom",
-          "icon": "",
+          "icon": "\ue91f",
           "icon_color": "#409cff",
           "status_headline": "microSD detected",
           "text": "A microSD card change was detected.",
@@ -678,7 +678,7 @@
       "preview_instructions": "< back  |  click a button",
       "confirm_instructions": "< reshoot  |  accept >",
       "capturing_text": "Capturing image...",
-      "capture_icon": "",
+      "capture_icon": "\uf030",
       "accept_label": "Accept"
     },
     "variations": [
@@ -832,20 +832,20 @@
           },
           "cols": 3,
           "keys": [
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
+            "\uf525",
+            "\uf528",
+            "\uf527",
+            "\uf524",
+            "\uf523",
+            "\uf526"
           ],
           "keys_to_values": {
-            "": "1",
-            "": "2",
-            "": "3",
-            "": "4",
-            "": "5",
-            "": "6"
+            "\uf525": "1",
+            "\uf528": "2",
+            "\uf527": "3",
+            "\uf524": "4",
+            "\uf523": "5",
+            "\uf526": "6"
           },
           "keyboard_font": "icon",
           "show_save_button": false,
@@ -1075,7 +1075,7 @@
   },
   "loading_spinner_screen": {
     "context": {
-      "text": "Loading…"
+      "text": "Loading\u2026"
     },
     "screenshot": {
       "animated": true,
@@ -1406,17 +1406,17 @@
         {
           "locale": "pt_BR",
           "english": "Brazilian Portuguese",
-          "native": "Português do Brasil"
+          "native": "Portugu\u00eas do Brasil"
         },
         {
           "locale": "ca",
           "english": "Catalan",
-          "native": "Català"
+          "native": "Catal\u00e0"
         },
         {
           "locale": "cs",
           "english": "Czech",
-          "native": "Čeština"
+          "native": "\u010ce\u0161tina"
         },
         {
           "locale": "nl",
@@ -1426,7 +1426,7 @@
         {
           "locale": "fr",
           "english": "French",
-          "native": "Français"
+          "native": "Fran\u00e7ais"
         },
         {
           "locale": "de",
@@ -1436,13 +1436,13 @@
         {
           "locale": "el",
           "english": "Greek",
-          "native": "Ελληνικά",
+          "native": "\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac",
           "image": true
         },
         {
           "locale": "hi",
           "english": "Hindi",
-          "native": "हिन्दी",
+          "native": "\u0939\u093f\u0928\u094d\u0926\u0940",
           "image": true
         },
         {
@@ -1458,13 +1458,13 @@
         {
           "locale": "ja",
           "english": "Japanese",
-          "native": "日本語",
+          "native": "\u65e5\u672c\u8a9e",
           "image": true
         },
         {
           "locale": "ko",
           "english": "Korean",
-          "native": "한국어",
+          "native": "\ud55c\uad6d\uc5b4",
           "image": true
         },
         {
@@ -1475,7 +1475,7 @@
         {
           "locale": "fa",
           "english": "Persian",
-          "native": "فارسی",
+          "native": "\u0641\u0627\u0631\u0633\u06cc",
           "image": true
         },
         {
@@ -1486,41 +1486,41 @@
         {
           "locale": "ru",
           "english": "Russian",
-          "native": "Русский",
+          "native": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
           "image": true
         },
         {
           "locale": "zh_Hans_CN",
           "english": "Simplified Chinese",
-          "native": "简体中文",
+          "native": "\u7b80\u4f53\u4e2d\u6587",
           "image": true
         },
         {
           "locale": "es",
           "english": "Spanish",
-          "native": "Español"
+          "native": "Espa\u00f1ol"
         },
         {
           "locale": "th",
           "english": "Thai",
-          "native": "ไทย",
+          "native": "\u0e44\u0e17\u0e22",
           "image": true
         },
         {
           "locale": "tr",
           "english": "Turkish",
-          "native": "Türkçe"
+          "native": "T\u00fcrk\u00e7e"
         },
         {
           "locale": "ur",
           "english": "Urdu",
-          "native": "اردو",
+          "native": "\u0627\u0631\u062f\u0648",
           "image": true
         },
         {
           "locale": "vi",
           "english": "Vietnamese",
-          "native": "Tiếng Việt",
+          "native": "Ti\u1ebfng Vi\u1ec7t",
           "image": true
         }
       ]
@@ -1540,7 +1540,13 @@
       "xpub_label": "Xpub",
       "button_list": [
         "Export xpub"
-      ]
+      ],
+      "warning_edges": true,
+      "animated": true
+    },
+    "screenshot": {
+      "animated": true,
+      "seconds": 2.0
     }
   },
   "seed_review_passphrase_screen": {
@@ -1601,7 +1607,9 @@
       "start_number": 1,
       "button_list": [
         "Next"
-      ]
+      ],
+      "warning_edges": true,
+      "animated": true
     },
     "variations": [
       {
@@ -1622,10 +1630,20 @@
           "start_number": 21,
           "button_list": [
             "Done"
-          ]
+          ],
+          "warning_edges": true,
+          "animated": true
+        },
+        "screenshot": {
+          "animated": true,
+          "seconds": 2.0
         }
       }
-    ]
+    ],
+    "screenshot": {
+      "animated": true,
+      "seconds": 2.0
+    }
   },
   "multisig_wallet_descriptor_screen": {
     "context": {
@@ -1964,11 +1982,11 @@
       "button_list": [
         {
           "label": "Restart",
-          "icon": ""
+          "icon": "\ue911"
         },
         {
           "label": "Power off",
-          "icon": ""
+          "icon": "\ue910"
         }
       ]
     }
@@ -2056,7 +2074,7 @@
       "top_nav": {
         "title": "I/O Test"
       },
-      "capturing_text": "Capturing image…",
+      "capturing_text": "Capturing image\u2026",
       "clear_label": "Clear",
       "exit_label": "Exit"
     }
