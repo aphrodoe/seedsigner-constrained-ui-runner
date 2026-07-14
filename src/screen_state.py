@@ -63,7 +63,6 @@ class ScreenType(Enum):
             ScreenType.QR_DISPLAY,
             ScreenType.SEED_TRANSCRIBE_ZOOMED_QR,
             ScreenType.SEED_TRANSCRIBE_WHOLE_QR,
-            ScreenType.SEED_TRANSCRIBE_SEEDQR_FORMAT,
             ScreenType.IO_TEST,
         ]
 
@@ -241,6 +240,14 @@ class ScreenState:
             bg = self.context["background"]
             if "button_list" in bg:
                 return self._normalize_items(bg["button_list"])
+        if "addresses" in self.context:
+            items = []
+            start_idx = self.context.get("start_index", 0)
+            for i, addr in enumerate(self.context["addresses"]):
+                items.append({"label": f"{start_idx + i}:{addr}", "value": addr})
+            if "next_label" in self.context:
+                items.append({"label": self.context["next_label"], "value": "next"})
+            return items
         return []
         
     def tick(self) -> bool:

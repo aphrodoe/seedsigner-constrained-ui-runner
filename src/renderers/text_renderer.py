@@ -87,6 +87,8 @@ class TextRenderer:
             lines = self._render_seed_words(state)
         elif state.screen_type == ScreenType.MULTISIG_WALLET_DESCRIPTOR:
             lines = self._render_multisig_wallet_descriptor(state)
+        elif state.screen_type == ScreenType.SEED_TRANSCRIBE_SEEDQR_FORMAT:
+            lines = self._render_seed_transcribe_seedqr_format(state)
         elif state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_ADDRESS:
             lines = self._render_seed_sign_message_confirm_address(state)
         elif state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_MESSAGE:
@@ -109,9 +111,10 @@ class TextRenderer:
                                     ScreenType.POWER_OFF_NOT_REQUIRED):
             lines = self._render_text_only(state)
         # ── Button-list fallback screens ────────────────────────────
-        elif state.screen_type in (ScreenType.POWER_OPTIONS,
-                                    ScreenType.PSBT_OP_RETURN):
+        elif state.screen_type == ScreenType.POWER_OPTIONS:
             lines = self._render_button_list(state)
+        elif state.screen_type == ScreenType.PSBT_OP_RETURN:
+            lines = self._render_psbt_op_return(state)
         else:
             lines = self._pad_rows([self._center("Unsupported")])
             
@@ -222,16 +225,33 @@ class TextRenderer:
 
         # If the user hasn't moved yet, we want to stay at 0 to show the text!
         if not getattr(state, "_user_has_moved", False):
-            current_scroll = 0
             if state.selected_index == 0 and natural_min_scroll > 0:
                 # Initialize intent so the first 'down' scrolls sequentially
                 state.tier_text_intent[self.tier] = -natural_min_scroll
+                
+                if state.screen_type == ScreenType.SEED_SIGN_MESSAGE_CONFIRM_MESSAGE:
+                    # Auto-scroll vertically if the content doesn't fit on screen
+                    # 6 ticks per frame (0.6s per line). Pause at top/bottom for 6 frames (3.6s)
+                    total_frames = natural_min_scroll * 2 + 12
+                    frame = (state.marquee_tick // 6) % total_frames
+                    if frame < 6:
+                        current_scroll = 0
+                    elif frame < 6 + natural_min_scroll:
+                        current_scroll = frame - 6
+                    elif frame < 12 + natural_min_scroll:
+                        current_scroll = natural_min_scroll
+                    else:
+                        current_scroll = natural_min_scroll - (frame - (12 + natural_min_scroll))
+                else:
+                    current_scroll = 0
+            else:
+                current_scroll = 0
         else:
             if self.tier not in state.tier_text_intent:
                 state.tier_text_intent[self.tier] = 0
             
         # Apply manual text scroll intent if the user is scrolling text at the top button
-        if state.selected_index == 0:
+        if state.selected_index == 0 and getattr(state, "_user_has_moved", False):
             intent = state.tier_text_intent.get(self.tier, 0)
             current_scroll += intent
             
@@ -1379,6 +1399,13 @@ class TextRenderer:
             all_content.append(self._center(""))
             all_content.append(self._center(url))
 
+        # Vertically center if the content fits on a single screen
+        available_rows = self.rows - 1
+        if len(all_content) < available_rows:
+            pad_top = (available_rows - len(all_content)) // 2
+            for _ in range(pad_top):
+                all_content.insert(0, self._center(""))
+
         return self._do_sliding_window(state, title_line, all_content, len(all_content))
 
     # ── toast_overlay_screen ────────────────────────────────────────
@@ -1578,6 +1605,83 @@ class TextRenderer:
                 
         return lines
 
+    # ── seed_transcribe_seedqr_format_screen ────────────────────────────
+
+    def _render_seed_transcribe_seedqr_format(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "SeedQR Format")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        
+        # Standard Format details
+        std_label = state.context.get("standard_label", "")
+        std_text = state.context.get("standard_text", "")
+        if std_label or std_text:
+            if std_label:
+                all_content.append(self._center(std_label))
+            if std_text:
+                for line in self._word_wrap(std_text):
+                    all_content.append(self._center(line))
+                    
+        # Add spacing between the two formats
+        all_content.append(self._center(""))
+        
+        # Compact Format details
+        cmp_label = state.context.get("compact_label", "")
+        cmp_text = state.context.get("compact_text", "")
+        if cmp_label or cmp_text:
+            if cmp_label:
+                all_content.append(self._center(cmp_label))
+            if cmp_text:
+                for line in self._word_wrap(cmp_text):
+                    all_content.append(self._center(line))
+        
+        all_content = self._pad_text_above_buttons(all_content, len(state.items))
+        
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "")
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+            
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
+    # ── psbt_op_return_screen ───────────────────────────────────────
+
+    def _render_psbt_op_return(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "OP_RETURN")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        
+        # Regular text variation
+        text = state.context.get("text", "")
+        if text:
+            for line in self._word_wrap(text):
+                all_content.append(self._center(line))
+        
+        # Raw hex variation
+        hex_data = state.context.get("hex", "")
+        if hex_data:
+            hex_label = state.context.get("hex_label", "")
+            if hex_label:
+                all_content.append(self._center(hex_label))
+            # Just chunk the hex string since it has no spaces
+            for line in self._word_wrap(hex_data):
+                all_content.append(self._center(line))
+                
+        # Optional spacing above buttons
+        if all_content:
+            all_content.append(self._center(""))
+            
+        num_text = len(all_content)
+        for i, item in enumerate(state.items):
+            label = item.get("label", "")
+            selected = (i == state.selected_index)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
+            
+        return self._do_sliding_window(state, title_line, all_content, num_text)
+
     # ── multisig_wallet_descriptor_screen ───────────────────────────
 
     def _render_multisig_wallet_descriptor(self, state: ScreenState) -> List[str]:
@@ -1623,7 +1727,7 @@ class TextRenderer:
             for line in self._word_wrap(deriv):
                 all_content.append(self._center(line))
         
-        address = self._highlight_address(state.context.get("address", ""))
+        address = self._highlight_address_verify(state.context.get("address", ""))
         if address:
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
@@ -1669,7 +1773,7 @@ class TextRenderer:
         title_line = self._title_row(title, "", state)
         
         all_content = []
-        address = self._highlight_address(state.context.get("address", ""))
+        address = self._highlight_address_verify(state.context.get("address", ""))
         if address:
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
@@ -1677,13 +1781,15 @@ class TextRenderer:
         type_network = state.context.get("type_network", "")
         network = state.context.get("network", "")
         if type_network:
-            all_content.append(self._center(type_network))
+            for line in self._word_wrap(type_network):
+                all_content.append(self._center(line))
         if network and network != "mainnet":
             all_content.append(self._center(f"[{network}]"))
         
         progress = state.context.get("progress_text", "")
         if progress:
-            all_content.append(self._center(progress))
+            for line in self._word_wrap(progress):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1703,9 +1809,10 @@ class TextRenderer:
         all_content = []
         headline = state.context.get("status_headline", "")
         if headline:
-            all_content.append(self._center(f"✓ {headline}"))
+            for line in self._word_wrap(f"✓ {headline}"):
+                all_content.append(self._center(line))
         
-        address = self._highlight_address(state.context.get("address", ""))
+        address = self._highlight_address_success(state.context.get("address", ""))
         if address:
             for line in self._word_wrap(address):
                 all_content.append(self._center(line))
@@ -1713,9 +1820,11 @@ class TextRenderer:
         addr_type = state.context.get("address_type_text", "")
         index_text = state.context.get("index_text", "")
         if addr_type:
-            all_content.append(self._center(addr_type))
+            for line in self._word_wrap(addr_type):
+                all_content.append(self._center(line))
         if index_text:
-            all_content.append(self._center(index_text))
+            for line in self._word_wrap(index_text):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1765,19 +1874,27 @@ class TextRenderer:
         your_input = state.context.get("your_input_text", "")
         if your_input:
             for line in self._word_wrap(your_input):
-                all_content.append(self._fixed(line))
-        
+                all_content.append(self._center(line))
+            
+        selected_bits = state.context.get("selected_final_bits", "")
+        if selected_bits:
+            all_content.append(self._center(selected_bits.ljust(11, "-")))
+            
+        checksum_label = state.context.get("checksum_label", "Checksum")
+        checksum_bits = state.context.get("checksum_bits", "")
+        if checksum_bits:
+            all_content.append(self._center(""))
+            all_content.append(self._center(checksum_label))
+            all_content.append(self._center(checksum_bits.rjust(11, "-")))
+            
         final_word = state.context.get("final_word_text", "")
         if final_word:
+            all_content.append(self._center(""))
             for line in self._word_wrap(final_word):
-                all_content.append(self._fixed(line))
-        
-        checksum_label = state.context.get("checksum_label", "Checksum")
-        selected_bits = state.context.get("selected_final_bits", "")
-        checksum_bits = state.context.get("checksum_bits", "")
-        if selected_bits or checksum_bits:
-            bits_display = f"{selected_bits}[{checksum_bits}]" if checksum_bits else selected_bits
-            all_content.append(self._fixed(f"{checksum_label}: {bits_display}"))
+                all_content.append(self._center(line))
+            if selected_bits and checksum_bits:
+                prefix = selected_bits[:11 - len(checksum_bits)]
+                all_content.append(self._center(prefix + checksum_bits))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1797,12 +1914,14 @@ class TextRenderer:
         all_content = []
         final_word = state.context.get("final_word", "")
         if final_word:
-            all_content.append(self._center(f'Word: "{final_word}"'))
+            for line in self._word_wrap(f'Word: "{final_word}"'):
+                all_content.append(self._center(line))
         
         fp_label = state.context.get("fingerprint_label", "fingerprint")
         fp = state.context.get("fingerprint", "")
         if fp:
-            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+            all_content.append(self._center(f"@ {fp_label}"))
+            all_content.append(self._center(fp))
         
         word_len = state.context.get("mnemonic_word_length", "")
         if word_len:
@@ -1830,19 +1949,16 @@ class TextRenderer:
         all_content = []
         for i, addr in enumerate(addresses):
             num = start_idx + i
-            chunked = self._highlight_address(addr)
-            # Prefix with index number
-            addr_line = f"#{num}: {chunked}"
-            for line in self._word_wrap(addr_line):
-                all_content.append(self._fixed(line))
+            label = f"{num}:{addr}"
+            selected = (state.selected_index == i)
+            all_content.append(self._item_row(label, selected=selected, state=state, index=i))
         
-        num_text = len(all_content)
         # The next_label acts as a navigable item
         if next_label:
             selected = (state.selected_index == len(addresses))
             all_content.append(self._item_row(next_label, selected=selected, state=state, index=len(addresses)))
         
-        return self._do_sliding_window(state, title_line, all_content, num_text)
+        return self._do_sliding_window(state, title_line, all_content, 0)
 
     # ── tools_address_explorer_address_type_screen ──────────────────
 
@@ -1854,12 +1970,24 @@ class TextRenderer:
         fp_label = state.context.get("fingerprint_label", "Fingerprint")
         fp = state.context.get("fingerprint", "")
         if fp:
-            all_content.append(self._fixed(f"{fp_label}: {fp}"))
+            all_content.append(self._center(f"@ {fp_label}"))
+            all_content.append(self._center(fp))
         
         deriv_label = state.context.get("derivation_label", "Derivation")
         deriv = state.context.get("derivation_text", "")
         if deriv:
-            all_content.append(self._fixed(f"{deriv_label}: {deriv}"))
+            all_content.append(self._center(f"⎇ {deriv_label}"))
+            for line in self._word_wrap(deriv):
+                all_content.append(self._center(line))
+                
+        wallet_label = state.context.get("wallet_descriptor_label", "")
+        wallet_text = state.context.get("wallet_descriptor_text", "")
+        if wallet_text:
+            if wallet_label:
+                for line in self._word_wrap(wallet_label):
+                    all_content.append(self._center(line))
+            for line in self._word_wrap(wallet_text):
+                all_content.append(self._center(line))
         
         all_content = self._pad_text_above_buttons(all_content, len(state.items))
         num_text = len(all_content)
@@ -1884,7 +2012,15 @@ class TextRenderer:
         return f"{text:<{self.cols}}"
 
     def _highlight_address(self, address: str) -> str:
-        """Mimics SeedSigner's address chunking for visual verification."""
+        """Generic address formatter."""
+        if not address:
+            return ""
+        if len(address) > 16:
+            return " ".join([address[i:i+4] for i in range(0, len(address), 4)])
+        return address
+
+    def _highlight_address_verify(self, address: str) -> str:
+        """Truncate the middle of the address to match LVGL Verify Address layout."""
         if not address:
             return ""
         if address.startswith("bc1") or address.startswith("tb1") or address.startswith("bcrt1"):
@@ -1892,10 +2028,31 @@ class TextRenderer:
             prefix = address[:sep]
             rest = address[sep:]
             if len(rest) > 14:
-                return f"{prefix} [{rest[:7]}] {rest[7:-7]} [{rest[-7:]}]"
+                middle = rest[7:-7]
+                if len(middle) > 13:
+                    middle = middle[:13] + "..."
+                return f"{prefix} [{rest[:7]}] {middle} [{rest[-7:]}]"
         else:
             if len(address) > 15:
-                return f"[{address[:8]}] {address[8:-7]} [{address[-7:]}]"
+                middle = address[8:-7]
+                if len(middle) > 13:
+                    middle = middle[:13] + "..."
+                return f"[{address[:8]}] {middle} [{address[-7:]}]"
+        return address
+
+    def _highlight_address_success(self, address: str) -> str:
+        """Heavily truncate the address to match LVGL Success Screen layout."""
+        if not address:
+            return ""
+        if address.startswith("bc1") or address.startswith("tb1") or address.startswith("bcrt1"):
+            sep = address.rfind("1") + 2
+            prefix = address[:sep]
+            rest = address[sep:]
+            if len(rest) > 10:
+                return f"{prefix} [{rest[:7]}]...[{rest[-3:]}]"
+        else:
+            if len(address) > 11:
+                return f"[{address[:8]}]...[{address[-3:]}]"
         return address
 
     def _pad_rows(self, lines: List[str]) -> List[str]:
