@@ -41,8 +41,12 @@ class DisplayManager:
         # ── Pixel displays ──────────────────────────────────────────
         elif display_type == "oled_128x64":
             from src.renderers.oled_hardware_renderer import OledHardwareRenderer
-            return OledHardwareRenderer()
+            return OledHardwareRenderer(width=128, height=64)
+        elif display_type == "oled_128x32":
+            from src.renderers.oled_hardware_renderer import OledHardwareRenderer
+            return OledHardwareRenderer(width=128, height=32)
         elif display_type == "epaper_200x200":
-            raise NotImplementedError("epaper_200x200 renderer not yet implemented (Week 10)")
+            from src.renderers.epaper_hardware_renderer import EpaperHardwareRenderer
+            return EpaperHardwareRenderer()
             
         raise ValueError(f"Unknown display type: {display_type}")
