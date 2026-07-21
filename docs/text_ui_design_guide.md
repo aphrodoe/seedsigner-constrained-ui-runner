@@ -44,6 +44,19 @@ On larger displays like OLEDs (Tier 2) and E-Paper (Tier 3), standard menus rare
 *   **Tier 2 (16x8)**: Renders a large block of items below the title row.
 *   **Tier 3 (25x16)**: Entire lists fit on screen. Future enhancements include drawing ASCII borders (`+---+`) around content zones and reserving columns for sidebars or persistent help text.
 
+### 2.4 Vertical Centering for Text-Only Screens
+For screens that do not have active button lists (e.g., wallet descriptors, setting confirmations), the text block is automatically vertically centered within the available display rows. This ensures that on larger displays (Tier 2/3), the text is not awkwardly pinned to the top of the screen.
+
+**Layout:**
+```text
+┌────────────────────────┐
+│                        │ ← Auto-padded
+│   Multisig 2-of-3      │
+│   Native Segwit        │
+│                        │ ← Auto-padded
+└────────────────────────┘
+```
+
 
 ## 3. Advanced Text Rendering
 
@@ -60,7 +73,7 @@ For screens requiring immediate attention (e.g., `dire_warning_animated`), the e
 
 We map visual states to ASCII/Unicode text equivalents, and where possible, inject custom 5x8 bitmaps into the LCD hardware's CGRAM (Slots 0-7).
 
-| Upstream LVGL Concept | Constrained UI Equivalent | CGRAM Supported |
+| Upstream LVGL Concept | Constrained UI Equivalent | Hardware CGRAM |
 | :--- | :--- | :---: |
 | `success` (Checkmark) | `✓` | Yes |
 | `warning` (Triangle) | `⚠` | Yes |
@@ -70,10 +83,18 @@ We map visual states to ASCII/Unicode text equivalents, and where possible, inje
 | Main Menu (Seeds)       | `⚿` | Yes |
 | Main Menu (Tools)       | `⚒` | Yes |
 | Main Menu (Settings)    | `⚙` | Yes |
+| Derivation Branch       | `⎇` | ASCII Fallback (`*`) |
+| Fingerprint             | `@` | Native ASCII |
+| Bitcoin                 | `₿` | ASCII Fallback (`B`) |
+| Radio Button (Filled)   | `●` | ASCII Fallback (`o`) |
+| Keyboard Mode           | `⌨` | ASCII Fallback (`K`) |
+| Edit                    | `✎` | ASCII Fallback (`E`) |
+| Alternate Cross         | `✗` | ASCII Fallback (`x`) |
+| Info                    | `ℹ` | ASCII Fallback (`i`) |
 
 ## 5. Keyboard Navigation & Entry
 
-For screens like `KeyboardScreen` and synthetic entry screens (Dice Roll, Coin Flip, BIP85), the UI adapts based on the display tier.
+For screens like `keyboard_screen` (Dice Roll, Coin Flip, BIP85, Derivation), the UI adapts based on the display tier.
 
 ### 5.1 1D Carousel (Tier 0 & Tier 1)
 On smaller displays, keyboards rely on a 1D horizontal array (a sliding list of characters).
@@ -106,5 +127,8 @@ Hardware constraints must never lead to loss of financial data. Instead of trunc
 ### 6.2 Visual Address Chunking
 To aid in the manual verification of complex addresses, the renderer attempts to recreate the upstream SeedSigner UX by isolating distinct visual chunks. Bech32 addresses are analyzed, and their most critical segments (the prefix, first 8 characters, and last 7 characters) are wrapped in `[ ]` brackets and padded with spaces. This guarantees that `_word_wrap` breaks the address exactly at the optimal boundaries, allowing for quick and accurate human verification.
 
-### 6.3 Flow Diagrams
+### 6.3 OP_RETURN Raw Data
+If a transaction output contains an OP_RETURN script, the screen must display the raw hex data before the user approves it. On constrained displays, this hex string is wrapped tightly into a continuous block above the navigation buttons, ensuring maximum data visibility without clipping.
+
+### 6.4 Flow Diagrams
 When displaying the PSBT Overview, constrained displays lack the graphical capabilities to draw vectors. Instead, the UI dynamically generates an ASCII art representation of the transaction flow, correctly scaling the graphical margins based on the count of inputs and outputs. An animated marquee (e.g. `--->`) connects the inputs to the outputs to simulate flow over time.

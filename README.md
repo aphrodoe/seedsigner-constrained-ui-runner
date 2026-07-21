@@ -6,13 +6,14 @@ This repository contains the standalone Python runner for constrained hardware i
 
 Instead of directly drawing pixels to a 240x240 screen, this engine consumes JSON payloads that describe the *intent* of a screen (e.g., a list of buttons, a warning, or a QR code) and renders them optimally for the connected hardware.
 
+As of Week 8, this runner supports **29 unique text-renderable screen types**, covering the entire signing flow (including PSBT details, multisig descriptors, message signing, and complex keyboard entry). 6 screens remain strictly visual-only (QR code display and Camera overlays).
+
 Supported outputs (Categorized by Tier):
-* **Desktop Terminal (Simulator)**
-* **Tier 0**: 16x2 Character LCD (I2C)
-* **Tier 1**: 20x4 Character LCD (I2C)
-* **Tier 2**: 128x64 OLED (via Pixel-to-Text adapter)
-* **Tier 3**: 200x200 E-Paper (via Pixel-to-Text adapter)
-* **Audio**: Navigation cues (PWM Buzzer)
+* **Tier 0**: 16x2 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
+* **Tier 1**: 20x4 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
+* **Tier 2**: 128x64 OLED (via Pixel-to-Text adapter) - *Upcoming Week 9 (ACEBOTT kit)*
+* **Tier 3**: 200x200 E-Paper (via Pixel-to-Text adapter) - *Upcoming Week 10 (Waveshare 1.54")*
+* **Audio**: Navigation cues (PWM Buzzer) - *Tested on standard 5V active buzzer*
 
 ## Setup
 
@@ -20,28 +21,9 @@ Supported outputs (Categorized by Tier):
 pip install -r requirements.txt
 ```
 
-## Running the Simulator
+## Terminal Simulators
 
-You can test the UI on your laptop without any hardware connected using the built-in terminal simulator. Use the **Up/Down arrow keys** to navigate, **Enter** to select, and **q** to quit.
-
-**Test 1: A simple short menu**
-```bash
-python3 -m src.main --display simulator --scenario button_list_screen
-```
-
-**Test 2: A long menu with scrolling**
-```bash
-python3 -m src.main --display simulator --scenario button_list_screen --variation scroll_many
-```
-
-**Test 3: The Main Menu Grid**
-```bash
-python3 -m src.main --display simulator --scenario main_menu_screen
-```
-
-## LCD Simulators
-
-These simulate the exact character output that would appear on a physical LCD:
+These simulate the exact character output that would appear on a physical LCD directly in your laptop's terminal without any hardware connected. Use the **Up/Down arrow keys** to navigate, **Enter** to select, and **q** to quit.
 
 **Tier 0: 16x2 LCD (Block Pagination)** — shows one item at a time:
 ```bash
