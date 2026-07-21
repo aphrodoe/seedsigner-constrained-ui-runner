@@ -38,9 +38,10 @@ class DisplayManager:
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=16, cols=25)
 
-        # ── Pixel displays (stub — implemented in Week 9/10) ────────
+        # ── Pixel displays ──────────────────────────────────────────
         elif display_type == "oled_128x64":
-            raise NotImplementedError("oled_128x64 renderer not yet implemented (Week 9)")
+            from src.renderers.oled_hardware_renderer import OledHardwareRenderer
+            return OledHardwareRenderer()
         elif display_type == "epaper_200x200":
             raise NotImplementedError("epaper_200x200 renderer not yet implemented (Week 10)")
             
