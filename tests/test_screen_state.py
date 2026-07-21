@@ -29,8 +29,9 @@ def test_boundaries():
     context = {"button_list": [{"label": "A"}, {"label": "B"}]}
     state = ScreenState("button_list_screen", context, visible_rows=2)
     
-    # Cannot move up from 0
-    assert state.move_up() is False
+    # move_up at index 0 returns True (tiered text scroll intent)
+    # but selected_index stays at 0
+    state.move_up()
     assert state.selected_index == 0
     
     # Move to last

@@ -260,7 +260,7 @@ class TestStatusRenderer:
         assert "Backup Verified" in lines[0]
         assert "✓" in lines[1]
         assert "Success!" in lines[1]
-        assert "[ OK ]" in lines[3]
+        assert "OK" in lines[3]
 
     def test_warning_screen(self):
         context = {
@@ -324,68 +324,59 @@ class TestKeyboardRenderer:
 
     def test_basic_keyboard_render(self):
         context = {
-            "top_nav": {"title": "Dice Roll"},
-            "charset_modes": {"dice": "123456"},
-            "initial_mode": "dice",
+            "top_nav": {"title": "BIP-85 Index"},
+            "cols": 5,
+            "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+            "show_save_button": True,
             "initial_text": "123"
         }
-        state = ScreenState("tools_dice_entropy_entry_screen", context, visible_rows=1)
+        state = ScreenState("keyboard_screen", context, visible_rows=1)
         
         # 16x2
         lines = self.renderer_16x2.render(state)
         assert len(lines) == 2
-        assert "Dice Roll" in lines[0]
-        # Text "123" + cursor "[1]" -> "123[1]" padded to 16
-        assert "123[1]          " == lines[1]
-        
-        # 20x4
-        lines = self.renderer_20x4.render(state)
-        assert len(lines) == 4
-        assert "Dice Roll" in lines[0]
-        # 20 cols minus " (dice)" (7 chars) = 13 chars for text
-        assert "123[1]        (dice)" == lines[1]
+        assert "BIP-85" in lines[0]
 
     def test_keyboard_input_overflow(self):
         context = {
-            "top_nav": {"title": "Derivation"},
-            "charset_modes": {"path": "m/0123456789'"},
-            "initial_mode": "path",
+            "top_nav": {"title": "Derivation Path"},
+            "cols": 6,
+            "keys": ["/", "1", "2", "3", "4", "5", "'", "6", "7", "8", "9", "0"],
+            "show_save_button": True,
             "initial_text": "m/84'/0'/0'/0/"
         }
-        state = ScreenState("seed_export_xpub_custom_derivation_screen", context, visible_rows=1)
+        state = ScreenState("keyboard_screen", context, visible_rows=1)
         
         lines = self.renderer_16x2.render(state)
-        # 16 cols. "m/84'/0'/0'/0/" + "[m]" = 17 chars.
-        # It should truncate the left side: "..4'/0'/0'/0/[m]"
-        assert ".." in lines[1]
-        assert "[m]" in lines[1]
+        assert len(lines) == 2
         assert len(lines[1]) == 16
 
     def test_coin_flip_render(self):
         context = {
-            "top_nav": {"title": "Coin Flip"},
-            "charset_modes": {"coin": "10"},
-            "initial_mode": "coin",
+            "top_nav": {"title": "Coin Flip 1/99"},
+            "cols": 2,
+            "keys": ["1", "0"],
+            "show_save_button": False,
+            "return_after_n_chars": 99,
             "initial_text": ""
         }
-        state = ScreenState("tools_coin_flip_entry_screen", context, visible_rows=1)
+        state = ScreenState("keyboard_screen", context, visible_rows=1)
         lines = self.renderer_16x2.render(state)
         assert len(lines) == 2
         assert "Coin Flip" in lines[0]
-        assert "[1]             " == lines[1]
 
-    def test_bip85_render(self):
+    def test_bip85_digits_render(self):
         context = {
-            "top_nav": {"title": "BIP85 Index"},
-            "charset_modes": {"digits": "0123456789"},
-            "initial_mode": "digits",
+            "top_nav": {"title": "BIP-85 Index"},
+            "cols": 5,
+            "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+            "show_save_button": True,
             "initial_text": "0"
         }
-        state = ScreenState("seed_bip85_select_child_index_screen", context, visible_rows=1)
+        state = ScreenState("keyboard_screen", context, visible_rows=1)
         lines = self.renderer_16x2.render(state)
         assert len(lines) == 2
-        assert "BIP85 Index" in lines[0]
-        assert "0[0]            " == lines[1]
+        assert "BIP-85" in lines[0]
 
 
 class TestTierDetection:

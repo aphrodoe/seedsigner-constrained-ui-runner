@@ -14,30 +14,34 @@ class DisplayManager:
             return json.load(f)
             
     def create_renderer(self) -> BaseRenderer:
-        display_type = self.config.get("display", {}).get("type", "simulator")
-        
-        if display_type == "simulator":
-            from src.renderers.simulator_renderer import SimulatorRenderer
-            return SimulatorRenderer(visible_rows=5, cols=20)
+        display_type = self.config.get("display", {}).get("type", "lcd_20x4_sim")
+
+        # ── Hardware character LCDs ──────────────────────────────────
+        if display_type == "lcd_16x2":
+            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
+            return LCDHardwareRenderer(rows=2, cols=16)
+        elif display_type == "lcd_20x4":
+            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
+            return LCDHardwareRenderer(rows=4, cols=20)
+
+        # ── Terminal simulators (Tier 0–3) ───────────────────────────
         elif display_type == "lcd_16x2_sim":
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=2, cols=16)
         elif display_type == "lcd_20x4_sim":
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=4, cols=20)
-        elif display_type == "lcd_16x2":
-            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
-            return LCDHardwareRenderer(rows=2, cols=16)
-        elif display_type == "lcd_20x4":
-            from src.renderers.lcd_hardware_renderer import LCDHardwareRenderer
-            return LCDHardwareRenderer(rows=4, cols=20)
         elif display_type == "lcd_16x8_sim":
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=8, cols=16)
         elif display_type == "lcd_25x16_sim":
             from src.renderers.lcd_simulator_renderer import LCDSimulatorRenderer
             return LCDSimulatorRenderer(rows=16, cols=25)
-        elif display_type == "oled_128x32":
-            raise NotImplementedError("oled_128x32 renderer not yet implemented")
+
+        # ── Pixel displays (stub — implemented in Week 9/10) ────────
+        elif display_type == "oled_128x64":
+            raise NotImplementedError("oled_128x64 renderer not yet implemented (Week 9)")
+        elif display_type == "epaper_200x200":
+            raise NotImplementedError("epaper_200x200 renderer not yet implemented (Week 10)")
             
         raise ValueError(f"Unknown display type: {display_type}")

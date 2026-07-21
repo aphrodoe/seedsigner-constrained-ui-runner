@@ -20,15 +20,29 @@ class LCDHardwareRenderer(BaseRenderer):
         # Get the formatted lines from the TextRenderer
         lines = self.text_renderer.render(state)
         
-        # Translate Unicode icons to CGRAM byte locations
+        # Translate Unicode icons to CGRAM byte locations or ASCII fallbacks.
+        # The HD44780 LCD has only 8 CGRAM slots (0-7), already occupied by
+        # the status icons loaded in lcd_i2c.py. Additional Unicode chars
+        # used by Week 8+ screens are mapped to ASCII approximations.
         translated_lines = []
         cgram_map = {
+            # CGRAM slot 0-7 (actual custom bitmaps on the LCD)
             "✓": chr(0), "⚠": chr(1), "‼": chr(2), "✕": chr(3),
-            "▦": chr(4), "⚿": chr(5), "⚒": chr(6), "⚙": chr(7)
+            "▦": chr(4), "⚿": chr(5), "⚒": chr(6), "⚙": chr(7),
+            # ASCII fallbacks for icons without CGRAM slots
+            "⎇": "*",     # Derivation (branch)
+            "@": "@",     # Fingerprint (already ASCII)
+            "₿": "B",     # Bitcoin
+            "●": "o",     # Radio button filled
+            "⌨": "K",     # Keyboard mode indicator
+            "✎": "E",     # Edit
+            "✗": "x",     # Alternative cross
+            "ℹ": "i",     # Info
+            "·": ".",     # Middle dot
         }
         for line in lines:
-            for uni, cgram in cgram_map.items():
-                line = line.replace(uni, cgram)
+            for uni, replacement in cgram_map.items():
+                line = line.replace(uni, replacement)
             translated_lines.append(line)
         
         # Write them to the hardware

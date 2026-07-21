@@ -28,6 +28,7 @@ class LCDI2C:
         self.bus = smbus.SMBus(bus_num)
         self.rows = rows
         self.cols = cols
+        self._backlight = LCD_BACKLIGHT
         
         self.row_offsets = [LCD_LINE_1, LCD_LINE_2, LCD_LINE_3, LCD_LINE_4]
         self._init_lcd()
@@ -68,8 +69,8 @@ class LCDI2C:
         bits = the data
         mode = 1 for data, 0 for command"""
         
-        bits_high = mode | (bits & 0xF0) | LCD_BACKLIGHT
-        bits_low = mode | ((bits << 4) & 0xF0) | LCD_BACKLIGHT
+        bits_high = mode | (bits & 0xF0) | self._backlight
+        bits_low = mode | ((bits << 4) & 0xF0) | self._backlight
         
         # High bits
         self.bus.write_byte(self.i2c_addr, bits_high)
@@ -114,6 +115,5 @@ class LCDI2C:
             
     def set_backlight(self, on: bool):
         """Turn backlight on or off"""
-        global LCD_BACKLIGHT
-        LCD_BACKLIGHT = 0x08 if on else 0x00
-        self.bus.write_byte(self.i2c_addr, LCD_BACKLIGHT)
+        self._backlight = 0x08 if on else 0x00
+        self.bus.write_byte(self.i2c_addr, self._backlight)

@@ -28,17 +28,9 @@ def main():
     
     try:
         context = json_parser.get_scenario_context(args.scenario, args.variation)
-        if not context:
-            # e.g. main_menu_screen is {} in scenarios.json
-            raise ValueError("Empty context")
-    except ValueError:
-        # Fallback to synthetic screens if not found in scenarios.json
-        try:
-            json_parser = JSONParser("scenarios/synthetic_screens.json")
-            context = json_parser.get_scenario_context(args.scenario, args.variation)
-        except (ValueError, FileNotFoundError):
-            print(f"Error: Scenario '{args.scenario}' not found in either scenarios.json or synthetic_screens.json")
-            sys.exit(1)
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
 
     state = ScreenState(args.scenario, context, visible_rows=renderer.visible_rows)
     audio = AudioRenderer(pin=18)
