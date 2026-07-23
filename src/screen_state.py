@@ -253,7 +253,14 @@ class ScreenState:
     def tick(self) -> bool:
         """Increment marquee tick. Returns True to indicate screen needs render."""
         self.marquee_tick += 1
-        return True
+        
+        # Only force a redraw if there is an active animation (loading spinner or toast)
+        if self.screen_type == ScreenType.LOADING:
+            return True
+        if self.context.get("toast"):
+            return True
+            
+        return False
         
     def move_up(self) -> bool:
         """Move cursor up. Returns True if selection changed or scrolled."""

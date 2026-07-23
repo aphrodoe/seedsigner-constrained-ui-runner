@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 try:
     # pyrefly: ignore [missing-import]
-    from waveshare_epd import epd1in54_V2
+    import epaper
     HAS_EPD = True
 except ImportError:
     HAS_EPD = False
@@ -16,7 +16,7 @@ class EpaperWaveshare:
         if not HAS_EPD:
             raise ImportError("waveshare-epaper is required for EpaperWaveshare. Install with: pip install waveshare-epaper")
             
-        self.device = epd1in54_V2.EPD()
+        self.device = epaper.epaper('epd1in54_V2').EPD()
         self.device.init(0) # 0 for full refresh, 1 for partial
         self.width = self.device.width
         self.height = self.device.height
@@ -36,11 +36,21 @@ class EpaperWaveshare:
             y = i * 8
             draw.text((0, y), line, font=self.font, fill=0)
             
-        # Send buffer to E-Paper hardware
-        self.device.display(self.device.getbuffer(image))
+        buffer = self.device.getbuffer(image)
+        
+        # E-paper sleep() closes the SPI bus. We must re-init before waking up.
+        if not hasattr(self, "is_first_frame") or self.is_first_frame:
+            self.device.init(0) # 0 for full refresh
+            self.device.displayPartBaseImage(buffer)
+            self.is_first_frame = False
+        else:
+            self.device.init(1) # 1 for fast partial refresh
+            self.device.displayPart(buffer)
+            
         self.device.sleep()
 
     def clear(self):
         """Clear the E-Paper hardware."""
+        self.device.init(0)
         self.device.Clear(0xFF)
         self.device.sleep()
