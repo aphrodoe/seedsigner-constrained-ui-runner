@@ -1,0 +1,2 @@
+*.bdf binary
+tests/golden/**/*.txt binary

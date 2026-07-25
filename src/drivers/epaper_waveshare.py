@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
+import os
 
 try:
     # pyrefly: ignore [missing-import]
@@ -21,8 +22,9 @@ class EpaperWaveshare:
         self.width = self.device.width
         self.height = self.device.height
         
-        # Default PIL font is 6x8 pixels
-        self.font = ImageFont.load_default()
+        # Use 8px Cozette bitmap font instead of default to fix bottom clipping
+        font_path = os.path.join(os.path.dirname(__file__), '..', 'utils', 'fonts', 'cozette.bdf')
+        self.font = ImageFont.load(font_path)
         self.clear()
 
     def write_lines(self, lines: list[str]):
