@@ -87,17 +87,24 @@ class SimpleScreensMixin:
         
         if self.tier >= 2:
             lines = []
-            total_content_rows = 2 if not version else 3
+            
+            version_lines = []
+            if version:
+                version_lines = self._word_wrap(version)
+                
+            total_content_rows = 1
+            total_content_rows += len(version_lines)
+            
             if not boot_logo_only and show_partners and sponsor_text:
-                total_content_rows += 4
+                total_content_rows += 3
                 
             padding_top = max(0, (self.rows - total_content_rows) // 2)
             for _ in range(padding_top):
                 lines.append(self._center(""))
                 
             lines.append(self._center("SEEDSIGNER"))
-            if version:
-                lines.append(self._center(version))
+            for v_line in version_lines:
+                lines.append(self._center(v_line))
                 
             if not boot_logo_only and show_partners and sponsor_text:
                 lines.append(self._center(""))
@@ -129,6 +136,39 @@ class SimpleScreensMixin:
             return self._pad_rows(lines)
 
     # ── text_only (reset, power_off_not_required, donate) ───────────
+
+    def _render_version_screen(self, state: ScreenState) -> List[str]:
+        title = state.context.get("top_nav", {}).get("title", "Version")
+        title_line = self._title_row(title, "", state)
+        
+        all_content = []
+        
+        version_name = state.context.get("version_name")
+        version_fork = state.context.get("version_fork")
+        short_commit_hash = state.context.get("short_commit_hash")
+        version_timestamp = state.context.get("version_timestamp")
+        
+        if version_name:
+            for line in self._word_wrap(version_name):
+                all_content.append(self._center(line))
+        if version_fork:
+            for line in self._word_wrap(f"Fork: {version_fork}"):
+                all_content.append(self._center(line))
+        if short_commit_hash:
+            for line in self._word_wrap(f"Commit: {short_commit_hash}"):
+                all_content.append(self._center(line))
+        if version_timestamp:
+            for line in self._word_wrap(version_timestamp):
+                all_content.append(self._center(line))
+                
+        # Vertically center if the content fits on a single screen
+        available_rows = self.rows - 1
+        if len(all_content) < available_rows:
+            pad_top = (available_rows - len(all_content)) // 2
+            for _ in range(pad_top):
+                all_content.insert(0, self._center(""))
+                
+        return self._do_sliding_window(state, title_line, all_content, len(all_content))
 
     def _render_text_only(self, state: ScreenState) -> List[str]:
         """Render screens with title + body text + optional URL, no buttons."""

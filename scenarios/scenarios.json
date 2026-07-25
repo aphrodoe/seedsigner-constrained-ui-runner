@@ -1,17 +1,8 @@
 {
   "main_menu_screen": {
     "context": {
-      "top_nav": {
-        "title": "Home",
-        "show_back_button": false,
-        "show_power_button": true
-      },
-      "button_list": [
-        "Scan",
-        "Seeds",
-        "Tools",
-        "Settings"
-      ]
+      "top_nav": {"title": "Home", "show_back_button": false, "show_power_button": true},
+      "button_list": ["Scan", "Seeds", "Tools", "Settings"]
     }
   },
   "button_list_screen": {
@@ -61,9 +52,7 @@
             "title": "Donaudampfschifffahrtsgesellschaftskapitaensanwaerterpruefungsordnung"
           }
         },
-        "screenshot": {
-          "animated": true
-        }
+        "screenshot": { "animated": true }
       },
       {
         "name": "intro_text",
@@ -149,10 +138,7 @@
             "Scan a QR code",
             "Export Xpub",
             "Backup this very long seed-options label that overflows the button",
-            {
-              "label": "Discard seed",
-              "label_color": "#ff0000"
-            }
+            { "label": "Discard seed", "label_color": "#ff0000" }
           ]
         }
       },
@@ -166,34 +152,13 @@
           },
           "is_button_text_centered": false,
           "button_list": [
-            {
-              "label": "CAMERA",
-              "icon": "\uf030"
-            },
-            {
-              "label": "DICE",
-              "icon": "\uf522"
-            },
-            {
-              "label": "FINGERPRINT",
-              "icon": "\ue91a"
-            },
-            {
-              "label": "KEYBOARD",
-              "icon": "\uf11c"
-            },
-            {
-              "label": "PLUS",
-              "icon": "\ue90f"
-            },
-            {
-              "label": "QRCODE",
-              "icon": "\ue920"
-            },
-            {
-              "label": "CHEVRON_RIGHT",
-              "right_icon": "\ue90a"
-            }
+            { "label": "CAMERA", "icon": "\uf030" },
+            { "label": "DICE", "icon": "\uf522" },
+            { "label": "FINGERPRINT", "icon": "\ue91a" },
+            { "label": "KEYBOARD", "icon": "\uf11c" },
+            { "label": "PLUS", "icon": "\ue90f" },
+            { "label": "QRCODE", "icon": "\ue920" },
+            { "label": "CHEVRON_RIGHT", "right_icon": "\ue90a" }
           ]
         }
       },
@@ -206,16 +171,8 @@
             "show_power_button": false
           },
           "button_list": [
-            {
-              "label": "Approve",
-              "icon": "\ue913",
-              "icon_color": "#30d158"
-            },
-            {
-              "label": "Cancel",
-              "icon": "\ue915",
-              "icon_color": "#ff5555"
-            }
+            { "label": "Approve", "icon": "", "icon_color": "#30d158" },
+            { "label": "Cancel", "icon": "", "icon_color": "#ff5555" }
           ]
         }
       },
@@ -229,10 +186,7 @@
           },
           "text": "Select which script types to enable.",
           "button_style": "checkbox",
-          "checked_buttons": [
-            0,
-            2
-          ],
+          "checked_buttons": [0, 2],
           "button_list": [
             "Native SegWit",
             "Nested SegWit",
@@ -251,11 +205,7 @@
           },
           "text": "Select which script types to enable.",
           "button_style": "checkbox",
-          "checked_buttons": [
-            0,
-            3,
-            5
-          ],
+          "checked_buttons": [0, 3, 5],
           "initial_selected_index": 5,
           "button_list": [
             "Native SegWit",
@@ -277,9 +227,7 @@
             "show_power_button": false
           },
           "button_style": "checked_selection",
-          "checked_buttons": [
-            1
-          ],
+          "checked_buttons": [1],
           "button_list": [
             "Sparrow",
             "Specter Desktop",
@@ -294,25 +242,15 @@
           "top_nav": {
             "title": "6a4f e1b8",
             "icon_color": "#409cff",
-            "icon": "\ue91a",
+            "icon": "",
             "show_back_button": true,
             "show_power_button": false
           },
           "is_button_text_centered": false,
           "button_list": [
-            {
-              "label": "Scan a QR code",
-              "icon": "\ue900"
-            },
-            {
-              "label": "Export Xpub",
-              "icon": "\ue920",
-              "right_icon": "\ue90a"
-            },
-            {
-              "label": "Sign a PSBT",
-              "icon": "\ue921"
-            }
+            { "label": "Scan a QR code", "icon": "" },
+            { "label": "Export Xpub", "icon": "", "right_icon": "" },
+            { "label": "Sign a PSBT", "icon": "" }
           ]
         }
       },
@@ -325,9 +263,7 @@
             "show_power_button": false
           },
           "button_style": "checked_selection",
-          "checked_buttons": [
-            1
-          ],
+          "checked_buttons": [1],
           "is_button_text_centered": false,
           "button_list": [
             "Compact",
@@ -346,24 +282,10 @@
           },
           "is_button_text_centered": false,
           "button_list": [
-            {
-              "label": "Scan",
-              "icon": "\uf030"
-            },
-            {
-              "label": "Verify",
-              "icon": "\ue91a"
-            },
-            {
-              "label": "Donate",
-              "icon": "\ue920",
-              "right_icon": "\ue90a"
-            },
-            {
-              "label": "Cancel",
-              "icon": "\ue90f",
-              "label_color": "#ff0000"
-            }
+            { "label": "Scan", "icon": "" },
+            { "label": "Verify", "icon": "" },
+            { "label": "Donate", "icon": "", "right_icon": "" },
+            { "label": "Cancel", "icon": "", "label_color": "#ff0000" }
           ]
         }
       }
@@ -378,46 +300,20 @@
       "logo_already_shown": false
     },
     "variations": [
-      {
-        "name": "boot_logo",
-        "context": {
-          "boot_logo_only": true
-        }
-      },
-      {
-        "name": "cpython_no_partners",
-        "context": {
-          "show_partner_logos": false
-        }
-      },
-      {
-        "name": "micropython_partners",
-        "context": {
-          "logo_already_shown": true
-        }
-      },
-      {
-        "name": "micropython_no_partners",
-        "context": {
-          "logo_already_shown": true,
-          "show_partner_logos": false
-        }
-      }
+      { "name": "boot_logo", "context": { "boot_logo_only": true } },
+      { "name": "cpython_no_partners", "context": { "show_partner_logos": false } },
+      { "name": "micropython_partners", "context": { "logo_already_shown": true } },
+      { "name": "micropython_no_partners", "context": { "logo_already_shown": true, "show_partner_logos": false } },
+      { "name": "long_version_multiline", "context": { "version": "v0.8.7-127-gdeadbeef-dirty", "show_partner_logos": false } }
     ]
   },
   "large_icon_status_screen": {
     "context": {
-      "top_nav": {
-        "title": "Backup Verified",
-        "show_back_button": false,
-        "show_power_button": false
-      },
+      "top_nav": { "title": "Backup Verified", "show_back_button": false, "show_power_button": false },
       "status_type": "success",
       "status_headline": "Success!",
       "text": "All mnemonic backup words were successfully verified!",
-      "button_list": [
-        "OK"
-      ],
+      "button_list": ["OK"],
       "is_bottom_list": true,
       "warning_edges": false
     },
@@ -425,17 +321,11 @@
       {
         "name": "warning",
         "context": {
-          "top_nav": {
-            "title": "Caution",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Caution", "show_back_button": true, "show_power_button": false },
           "status_type": "warning",
           "status_headline": "Full Spend!",
           "text": "This transaction spends its entire input value. No change is coming back to your wallet.",
-          "button_list": [
-            "Continue"
-          ],
+          "button_list": ["Continue"],
           "is_bottom_list": true,
           "warning_edges": false
         }
@@ -443,17 +333,11 @@
       {
         "name": "dire_warning",
         "context": {
-          "top_nav": {
-            "title": "Caution",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Caution", "show_back_button": true, "show_power_button": false },
           "status_type": "dire_warning",
           "status_headline": "SeedQR is your private key!",
           "text": "Never photograph or scan it into a device that connects to the internet.",
-          "button_list": [
-            "I understand"
-          ],
+          "button_list": ["I understand"],
           "is_bottom_list": true,
           "warning_edges": false
         }
@@ -461,17 +345,11 @@
       {
         "name": "error",
         "context": {
-          "top_nav": {
-            "title": "Hardware Error",
-            "show_back_button": false,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Hardware Error", "show_back_button": false, "show_power_button": false },
           "status_type": "error",
           "status_headline": "Cannot access camera",
           "text": "Disconnect power and check for a loose camera connection.",
-          "button_list": [
-            "Back to Main Menu"
-          ],
+          "button_list": ["Back to Main Menu"],
           "is_bottom_list": true,
           "warning_edges": false
         }
@@ -479,39 +357,24 @@
       {
         "name": "dire_warning_animated",
         "context": {
-          "top_nav": {
-            "title": "Caution",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Caution", "show_back_button": true, "show_power_button": false },
           "status_type": "dire_warning",
           "status_headline": "SeedQR is your private key!",
           "text": "Never photograph or scan it into a device that connects to the internet.",
-          "button_list": [
-            "I understand"
-          ],
+          "button_list": ["I understand"],
           "is_bottom_list": true,
           "warning_edges": true
         },
-        "screenshot": {
-          "animated": true,
-          "seconds": 1.4
-        }
+        "screenshot": { "animated": true, "seconds": 1.4 }
       },
       {
         "name": "long_text_overflow",
         "context": {
-          "top_nav": {
-            "title": "Caution",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Caution", "show_back_button": true, "show_power_button": false },
           "status_type": "dire_warning",
           "status_headline": "SeedQR is your private key!",
           "text": "Anyone who sees this QR code can steal all of your funds. Never photograph it, never scan it into a device that connects to the internet, and never store it digitally. Treat it exactly like the seed phrase itself: write it on paper or steel, keep it offline, and store it somewhere only you can reach. If you are not certain this environment is private and air-gapped, go back now and do not display the code.",
-          "button_list": [
-            "I understand"
-          ],
+          "button_list": ["I understand"],
           "is_bottom_list": true,
           "warning_edges": true
         }
@@ -519,17 +382,11 @@
       {
         "name": "long_text_overflow_plain",
         "context": {
-          "top_nav": {
-            "title": "Caution",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Caution", "show_back_button": true, "show_power_button": false },
           "status_type": "dire_warning",
           "status_headline": "SeedQR is your private key!",
           "text": "Anyone who sees this QR code can steal all of your funds. Never photograph it, never scan it into a device that connects to the internet, and never store it digitally. Treat it exactly like the seed phrase itself: write it on paper or steel, keep it offline, and store it somewhere only you can reach. If you are not certain this environment is private and air-gapped, go back now and do not display the code.",
-          "button_list": [
-            "I understand"
-          ],
+          "button_list": ["I understand"],
           "is_bottom_list": true,
           "warning_edges": false
         }
@@ -537,17 +394,11 @@
       {
         "name": "newline",
         "context": {
-          "top_nav": {
-            "title": "Backup Verified",
-            "show_back_button": false,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Backup Verified", "show_back_button": false, "show_power_button": false },
           "status_type": "success",
           "status_headline": "Success!",
           "text": "First line stands alone.\nThe second paragraph is longer, so it wraps onto more than one line by itself.",
-          "button_list": [
-            "OK"
-          ],
+          "button_list": ["OK"],
           "is_bottom_list": true,
           "warning_edges": false
         }
@@ -555,38 +406,26 @@
       {
         "name": "custom_psbt_finalize",
         "context": {
-          "top_nav": {
-            "title": "Sign Transaction",
-            "show_back_button": true,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "Sign Transaction", "show_back_button": true, "show_power_button": false },
           "status_type": "custom",
-          "icon": "\ue921",
+          "icon": "",
           "icon_color": "#409cff",
           "status_headline": "",
           "text": "Click to approve this transaction",
-          "button_list": [
-            "Approve transaction"
-          ],
+          "button_list": ["Approve transaction"],
           "is_bottom_list": true
         }
       },
       {
         "name": "custom_microsd_notification",
         "context": {
-          "top_nav": {
-            "title": "microSD",
-            "show_back_button": false,
-            "show_power_button": false
-          },
+          "top_nav": { "title": "microSD", "show_back_button": false, "show_power_button": false },
           "status_type": "custom",
-          "icon": "\ue91f",
+          "icon": "",
           "icon_color": "#409cff",
           "status_headline": "microSD detected",
           "text": "A microSD card change was detected.",
-          "button_list": [
-            "OK"
-          ],
+          "button_list": ["OK"],
           "is_bottom_list": true
         }
       }
@@ -594,11 +433,7 @@
   },
   "seed_add_passphrase_screen": {
     "context": {
-      "top_nav": {
-        "title": "BIP-39 Passphrase",
-        "show_back_button": true,
-        "show_power_button": false
-      }
+      "top_nav": { "title": "BIP-39 Passphrase", "show_back_button": true, "show_power_button": false }
     },
     "variations": [
       {
@@ -655,18 +490,141 @@
         }
       },
       {
-        "name": "force_square",
+        "name": "segmented_middle_first",
         "context": {
-          "fill_landscape": false,
-          "progress": 50,
+          "total_segments": 7,
+          "decoded_indices": [3],
+          "just_decoded_index": 3,
           "frame_status": 1
         }
       },
       {
-        "name": "fill_landscape",
+        "name": "segmented_sparse",
         "context": {
-          "fill_landscape": true,
-          "progress": 50,
+          "total_segments": 12,
+          "decoded_indices": [0, 3, 4, 8, 11],
+          "just_decoded_index": 8,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_near_full",
+        "context": {
+          "total_segments": 8,
+          "decoded_indices": [0, 1, 3, 4, 5, 6, 7],
+          "just_decoded_index": 7,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_repeated",
+        "context": {
+          "total_segments": 7,
+          "decoded_indices": [1, 2, 5],
+          "just_decoded_index": 2,
+          "frame_status": 2
+        }
+      },
+      {
+        "name": "segmented_dense",
+        "context": {
+          "total_segments": 24,
+          "decoded_count": 14,
+          "just_decoded_index": 13,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_degenerate",
+        "context": {
+          "total_segments": 200,
+          "decoded_range": { "start": 50, "count": 100 },
+          "frame_status": 1
+        }
+      }
+    ]
+  },
+  "camera_preview_pillarboxed_screen": {
+    "context": {
+      "scanning": true,
+      "progress": 45,
+      "frame_status": 1
+    },
+    "screenshot": {
+      "render_as_landscape": true
+    },
+    "variations": [
+      {
+        "name": "no_frame_yet",
+        "context": {
+          "progress": 0,
+          "frame_status": 0
+        }
+      },
+      {
+        "name": "frame_repeated",
+        "context": {
+          "progress": 60,
+          "frame_status": 2
+        }
+      },
+      {
+        "name": "complete",
+        "context": {
+          "progress": 100,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_middle_first",
+        "context": {
+          "total_segments": 7,
+          "decoded_indices": [3],
+          "just_decoded_index": 3,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_sparse",
+        "context": {
+          "total_segments": 12,
+          "decoded_indices": [0, 3, 4, 8, 11],
+          "just_decoded_index": 8,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_near_full",
+        "context": {
+          "total_segments": 8,
+          "decoded_indices": [0, 1, 3, 4, 5, 6, 7],
+          "just_decoded_index": 7,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_repeated",
+        "context": {
+          "total_segments": 7,
+          "decoded_indices": [1, 2, 5],
+          "just_decoded_index": 2,
+          "frame_status": 2
+        }
+      },
+      {
+        "name": "segmented_dense",
+        "context": {
+          "total_segments": 24,
+          "decoded_count": 14,
+          "just_decoded_index": 13,
+          "frame_status": 1
+        }
+      },
+      {
+        "name": "segmented_degenerate",
+        "context": {
+          "total_segments": 200,
+          "decoded_range": { "start": 50, "count": 100 },
           "frame_status": 1
         }
       }
@@ -678,21 +636,17 @@
       "preview_instructions": "< back  |  click a button",
       "confirm_instructions": "< reshoot  |  accept >",
       "capturing_text": "Capturing image...",
-      "capture_icon": "\uf030",
+      "capture_icon": "",
       "accept_label": "Accept"
     },
     "variations": [
       {
         "name": "capturing",
-        "context": {
-          "phase": "capturing"
-        }
+        "context": { "phase": "capturing" }
       },
       {
         "name": "confirm",
-        "context": {
-          "phase": "confirm"
-        }
+        "context": { "phase": "confirm" }
       }
     ]
   },
@@ -767,18 +721,7 @@
         "show_power_button": false
       },
       "cols": 5,
-      "keys": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0"
-      ],
+      "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
       "show_save_button": true
     },
     "variations": [
@@ -789,20 +732,7 @@
             "title": "Derivation Path"
           },
           "cols": 6,
-          "keys": [
-            "/",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "'",
-            "6",
-            "7",
-            "8",
-            "9",
-            "0"
-          ],
+          "keys": ["/", "1", "2", "3", "4", "5", "'", "6", "7", "8", "9", "0"],
           "initial_value": "m/",
           "show_save_button": true
         }
@@ -814,10 +744,7 @@
             "title": "Coin Flip 1/99"
           },
           "cols": 2,
-          "keys": [
-            "1",
-            "0"
-          ],
+          "keys": ["1", "0"],
           "show_save_button": false,
           "return_after_n_chars": 99,
           "title_keystroke_template": "Coin Flip {n}/{total}",
@@ -831,21 +758,14 @@
             "title": "Dice Roll 1/50"
           },
           "cols": 3,
-          "keys": [
-            "\uf525",
-            "\uf528",
-            "\uf527",
-            "\uf524",
-            "\uf523",
-            "\uf526"
-          ],
+          "keys": ["", "", "", "", "", ""],
           "keys_to_values": {
-            "\uf525": "1",
-            "\uf528": "2",
-            "\uf527": "3",
-            "\uf524": "4",
-            "\uf523": "5",
-            "\uf526": "6"
+            "": "1",
+            "": "2",
+            "": "3",
+            "": "4",
+            "": "5",
+            "": "6"
           },
           "keyboard_font": "icon",
           "show_save_button": false,
@@ -857,88 +777,35 @@
   },
   "seed_mnemonic_entry_screen": {
     "context": {
-      "top_nav": {
-        "title": "Seed Word #1",
-        "show_back_button": true,
-        "show_power_button": false
-      },
-      "wordlist": [
-        "abandon",
-        "ability",
-        "able",
-        "about",
-        "above",
-        "absent",
-        "absorb",
-        "abstract",
-        "absurd",
-        "abuse",
-        "access",
-        "accident",
-        "account",
-        "accuse",
-        "cabin",
-        "cable",
-        "cactus",
-        "cage",
-        "cake",
-        "call",
-        "muffin",
-        "mule",
-        "multiply",
-        "muscle",
-        "museum",
-        "mushroom",
-        "music",
-        "must",
-        "mutual",
-        "myself",
-        "mystery",
-        "myth",
-        "navy",
-        "near",
-        "neck",
-        "need",
-        "negative",
-        "oak",
-        "obey",
-        "object"
-      ]
+      "top_nav": {"title": "Seed Word #1", "show_back_button": true, "show_power_button": false},
+      "wordlist": ["abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse", "access", "accident", "account", "accuse", "cabin", "cable", "cactus", "cage", "cake", "call", "muffin", "mule", "multiply", "muscle", "museum", "mushroom", "music", "must", "mutual", "myself", "mystery", "myth", "navy", "near", "neck", "need", "negative", "oak", "obey", "object"]
     },
     "variations": [
       {
         "name": "partial",
         "context": {
-          "top_nav": {
-            "title": "Seed Word #3"
-          },
+          "top_nav": {"title": "Seed Word #3"},
           "initial_letters": "mu"
         }
       },
       {
         "name": "narrowed",
         "context": {
-          "top_nav": {
-            "title": "Seed Word #7"
-          },
+          "top_nav": {"title": "Seed Word #7"},
           "initial_letters": "mus"
         }
       },
       {
         "name": "single_match",
         "context": {
-          "top_nav": {
-            "title": "Seed Word #12"
-          },
+          "top_nav": {"title": "Seed Word #12"},
           "initial_letters": "mush"
         }
       },
       {
         "name": "word_selected",
         "context": {
-          "top_nav": {
-            "title": "Seed Word #5"
-          },
+          "top_nav": {"title": "Seed Word #5"},
           "initial_letters": "mu",
           "initial_selected_word": "muscle"
         }
@@ -1033,10 +900,7 @@
       },
       {
         "name": "finder_pattern",
-        "context": {
-          "initial_zone_x": 0,
-          "initial_zone_y": 0
-        }
+        "context": { "initial_zone_x": 0, "initial_zone_y": 0 }
       },
       {
         "name": "alignment_pattern",
@@ -1051,36 +915,25 @@
   },
   "seed_finalize_screen": {
     "context": {
-      "top_nav": {
-        "title": "Finalize Seed",
-        "show_power_button": false
-      },
+      "top_nav": {"title": "Finalize Seed", "show_power_button": false},
       "fingerprint": "8c65eb9f",
       "fingerprint_label": "fingerprint",
-      "button_list": [
-        "Done",
-        "BIP-39 Passphrase"
-      ]
+      "button_list": ["Done", "BIP-39 Passphrase"]
     },
     "variations": [
       {
         "name": "no_passphrase",
         "context": {
-          "button_list": [
-            "Done"
-          ]
+          "button_list": ["Done"]
         }
       }
     ]
   },
   "loading_spinner_screen": {
     "context": {
-      "text": "Loading\u2026"
+      "text": "Loading…"
     },
-    "screenshot": {
-      "animated": true,
-      "seconds": 0.49
-    },
+    "screenshot": { "animated": true, "seconds": 0.49 },
     "variations": [
       {
         "name": "no_text",
@@ -1092,15 +945,8 @@
   },
   "psbt_overview_screen": {
     "context": {
-      "top_nav": {
-        "title": "Review Transaction",
-        "show_back_button": true
-      },
-      "btc_amount": {
-        "primary": "841,234",
-        "unit": "sats",
-        "network": "M"
-      },
+      "top_nav": { "title": "Review Transaction", "show_back_button": true },
+      "btc_amount": { "primary": "841,234", "unit": "sats", "network": "M" },
       "num_inputs": 3,
       "destination_addresses": [
         "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
@@ -1111,34 +957,21 @@
       "has_op_return": false,
       "button": "Review details"
     },
-    "screenshot": {
-      "animated": true,
-      "seconds": 3.0
-    },
+    "screenshot": { "animated": true, "seconds": 3.0 },
     "variations": [
       {
         "name": "single_input",
         "context": {
-          "btc_amount": {
-            "primary": "0.00841234",
-            "unit": "btc",
-            "network": "M"
-          },
+          "btc_amount": { "primary": "0.00841234", "unit": "btc", "network": "M" },
           "num_inputs": 1,
-          "destination_addresses": [
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
-          ],
+          "destination_addresses": [ "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" ],
           "num_change_outputs": 0
         }
       },
       {
         "name": "many_inputs_many_recipients",
         "context": {
-          "btc_amount": {
-            "primary": "12,500,000",
-            "unit": "sats",
-            "network": "M"
-          },
+          "btc_amount": { "primary": "12,500,000", "unit": "sats", "network": "M" },
           "num_inputs": 8,
           "destination_addresses": [
             "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
@@ -1153,11 +986,7 @@
       {
         "name": "self_transfer_full_spend",
         "context": {
-          "btc_amount": {
-            "primary": "0.05",
-            "unit": "btc",
-            "network": "M"
-          },
+          "btc_amount": { "primary": "0.05", "unit": "btc", "network": "M" },
           "num_inputs": 2,
           "destination_addresses": [],
           "num_self_transfer_outputs": 1,
@@ -1168,9 +997,7 @@
         "name": "op_return_and_change",
         "context": {
           "num_inputs": 2,
-          "destination_addresses": [
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"
-          ],
+          "destination_addresses": [ "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq" ],
           "has_op_return": true,
           "num_change_outputs": 1
         }
@@ -1178,15 +1005,9 @@
       {
         "name": "testnet",
         "context": {
-          "btc_amount": {
-            "primary": "841,234",
-            "unit": "tSats",
-            "network": "T"
-          },
+          "btc_amount": { "primary": "841,234", "unit": "tSats", "network": "T" },
           "num_inputs": 2,
-          "destination_addresses": [
-            "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
-          ],
+          "destination_addresses": [ "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx" ],
           "num_change_outputs": 1
         }
       }
@@ -1194,62 +1015,40 @@
   },
   "psbt_address_details_screen": {
     "context": {
-      "top_nav": {
-        "title": "Verify Send Address",
-        "show_back_button": true
-      },
-      "btc_amount": {
-        "primary": "0.00841234",
-        "unit": "btc",
-        "network": "M"
-      },
+      "top_nav": { "title": "Verify Send Address", "show_back_button": true },
+      "btc_amount": { "primary": "0.00841234", "unit": "btc", "network": "M" },
+      "network": "M",
       "address": "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
-      "button_list": [
-        "Next"
-      ]
+      "button_list": ["Next"]
     },
     "variations": [
       {
         "name": "taproot",
         "context": {
-          "btc_amount": {
-            "primary": "1,250,000",
-            "unit": "sats",
-            "network": "M"
-          },
+          "btc_amount": { "primary": "1,250,000", "unit": "sats", "network": "M" },
           "address": "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
         }
       },
       {
         "name": "legacy_p2sh",
         "context": {
-          "btc_amount": {
-            "primary": "500,000",
-            "unit": "sats",
-            "network": "M"
-          },
+          "btc_amount": { "primary": "500,000", "unit": "sats", "network": "M" },
           "address": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
         }
       },
       {
         "name": "testnet",
         "context": {
-          "btc_amount": {
-            "primary": "841,234",
-            "unit": "tSats",
-            "network": "T"
-          },
+          "btc_amount": { "primary": "841,234", "unit": "tSats", "network": "T" },
+          "network": "T",
           "address": "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
         }
       },
       {
         "name": "regtest",
         "context": {
-          "btc_amount": {
-            "primary": "841,234",
-            "unit": "tSats",
-            "network": "R"
-          },
+          "btc_amount": { "primary": "841,234", "unit": "tSats", "network": "R" },
+          "network": "R",
           "address": "bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080"
         }
       }
@@ -1257,22 +1056,13 @@
   },
   "psbt_change_details_screen": {
     "context": {
-      "top_nav": {
-        "title": "Your Change",
-        "show_back_button": true
-      },
-      "btc_amount": {
-        "primary": "0.00123456",
-        "unit": "btc",
-        "network": "M"
-      },
+      "top_nav": { "title": "Your Change", "show_back_button": true },
+      "btc_amount": { "primary": "0.00123456", "unit": "btc", "network": "M" },
       "address": "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
       "address_type_label": "change address #0",
       "is_verified": true,
       "verified_text": "Address verified!",
-      "button_list": [
-        "Next"
-      ]
+      "button_list": ["Next"]
     },
     "variations": [
       {
@@ -1280,24 +1070,14 @@
         "context": {
           "address_type_label": "change address #2",
           "is_verified": false,
-          "button_list": [
-            "Verify multisig change",
-            "Skip verification"
-          ]
+          "button_list": ["Verify multisig change", "Skip verification"]
         }
       },
       {
         "name": "self_transfer_verified",
         "context": {
-          "top_nav": {
-            "title": "Self-Transfer",
-            "show_back_button": true
-          },
-          "btc_amount": {
-            "primary": "2,000,000",
-            "unit": "sats",
-            "network": "M"
-          },
+          "top_nav": { "title": "Self-Transfer", "show_back_button": true },
+          "btc_amount": { "primary": "2,000,000", "unit": "sats", "network": "M" },
           "address": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
           "address_type_label": "receive address #5",
           "is_verified": true
@@ -1306,49 +1086,24 @@
       {
         "name": "self_transfer_unverified_multisig",
         "context": {
-          "top_nav": {
-            "title": "Self-Transfer",
-            "show_back_button": true
-          },
-          "btc_amount": {
-            "primary": "2,000,000",
-            "unit": "sats",
-            "network": "M"
-          },
+          "top_nav": { "title": "Self-Transfer", "show_back_button": true },
+          "btc_amount": { "primary": "2,000,000", "unit": "sats", "network": "M" },
           "address": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
           "address_type_label": "receive address #5",
           "is_verified": false,
-          "button_list": [
-            "Verify multisig addr",
-            "Skip verification"
-          ]
+          "button_list": ["Verify multisig addr", "Skip verification"]
         }
       }
     ]
   },
   "psbt_math_screen": {
     "context": {
-      "top_nav": {
-        "title": "Transaction Math",
-        "show_back_button": true
-      },
+      "top_nav": { "title": "Transaction Math", "show_back_button": true },
       "denomination": "sats",
       "num_recipients": 1,
-      "amounts": {
-        "input": "1,000,000",
-        "spend": "841,234",
-        "fee": "2,500",
-        "change": "156,266"
-      },
-      "labels": {
-        "inputs": "inputs",
-        "recipients": "recipients",
-        "fee": "fee",
-        "change": "sats change"
-      },
-      "button_list": [
-        "Review recipients"
-      ]
+      "amounts": { "input": "1,000,000", "spend": "841,234", "fee": "2,500", "change": "156,266" },
+      "labels": { "inputs": "inputs", "recipients": "recipients", "fee": "fee", "change": "sats change" },
+      "button_list": ["Review recipients"]
     },
     "variations": [
       {
@@ -1356,212 +1111,71 @@
         "context": {
           "denomination": "btc",
           "num_recipients": 2,
-          "amounts": {
-            "input": "0.05000000",
-            "spend": "0.04835000",
-            "fee": "1250",
-            "change": "0.00163750"
-          },
-          "labels": {
-            "inputs": "inputs",
-            "recipients": "recipients",
-            "fee": "fee",
-            "change": "btc change"
-          }
+          "amounts": { "input": "0.05000000", "spend": "0.04835000", "fee": "1250", "change": "0.00163750" },
+          "labels": { "inputs": "inputs", "recipients": "recipients", "fee": "fee", "change": "btc change" }
         }
       },
       {
         "name": "self_transfer",
         "context": {
           "num_recipients": 0,
-          "amounts": {
-            "input": "500,000",
-            "spend": "0",
-            "fee": "1,800",
-            "change": "498,200"
-          },
-          "labels": {
-            "inputs": "inputs",
-            "recipients": "recipients",
-            "fee": "fee",
-            "change": "sats change"
-          }
+          "amounts": { "input": "500,000", "spend": "0", "fee": "1,800", "change": "498,200" },
+          "labels": { "inputs": "inputs", "recipients": "recipients", "fee": "fee", "change": "sats change" }
         }
       }
     ]
   },
   "settings_locale_picker_screen": {
     "context": {
-      "top_nav": {
-        "title": "Language",
-        "show_back_button": true
-      },
+      "top_nav": {"title": "Language", "show_back_button": true},
       "active_locale": "en",
       "rows": [
-        {
-          "locale": "en",
-          "english": "English",
-          "native": "English"
-        },
-        {
-          "locale": "pt_BR",
-          "english": "Brazilian Portuguese",
-          "native": "Portugu\u00eas do Brasil"
-        },
-        {
-          "locale": "ca",
-          "english": "Catalan",
-          "native": "Catal\u00e0"
-        },
-        {
-          "locale": "cs",
-          "english": "Czech",
-          "native": "\u010ce\u0161tina"
-        },
-        {
-          "locale": "nl",
-          "english": "Dutch",
-          "native": "Nederlands"
-        },
-        {
-          "locale": "fr",
-          "english": "French",
-          "native": "Fran\u00e7ais"
-        },
-        {
-          "locale": "de",
-          "english": "German",
-          "native": "Deutsch"
-        },
-        {
-          "locale": "el",
-          "english": "Greek",
-          "native": "\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac",
-          "image": true
-        },
-        {
-          "locale": "hi",
-          "english": "Hindi",
-          "native": "\u0939\u093f\u0928\u094d\u0926\u0940",
-          "image": true
-        },
-        {
-          "locale": "id",
-          "english": "Indonesian",
-          "native": "Bahasa Indonesia"
-        },
-        {
-          "locale": "it",
-          "english": "Italian",
-          "native": "Italiano"
-        },
-        {
-          "locale": "ja",
-          "english": "Japanese",
-          "native": "\u65e5\u672c\u8a9e",
-          "image": true
-        },
-        {
-          "locale": "ko",
-          "english": "Korean",
-          "native": "\ud55c\uad6d\uc5b4",
-          "image": true
-        },
-        {
-          "locale": "no",
-          "english": "Norwegian",
-          "native": "Norsk"
-        },
-        {
-          "locale": "fa",
-          "english": "Persian",
-          "native": "\u0641\u0627\u0631\u0633\u06cc",
-          "image": true
-        },
-        {
-          "locale": "pl",
-          "english": "Polish",
-          "native": "Polski"
-        },
-        {
-          "locale": "ru",
-          "english": "Russian",
-          "native": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
-          "image": true
-        },
-        {
-          "locale": "zh_Hans_CN",
-          "english": "Simplified Chinese",
-          "native": "\u7b80\u4f53\u4e2d\u6587",
-          "image": true
-        },
-        {
-          "locale": "es",
-          "english": "Spanish",
-          "native": "Espa\u00f1ol"
-        },
-        {
-          "locale": "th",
-          "english": "Thai",
-          "native": "\u0e44\u0e17\u0e22",
-          "image": true
-        },
-        {
-          "locale": "tr",
-          "english": "Turkish",
-          "native": "T\u00fcrk\u00e7e"
-        },
-        {
-          "locale": "ur",
-          "english": "Urdu",
-          "native": "\u0627\u0631\u062f\u0648",
-          "image": true
-        },
-        {
-          "locale": "vi",
-          "english": "Vietnamese",
-          "native": "Ti\u1ebfng Vi\u1ec7t",
-          "image": true
-        }
+        {"locale": "en", "english": "English", "native": "English"},
+        {"locale": "pt_BR", "english": "Brazilian Portuguese", "native": "Português do Brasil"},
+        {"locale": "ca", "english": "Catalan", "native": "Català"},
+        {"locale": "cs", "english": "Czech", "native": "Čeština"},
+        {"locale": "nl", "english": "Dutch", "native": "Nederlands"},
+        {"locale": "fr", "english": "French", "native": "Français"},
+        {"locale": "de", "english": "German", "native": "Deutsch"},
+        {"locale": "el", "english": "Greek", "native": "Ελληνικά", "image": true},
+        {"locale": "hi", "english": "Hindi", "native": "हिन्दी", "image": true},
+        {"locale": "id", "english": "Indonesian", "native": "Bahasa Indonesia"},
+        {"locale": "it", "english": "Italian", "native": "Italiano"},
+        {"locale": "ja", "english": "Japanese", "native": "日本語", "image": true},
+        {"locale": "ko", "english": "Korean", "native": "한국어", "image": true},
+        {"locale": "no", "english": "Norwegian", "native": "Norsk"},
+        {"locale": "fa", "english": "Persian", "native": "فارسی", "image": true},
+        {"locale": "pl", "english": "Polish", "native": "Polski"},
+        {"locale": "ru", "english": "Russian", "native": "Русский", "image": true},
+        {"locale": "zh_Hans_CN", "english": "Simplified Chinese", "native": "简体中文", "image": true},
+        {"locale": "es", "english": "Spanish", "native": "Español"},
+        {"locale": "th", "english": "Thai", "native": "ไทย", "image": true},
+        {"locale": "tr", "english": "Turkish", "native": "Türkçe"},
+        {"locale": "ur", "english": "Urdu", "native": "اردو", "image": true},
+        {"locale": "vi", "english": "Vietnamese", "native": "Tiếng Việt", "image": true}
       ]
     }
   },
   "seed_export_xpub_details_screen": {
     "context": {
-      "top_nav": {
-        "title": "Xpub Details",
-        "show_back_button": true
-      },
+      "top_nav": {"title": "Xpub Details", "show_back_button": true},
       "fingerprint": "9a8f2c1b",
       "derivation_path": "m/84'/0'/0'",
       "xpub": "zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCtoUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs",
       "fingerprint_label": "Fingerprint",
       "derivation_label": "Derivation",
       "xpub_label": "Xpub",
-      "button_list": [
-        "Export xpub"
-      ],
-      "warning_edges": true,
-      "animated": true
-    },
-    "screenshot": {
-      "animated": true,
-      "seconds": 2.0
+      "button_list": ["Export xpub"]
     }
   },
   "seed_review_passphrase_screen": {
     "context": {
-      "top_nav": {
-        "title": "Verify Passphrase",
-        "show_back_button": true
-      },
+      "top_nav": {"title": "Verify Passphrase", "show_back_button": true},
       "passphrase": "dishwasher",
       "fingerprint_without": "9a8f2c1b",
       "fingerprint_with": "1b2c3d4e",
       "changes_fingerprint_label": "changes fingerprint",
-      "button_list": [
-        "Done"
-      ]
+      "button_list": ["Done"]
     },
     "variations": [
       {
@@ -1592,128 +1206,68 @@
   },
   "seed_words_screen": {
     "context": {
-      "top_nav": {
-        "title": "Seed Words: 1/3",
-        "show_back_button": true
-      },
-      "words": [
-        "vault",
-        "ridge",
-        "oyster",
-        "muffin"
-      ],
+      "top_nav": {"title": "Seed Words: 1/3", "show_back_button": true},
+      "words": ["vault", "ridge", "oyster", "muffin"],
       "page_index": 0,
       "num_pages": 3,
       "start_number": 1,
-      "button_list": [
-        "Next"
-      ],
-      "warning_edges": true,
-      "animated": true
+      "button_list": ["Next"]
     },
     "variations": [
       {
         "name": "last_page",
         "context": {
-          "top_nav": {
-            "title": "Seed Words: 6/6",
-            "show_back_button": true
-          },
-          "words": [
-            "mimic",
-            "suffer",
-            "gadget",
-            "primary"
-          ],
+          "top_nav": {"title": "Seed Words: 6/6", "show_back_button": true},
+          "words": ["mimic", "suffer", "gadget", "primary"],
           "page_index": 5,
           "num_pages": 6,
           "start_number": 21,
-          "button_list": [
-            "Done"
-          ],
-          "warning_edges": true,
-          "animated": true
-        },
-        "screenshot": {
-          "animated": true,
-          "seconds": 2.0
+          "button_list": ["Done"]
         }
       }
-    ],
-    "screenshot": {
-      "animated": true,
-      "seconds": 2.0
-    }
+    ]
   },
   "multisig_wallet_descriptor_screen": {
     "context": {
-      "top_nav": {
-        "title": "Descriptor Loaded",
-        "show_back_button": true
-      },
+      "top_nav": { "title": "Descriptor Loaded", "show_back_button": true },
       "policy": "2 of 3",
-      "fingerprints": [
-        "1a0b2c3d",
-        "22bde1a9",
-        "73c5da0a"
-      ],
+      "fingerprints": ["1a0b2c3d", "22bde1a9", "73c5da0a"],
       "policy_label": "Policy",
       "signing_keys_label": "Signing Keys",
-      "button_list": [
-        "OK"
-      ]
+      "button_list": ["OK"]
     },
     "variations": [
       {
         "name": "3_of_5",
         "context": {
           "policy": "3 of 5",
-          "fingerprints": [
-            "1a0b2c3d",
-            "22bde1a9",
-            "73c5da0a",
-            "9e8f7a6b",
-            "4c5d6e7f"
-          ]
+          "fingerprints": ["1a0b2c3d", "22bde1a9", "73c5da0a", "9e8f7a6b", "4c5d6e7f"]
         }
       }
     ]
   },
   "seed_sign_message_confirm_address_screen": {
     "context": {
-      "top_nav": {
-        "title": "Confirm Address",
-        "show_back_button": true
-      },
+      "top_nav": { "title": "Confirm Address", "show_back_button": true },
       "derivation_path": "m/84h/0h/0h/0/0",
       "derivation_path_label": "derivation path",
       "address": "bc1qaz78jzgh8qtz53glkqkz5pckghnyuffwksm777",
-      "button_list": [
-        "Sign message"
-      ]
+      "button_list": ["Sign message"]
     }
   },
   "settings_qr_confirmation_screen": {
     "context": {
-      "top_nav": {
-        "title": "Settings QR",
-        "show_back_button": false,
-        "show_power_button": false
-      },
+      "top_nav": {"title": "Settings QR", "show_back_button": false, "show_power_button": false},
       "config_name": "English noob mode",
       "status_message": "Persistent Settings enabled. Settings saved to SD card.",
-      "button_list": [
-        "Home"
-      ]
+      "button_list": ["Home"]
     },
     "variations": [
-      {
-        "name": "not_persistent",
+      { "name": "not_persistent",
         "context": {
           "config_name": "Mode Ephemeral",
           "status_message": "Settings updated in temporary memory"
-        }
-      }
+        } }
     ]
   },
   "seed_sign_message_confirm_message_screen": {
@@ -1875,9 +1429,7 @@
       "qr_data": "5bbd9d71a8ec7990831aff359d426545",
       "qr_mode": "byte",
       "data_encoding": "hex",
-      "button_list": [
-        "Begin 21x21"
-      ]
+      "button_list": ["Begin 21x21"]
     },
     "variations": [
       {
@@ -1886,9 +1438,7 @@
           "qr_data": "073318950739065415961602009907670428187212261116",
           "qr_mode": "numeric",
           "data_encoding": "utf8",
-          "button_list": [
-            "Begin 25x25"
-          ]
+          "button_list": ["Begin 25x25"]
         }
       },
       {
@@ -1897,9 +1447,7 @@
           "qr_data": "0e74b64107f94cc0ccfae6a13dcbec3662154fec67e0e00999c07892597d190a",
           "qr_mode": "byte",
           "data_encoding": "hex",
-          "button_list": [
-            "Begin 25x25"
-          ]
+          "button_list": ["Begin 25x25"]
         }
       },
       {
@@ -1908,9 +1456,7 @@
           "qr_data": "011513251154012711900771041507421289190620080870026613431420201617920614089619290300152408010643",
           "qr_mode": "numeric",
           "data_encoding": "utf8",
-          "button_list": [
-            "Begin 29x29"
-          ]
+          "button_list": ["Begin 29x29"]
         }
       }
     ]
@@ -1980,14 +1526,8 @@
         "show_back_button": true
       },
       "button_list": [
-        {
-          "label": "Restart",
-          "icon": "\ue911"
-        },
-        {
-          "label": "Power off",
-          "icon": "\ue910"
-        }
+        { "label": "Restart", "icon": "\ue911" },
+        { "label": "Power off", "icon": "\ue910" }
       ]
     }
   },
@@ -2047,15 +1587,43 @@
       "url": "seedsigner.com"
     }
   },
+  "version_screen": {
+    "context": {
+      "top_nav": {
+        "title": "Version",
+        "show_back_button": true
+      },
+      "version_name": "v0.8.7-3-g3f8c1e0",
+      "version_fork": "my-fork",
+      "short_commit_hash": "3f8c1e0",
+      "version_timestamp": "2026-07-21 14:30:00 UTC"
+    },
+    "variations": [
+      {
+        "name": "release_image",
+        "context": {
+          "version_name": "v0.8.7",
+          "version_fork": null,
+          "short_commit_hash": null
+        }
+      },
+      {
+        "name": "long_branch_name",
+        "context": {
+          "version_name": "feature/version-display",
+          "version_fork": "example-fork",
+          "short_commit_hash": "7d9e2a4"
+        }
+      }
+    ]
+  },
   "psbt_op_return_screen": {
     "context": {
       "top_nav": {
         "title": "OP_RETURN",
         "show_back_button": true
       },
-      "button_list": [
-        "Done"
-      ],
+      "button_list": ["Done"],
       "text": "Hello from the Bitcoin blockchain!"
     },
     "variations": [
@@ -2074,7 +1642,7 @@
       "top_nav": {
         "title": "I/O Test"
       },
-      "capturing_text": "Capturing image\u2026",
+      "capturing_text": "Capturing image…",
       "clear_label": "Clear",
       "exit_label": "Exit"
     }

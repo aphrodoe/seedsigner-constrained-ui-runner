@@ -21,6 +21,7 @@ class ScreenType(Enum):
     PSBT_MATH = "psbt_math_screen"
 
     # ── New text-renderable screens ─────────────────────────────────
+    VERSION = "version_screen"
     TOAST_OVERLAY = "toast_overlay_screen"
     SEED_EXPORT_XPUB_DETAILS = "seed_export_xpub_details_screen"
     SEED_REVIEW_PASSPHRASE = "seed_review_passphrase_screen"
@@ -41,6 +42,7 @@ class ScreenType(Enum):
     PSBT_OP_RETURN = "psbt_op_return_screen"
 
     # ── Visual-only screens (no text-UI equivalent) ─────────────────
+    CAMERA_PREVIEW_PILLARBOXED = "camera_preview_pillarboxed_screen"
     CAMERA_PREVIEW_OVERLAY = "camera_preview_overlay_screen"
     CAMERA_ENTROPY_OVERLAY = "camera_entropy_overlay_screen"
     QR_DISPLAY = "qr_display_screen"
@@ -58,6 +60,7 @@ class ScreenType(Enum):
 
     def is_visual_only(self):
         return self in [
+            ScreenType.CAMERA_PREVIEW_PILLARBOXED,
             ScreenType.CAMERA_PREVIEW_OVERLAY,
             ScreenType.CAMERA_ENTROPY_OVERLAY,
             ScreenType.QR_DISPLAY,
@@ -253,14 +256,7 @@ class ScreenState:
     def tick(self) -> bool:
         """Increment marquee tick. Returns True to indicate screen needs render."""
         self.marquee_tick += 1
-        
-        # Only force a redraw if there is an active animation (loading spinner or toast)
-        if self.screen_type == ScreenType.LOADING:
-            return True
-        if self.context.get("toast"):
-            return True
-            
-        return False
+        return True
         
     def move_up(self) -> bool:
         """Move cursor up. Returns True if selection changed or scrolled."""

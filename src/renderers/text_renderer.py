@@ -72,6 +72,8 @@ class TextRenderer(
             lines = self._render_seed_finalize(state)
         elif state.screen_type == ScreenType.LOADING:
             lines = self._render_loading(state)
+        elif state.screen_type == ScreenType.VERSION:
+            lines = self._render_version_screen(state)
         elif state.screen_type == ScreenType.SCREENSAVER:
             lines = []
             padding_top = max(0, (self.rows - 1) // 2)
