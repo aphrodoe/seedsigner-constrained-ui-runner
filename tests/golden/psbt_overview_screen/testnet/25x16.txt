@@ -1,0 +1,16 @@
+[<] Review Transaction   
+                         
+                         
+                         
+                         
+      841,234 tSats      
+                         
+input 1-\     /-recipient
+input 2-+-----+-change   
+              \-fee      
+                         
+                         
+                         
+                         
+                         
+    [ Review details ]   

@@ -1,0 +1,8 @@
+Verify Address  
+bcrt1q [w508d6q]
+ejxtdg4y5r3za...
+   [kygt080]    
+  Single Sig -  
+ Native Segwit  
+   (Regtest)    
+   [regtest]    

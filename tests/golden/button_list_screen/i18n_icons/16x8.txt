@@ -1,0 +1,8 @@
+[<] Verify      
+> O Scan        
+  @ Verify      
+  ▦ Donate >    
+  + Cancel      
+                
+                
+                

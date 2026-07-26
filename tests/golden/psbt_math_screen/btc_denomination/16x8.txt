@@ -1,0 +1,8 @@
+[<] Transaction 
+inputs          
+      0.05000000
+recipients      
+     -0.04835000
+fee        -1250
+----------------
+btc change      

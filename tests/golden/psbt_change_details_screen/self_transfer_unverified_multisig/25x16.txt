@@ -1,0 +1,16 @@
+[<] Self-Transfer        
+                         
+                         
+                         
+                         
+   [receive address #5]  
+      2,000,000 sats     
+ 3J98 t1Wp EZ73 CNmQ viec
+    rnyi Wrnq RhWN Ly    
+                         
+                         
+                         
+                         
+                         
+ [ Verify multisig addr ]
+    Skip verification    

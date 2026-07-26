@@ -1,0 +1,4 @@
+Hardware Error      
+  ✕ Cannot access   
+       camera       
+> Back to Main Menu 

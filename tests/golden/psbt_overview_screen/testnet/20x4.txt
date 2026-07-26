@@ -1,0 +1,4 @@
+Review Transaction  
+Spend: 841,234 tSats
+     Inputs: 2      
+  Destinations: 1   

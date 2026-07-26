@@ -1,0 +1,16 @@
+[<] Seed Word #3         
+mu                       
+ [a]  .   .   .   .   f  
+  .   .   .   .   .   l  
+  .   .   .   .   .   .  
+  s   t   .   .   .   .  
+     .   .  [DEL] [OK]   
+  muffin                 
+  mule                   
+  multiply               
+  muscle                 
+  museum                 
+  mushroom               
+  music                  
+  must                   
+  mutual                 

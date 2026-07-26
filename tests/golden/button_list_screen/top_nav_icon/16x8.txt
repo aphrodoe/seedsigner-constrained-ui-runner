@@ -1,0 +1,8 @@
+[<] @ 6a4f e1b8 
+> [+] Scan a QR 
+  ▦ Export Xpu..
+  ✎ Sign a PSBT 
+                
+                
+                
+                

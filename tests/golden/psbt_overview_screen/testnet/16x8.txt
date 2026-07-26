@@ -1,0 +1,8 @@
+[<] Review Trans
+ Spend: 841,234 
+     tSats      
+   Inputs: 2    
+Destinations: 1 
+Change outputs: 
+       1        
+> Review details

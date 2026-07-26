@@ -1,0 +1,8 @@
+[<] SeedQR Forma
+    Standard    
+BIP-39 wordlist 
+    indices     
+                
+    Compact     
+Raw entropy bits
+> Standard: 29x2

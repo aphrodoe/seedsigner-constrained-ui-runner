@@ -1,0 +1,4 @@
+Sign Transaction    
+  Click to approve  
+  this transaction  
+> Approve transactio

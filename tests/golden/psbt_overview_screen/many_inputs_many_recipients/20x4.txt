@@ -1,0 +1,4 @@
+Review Transaction  
+ Spend: 12,500,000  
+        sats        
+     Inputs: 8      

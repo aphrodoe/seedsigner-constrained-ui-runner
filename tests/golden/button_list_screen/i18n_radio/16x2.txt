@@ -1,0 +1,2 @@
+Display dens 1/3
+> ( ) Compact   

@@ -1,0 +1,8 @@
+[<] Review Trans
+                
+Spend: 0.05 btc 
+   Inputs: 2    
+Self-transfers: 
+       1        
+                
+> Review details

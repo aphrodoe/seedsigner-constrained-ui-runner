@@ -1,0 +1,8 @@
+[<] Final Word C
+  Your input:   
+   "0010101"    
+  0010101----   
+                
+    Checksum    
+  -------0100   
+                

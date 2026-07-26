@@ -1,0 +1,4 @@
+Settings QR         
+  "Mode Ephemeral"  
+                    
+Settings updated in 

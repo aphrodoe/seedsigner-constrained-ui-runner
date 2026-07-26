@@ -1,0 +1,4 @@
+Transaction Math    
+inputs     1,000,000
+recipients  -841,234
+fee           -2,500

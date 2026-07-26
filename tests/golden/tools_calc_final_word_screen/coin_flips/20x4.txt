@@ -1,0 +1,4 @@
+Final Word Calc     
+    Your input:     
+     "0010101"      
+    0010101----     

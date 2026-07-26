@@ -1,0 +1,16 @@
+[<] Review Transaction   
+                         
+                         
+                         
+                         
+      0.00841234 btc     
+                         
+              /-recipient
+1 input-------+-fee      
+                         
+                         
+                         
+                         
+                         
+                         
+    [ Review details ]   

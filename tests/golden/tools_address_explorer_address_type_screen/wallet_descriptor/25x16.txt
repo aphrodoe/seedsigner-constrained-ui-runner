@@ -1,0 +1,16 @@
+[<] Address Explorer     
+                         
+                         
+                         
+                         
+                         
+    Wallet descriptor    
+      2 / 3 multisig     
+                         
+                         
+                         
+                         
+                         
+                         
+  [ Receive addresses ]  
+     Change addresses    

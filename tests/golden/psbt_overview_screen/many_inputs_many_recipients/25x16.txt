@@ -1,0 +1,16 @@
+[<] Review Transaction   
+                         
+                         
+                         
+     12,500,000 sats     
+                         
+input 1-\       /-recip 1
+input 2-|       |- [...] 
+ [...] -+-------+-recip 5
+input 7-|       |-change 
+input 8-/       \-fee    
+                         
+                         
+                         
+                         
+    [ Review details ]   

@@ -1,0 +1,8 @@
+[<] Caution     
+    ---⚠---     
+  Full Spend!   
+                
+This transaction
+   spends its   
+  entire input  
+> Continue      

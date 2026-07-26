@@ -1,0 +1,16 @@
+[<] Review Transaction   
+                         
+                         
+                         
+       841,234 sats      
+                         
+              /-recipient
+input 1-\     |-OP_RETURN
+input 2-+-----+-change   
+              \-fee      
+                         
+                         
+                         
+                         
+                         
+    [ Review details ]   

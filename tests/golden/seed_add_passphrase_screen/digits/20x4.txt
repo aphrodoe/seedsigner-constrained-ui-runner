@@ -1,0 +1,4 @@
+BIP-39 Passphrase   
+[0]         (digits)
+                    
+                    

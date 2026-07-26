@@ -1,0 +1,4 @@
+Review Transaction  
+Spend: 841,234 sats 
+     Inputs: 3      
+  Destinations: 2   

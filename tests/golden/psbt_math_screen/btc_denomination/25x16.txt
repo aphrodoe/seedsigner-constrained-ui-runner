@@ -1,0 +1,16 @@
+[<] Transaction Math     
+                         
+                         
+                         
+                         
+inputs         0.05000000
+recipients    -0.04835000
+fee                 -1250
+-------------------------
+btc change     0.00163750
+                         
+                         
+                         
+                         
+                         
+  [ Review recipients ]  

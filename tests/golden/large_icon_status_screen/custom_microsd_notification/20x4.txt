@@ -1,0 +1,4 @@
+microSD             
+    [SD] microSD    
+      detected      
+> OK                

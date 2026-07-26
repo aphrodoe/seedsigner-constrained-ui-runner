@@ -1,0 +1,8 @@
+[<] Button Icons
+> O CAMERA      
+  :: DICE       
+  @ FINGERPRINT 
+  ⌨ KEYBOARD    
+  + PLUS        
+  ▦ QRCODE      
+  CHEVRON_RIGH..

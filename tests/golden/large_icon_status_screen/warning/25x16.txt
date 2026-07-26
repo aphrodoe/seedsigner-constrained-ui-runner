@@ -1,0 +1,16 @@
+[<] Caution              
+                         
+                         
+                         
+         ---⚠---         
+       Full Spend!       
+                         
+ This transaction spends 
+ its entire input value. 
+ No change is coming back
+     to your wallet.     
+                         
+                         
+                         
+                         
+       [ Continue ]      

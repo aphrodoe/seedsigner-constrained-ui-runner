@@ -1,0 +1,2 @@
+BIP-39 Passphras
+[A]             

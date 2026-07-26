@@ -1,0 +1,16 @@
+[<] Seed Options         
+[ Scan a QR code ]       
+  Export Xpub            
+  Backup this very long..
+  Discard seed           
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         

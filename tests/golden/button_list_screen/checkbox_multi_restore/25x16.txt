@@ -1,0 +1,16 @@
+[<] Script Types         
+Select which script types
+        to enable.       
+  [x] Native SegWit      
+  [ ] Nested SegWit      
+  [ ] Taproot            
+  [x] Legacy             
+  [ ] Custom derivation  
+> [x] Coordinator default
+  [ ] Advanced override  
+                         
+                         
+                         
+                         
+                         
+                         

@@ -1,0 +1,4 @@
+Final Word Calc     
+    Your input:     
+     "satoshi"      
+    10111111011     

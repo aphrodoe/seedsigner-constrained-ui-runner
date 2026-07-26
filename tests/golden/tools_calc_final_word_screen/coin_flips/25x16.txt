@@ -1,0 +1,16 @@
+[<] Final Word Calc      
+                         
+                         
+                         
+  Your input: "0010101"  
+       0010101----       
+                         
+         Checksum        
+       -------0100       
+                         
+   Final Word: "clever"  
+       00101010100       
+                         
+                         
+                         
+         [ Next ]        

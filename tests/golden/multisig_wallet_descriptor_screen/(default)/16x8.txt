@@ -1,0 +1,8 @@
+[<] Descriptor L
+     Policy     
+     2 of 3     
+  Signing Keys  
+    1a0b2c3d    
+    22bde1a9    
+    73c5da0a    
+> OK            

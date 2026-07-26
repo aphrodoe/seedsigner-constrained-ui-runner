@@ -1,0 +1,16 @@
+[<] Transaction Math     
+                         
+                         
+                         
+                         
+                         
+inputs            500,000
+fee                -1,800
+-------------------------
+sats change       498,200
+                         
+                         
+                         
+                         
+                         
+  [ Review recipients ]  

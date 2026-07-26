@@ -1,0 +1,8 @@
+[<] Xpub Details
+@ Fingerprint   
+  9a8f2c1b      
+⎇ Derivation    
+  m/84'/0'/0'   
+✕ Xpub          
+  zpub6rFR7y4Q2A
+> Export xpub   

@@ -1,0 +1,8 @@
+[<] Review Trans
+ Spend: 841,234 
+      sats      
+   Inputs: 3    
+Destinations: 2 
+Change outputs: 
+       1        
+> Review details

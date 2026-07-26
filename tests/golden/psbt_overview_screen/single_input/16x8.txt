@@ -1,0 +1,8 @@
+[<] Review Trans
+                
+     Spend:     
+ 0.00841234 btc 
+   Inputs: 1    
+Destinations: 1 
+                
+> Review details

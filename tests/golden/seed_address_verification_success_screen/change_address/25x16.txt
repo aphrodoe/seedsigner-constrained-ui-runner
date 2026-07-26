@@ -1,0 +1,16 @@
+Success!                 
+                         
+                         
+                         
+                         
+                         
+    ✓ Address Verified   
+  bc1q [6p00waz]...[5ek] 
+      change address     
+         index 12        
+                         
+                         
+                         
+                         
+                         
+          [ OK ]         

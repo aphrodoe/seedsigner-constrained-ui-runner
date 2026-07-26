@@ -1,0 +1,8 @@
+[<] Script Types
+  Select which  
+script types to 
+    enable.     
+  [x] Native S..
+  [ ] Nested S..
+  [ ] Taproot   
+  [x] Legacy    

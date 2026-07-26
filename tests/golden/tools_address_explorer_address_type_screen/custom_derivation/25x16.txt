@@ -1,0 +1,16 @@
+[<] Address Explorer     
+                         
+                         
+                         
+                         
+      @ Fingerprint      
+         8c65eb9f        
+       ⎇ Derivation      
+      m/48'/0'/0'/2'     
+                         
+                         
+                         
+                         
+                         
+  [ Receive addresses ]  
+     Change addresses    

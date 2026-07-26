@@ -1,0 +1,8 @@
+Backup Verified 
+    ---✓---     
+    Success!    
+                
+  All mnemonic  
+  backup words  
+      were      
+> OK            

@@ -1,0 +1,4 @@
+Confirm action   1/2
+> ✓ Approve         
+  ✗ Cancel          
+                    

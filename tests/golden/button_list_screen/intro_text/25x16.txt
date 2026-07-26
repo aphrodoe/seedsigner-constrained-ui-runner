@@ -1,0 +1,16 @@
+[<] Export Wallet        
+Choose how to export this
+     wallet's public     
+descriptor. The QR option
+  encodes the descriptor 
+    for an air-gapped    
+    transfer; the file   
+ options write it to the 
+   SD card. Review the   
+      coordinator's      
+ requirements before you 
+ continue, then pick the 
+    format it expects.   
+       [ QR code ]       
+        JSON file        
+        Text file        

@@ -1,0 +1,16 @@
+Backup Verified          
+                         
+                         
+                         
+                         
+         ---✓---         
+         Success!        
+                         
+All mnemonic backup words
+    were successfully    
+        verified!        
+                         
+                         
+                         
+                         
+          [ OK ]         

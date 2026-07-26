@@ -1,0 +1,16 @@
+[<] Seed Word #7         
+mus                      
+ [a]  .   c   .   e   .  
+  .   h   i   .   .   .  
+  .   .   .   .   .   .  
+  .   t   .   .   .   .  
+     .   .  [DEL] [OK]   
+  muscle                 
+  museum                 
+  mushroom               
+  music                  
+  must                   
+                         
+                         
+                         
+                         

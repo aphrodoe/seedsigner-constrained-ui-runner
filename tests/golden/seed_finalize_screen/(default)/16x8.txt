@@ -1,0 +1,8 @@
+Finalize Seed   
+                
+ @ fingerprint  
+    8c65eb9f    
+                
+                
+> Done          
+  BIP-39 Passp..

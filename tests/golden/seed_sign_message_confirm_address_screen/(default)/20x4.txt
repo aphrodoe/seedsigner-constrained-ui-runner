@@ -1,0 +1,4 @@
+Confirm Address     
+ ⎇ derivation path  
+  m/84h/0h/0h/0/0   
+   bc1q [az78jzg]   

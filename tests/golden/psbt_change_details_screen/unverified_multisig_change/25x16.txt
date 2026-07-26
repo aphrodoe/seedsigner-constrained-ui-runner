@@ -1,0 +1,16 @@
+[<] Your Change          
+                         
+                         
+                         
+                         
+   [change address #2]   
+      0.00123456 btc     
+ bc1q ar0s rrr7 xfkv y5l6
+ 43ly dnw9 re59 gtzz wf5m
+            dq           
+                         
+                         
+                         
+                         
+[ Verify multisig chang ]
+    Skip verification    

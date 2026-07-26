@@ -82,6 +82,22 @@ python3 tools/dual_runner.py
 
 ## Running Tests
 
+To run the standard unit tests:
 ```bash
-python3 -m pytest tests/ -v
+python3 -m pytest tests/test_screen_state.py tests/test_text_renderer.py tests/test_json_parser.py -v
 ```
+
+To run the automated Golden UI tests (verifies text snapshots across all hardware tiers against `scenarios.json`):
+```bash
+python3 -m pytest tests/test_all_screens_golden.py
+```
+*(Append `--update-golden` to overwrite baselines if you make intentional design changes)*
+
+## Hardware Screen Walkthrough
+
+To physically verify the text UI layout alignment and pagination on your I2C/SPI displays, you can run the hardware walkthrough tool. This tool will auto-detect connected LCD, OLED, or E-Paper displays and pipe all 130+ screen variations directly to the hardware:
+
+```bash
+./tools/test_all_screens.py
+```
+*(Press Enter to manually advance through the screens)*

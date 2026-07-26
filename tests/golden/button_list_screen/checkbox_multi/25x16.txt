@@ -1,0 +1,16 @@
+[<] Script Types         
+Select which script types
+        to enable.       
+> [x] Native SegWit      
+  [ ] Nested SegWit      
+  [x] Taproot            
+  [ ] Legacy             
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         

@@ -1,0 +1,4 @@
+Display density  1/3
+> ( ) Compact       
+  (●) Medium        
+  ( ) Static        

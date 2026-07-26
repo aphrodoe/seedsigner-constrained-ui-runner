@@ -1,0 +1,4 @@
+Verify Passphrase   
+ "·secret··phrase·" 
+     @ changes      
+    fingerprint     

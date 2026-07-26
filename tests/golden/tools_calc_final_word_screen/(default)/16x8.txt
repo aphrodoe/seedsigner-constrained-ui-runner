@@ -1,0 +1,8 @@
+[<] Final Word C
+  Your input:   
+   "satoshi"    
+  10111111011   
+                
+    Checksum    
+  -------1111   
+                

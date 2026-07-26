@@ -1,0 +1,16 @@
+microSD                  
+                         
+                         
+        .-------.        
+        |SD   _ |        
+        |    (_)|        
+        '-------'        
+                         
+     microSD detected    
+                         
+A microSD card change was
+        detected.        
+                         
+                         
+                         
+          [ OK ]         

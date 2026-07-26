@@ -1,0 +1,4 @@
+Export Wallet    5/6
+Choose how to export
+this wallet's public
+ descriptor. The QR 

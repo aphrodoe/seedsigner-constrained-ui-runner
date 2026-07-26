@@ -1,0 +1,4 @@
+Verify Send Address 
+  Amount: 841,234   
+       tSats        
+bcrt 1qw5 08d6 qejx 

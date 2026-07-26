@@ -1,0 +1,16 @@
+[<] Final Word Calc      
+                         
+                         
+                         
+  Your input: "satoshi"  
+       10111111011       
+                         
+         Checksum        
+       -------1111       
+                         
+    Final Word: "say"    
+       10111111111       
+                         
+                         
+                         
+         [ Next ]        

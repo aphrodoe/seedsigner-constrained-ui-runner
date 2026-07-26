@@ -1,0 +1,4 @@
+Button Icons     1/7
+> O CAMERA          
+  :: DICE           
+  @ FINGERPRINT     

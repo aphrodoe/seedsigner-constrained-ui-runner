@@ -1,0 +1,8 @@
+[<] Display dens
+> ( ) Compact   
+  (●) Medium    
+  ( ) Static    
+                
+                
+                
+                

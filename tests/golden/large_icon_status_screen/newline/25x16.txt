@@ -1,0 +1,16 @@
+Backup Verified          
+                         
+                         
+                         
+         ---✓---         
+         Success!        
+                         
+ First line stands alone.
+ The second paragraph is 
+ longer, so it wraps onto
+  more than one line by  
+         itself.         
+                         
+                         
+                         
+          [ OK ]         

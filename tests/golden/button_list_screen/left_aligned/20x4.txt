@@ -1,0 +1,4 @@
+Seed Options     1/4
+> Scan a QR code    
+  Export Xpub       
+  Backup this very..

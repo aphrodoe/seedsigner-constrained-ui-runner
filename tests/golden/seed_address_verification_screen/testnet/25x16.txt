@@ -1,0 +1,16 @@
+Verify Address           
+                         
+                         
+                         
+      tb1q [w508d6q]     
+     ejxtdg4y5r3za...    
+        [kxpjzsx]        
+   Single Sig - Native   
+     Segwit (Testnet)    
+        [testnet]        
+  Checking address 1240  
+                         
+                         
+                         
+       [ Skip 10 ]       
+          Cancel         

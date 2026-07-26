@@ -1,0 +1,8 @@
+Restarting      
+ SeedSigner is  
+  restarting.   
+                
+ All in-memory  
+  data will be  
+     wiped.     
+                

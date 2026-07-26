@@ -1,0 +1,16 @@
+[<] 12th Word            
+                         
+                         
+                         
+                         
+      Word: "clever"     
+      @ fingerprint      
+         7b07c0b7        
+     12-word mnemonic    
+                         
+                         
+                         
+                         
+                         
+      [ Load seed ]      
+         Discard         

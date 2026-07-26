@@ -1,0 +1,8 @@
+[<] Export Walle
+ Choose how to  
+  export this   
+wallet's public 
+descriptor. The 
+   QR option    
+  encodes the   
+ descriptor for 

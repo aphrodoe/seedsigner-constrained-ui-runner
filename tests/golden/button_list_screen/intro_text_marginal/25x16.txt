@@ -1,0 +1,16 @@
+[<] Confirm SeedQR?      
+  Scan your transcribed  
+ SeedQR to confirm it was
+    copied correctly.    
+         [ Scan ]        
+           Skip          
+           Done          
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         
+                         

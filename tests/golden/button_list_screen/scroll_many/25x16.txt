@@ -1,0 +1,16 @@
+[<] Settings             
+       [ Language ]      
+   Persistent settings   
+     Camera rotation     
+     Bitcoin network     
+       Script types      
+        Sig types        
+     Message signing     
+         Advanced        
+          Donate         
+         I/O test        
+                         
+                         
+                         
+                         
+                         

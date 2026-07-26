@@ -1,0 +1,16 @@
+[<] Language             
+      [ ✓ English ]      
+  Português do Brasil (..
+      Català (Catalan)   
+      Čeština (Czech)    
+     Nederlands (Dutch)  
+     Français (French)   
+      Deutsch (German)   
+      Ελληνικά (Greek)   
+       हिन्दी (Hindi)    
+  Bahasa Indonesia (Ind..
+     Italiano (Italian)  
+       日本語 (Japanese)    
+        한국어 (Korean)     
+     Norsk (Norwegian)   
+      فارسی (Persian)    

@@ -1,0 +1,16 @@
+[<] Review Transaction   
+                         
+                         
+                         
+                         
+         0.05 btc        
+                         
+input 1-\ /-self-transfer
+input 2-+-+-fee          
+                         
+                         
+                         
+                         
+                         
+                         
+    [ Review details ]   

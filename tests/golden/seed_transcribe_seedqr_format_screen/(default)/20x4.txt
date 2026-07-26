@@ -1,0 +1,4 @@
+SeedQR Format       
+      Standard      
+  BIP-39 wordlist   
+      indices       

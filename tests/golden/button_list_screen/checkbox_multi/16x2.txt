@@ -1,0 +1,2 @@
+Script Types 1/4
+> [x] Native Seg

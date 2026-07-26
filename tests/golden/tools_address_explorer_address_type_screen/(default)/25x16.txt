@@ -1,0 +1,16 @@
+[<] Address Explorer     
+                         
+                         
+                         
+                         
+      @ Fingerprint      
+         8c65eb9f        
+       ⎇ Derivation      
+      Native Segwit      
+                         
+                         
+                         
+                         
+                         
+  [ Receive addresses ]  
+     Change addresses    

@@ -1,0 +1,16 @@
+[<] SeedQR Format        
+                         
+                         
+                         
+                         
+         Standard        
+ BIP-39 wordlist indices 
+                         
+         Compact         
+     Raw entropy bits    
+                         
+                         
+                         
+                         
+   [ Standard: 25x25 ]   
+      Compact: 21x21     

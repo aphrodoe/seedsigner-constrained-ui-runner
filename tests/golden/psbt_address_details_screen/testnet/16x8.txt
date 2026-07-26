@@ -1,0 +1,8 @@
+[<] Verify Send 
+Amount: 841,234 
+     tSats      
+ tb1q w508 d6qe 
+ jxtd g4y5 r3za 
+ rvar y0c5 xw7k 
+    xpjz sx     
+> Next          

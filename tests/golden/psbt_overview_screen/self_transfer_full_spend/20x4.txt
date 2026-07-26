@@ -1,0 +1,4 @@
+Review Transaction  
+  Spend: 0.05 btc   
+     Inputs: 2      
+ Self-transfers: 1  

@@ -1,0 +1,16 @@
+[<] Caution              
+!        ---‼---        !
+! SeedQR is your private!
+!          key!         !
+!                       !
+!Anyone who sees this QR!
+! code can steal all of !
+!   your funds. Never   !
+!  photograph it, never !
+! scan it into a device !
+!  that connects to the !
+!  internet, and never  !
+!  store it digitally.  !
+! Treat it exactly like !
+!the seed phrase itself:!
+     [ I understand ]    

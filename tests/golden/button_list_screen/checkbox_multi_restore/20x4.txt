@@ -1,0 +1,4 @@
+Script Types     6/7
+Select which script 
+  types to enable.  
+  [x] Native SegWit 

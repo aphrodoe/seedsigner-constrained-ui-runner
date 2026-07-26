@@ -1,0 +1,8 @@
+microSD         
+   ---[SD]---   
+microSD detected
+                
+ A microSD card 
+   change was   
+   detected.    
+> OK            

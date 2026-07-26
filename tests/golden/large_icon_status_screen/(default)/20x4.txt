@@ -1,0 +1,4 @@
+Backup Verified     
+     ✓ Success!     
+All mnemonic backup 
+> OK                

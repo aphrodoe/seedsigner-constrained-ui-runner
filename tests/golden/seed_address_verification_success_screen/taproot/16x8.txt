@@ -1,0 +1,8 @@
+Success!        
+   ✓ Address    
+    Verified    
+      bc1p      
+[0xlxvlh]...[jj0
+       ]        
+receive address 
+    index 0     
