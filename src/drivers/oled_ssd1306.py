@@ -1,45 +1,59 @@
+"""
+Hardware driver for SSD1306 OLED displays over I2C.
+
+Handles PIL image buffering and luma.oled hardware communication.
+All text rendering logic is delegated to the shared graphics utility
+(src/utils/graphics.py) to ensure hardware-agnostic consistency.
+"""
 from PIL import Image, ImageDraw, ImageFont
-import os
 
 try:
     # pyrefly: ignore [missing-import]
     from luma.core.interface.serial import i2c
-    
+
     # pyrefly: ignore [missing-import]
     from luma.oled.device import ssd1306
     HAS_LUMA = True
 except ImportError:
     HAS_LUMA = False
 
+from src.utils.graphics import compute_text_grid, draw_text_line
+
+
 class OledSSD1306:
     """
-    Hardware driver for the 128x64 SSD1306 OLED display over I2C.
-    Handles PIL image buffering and luma.oled hardware communication.
+    Hardware driver for SSD1306 OLED displays over I2C.
+
+    The text grid (cols, rows) is dynamically computed from the physical pixel
+    dimensions and the loaded font metrics — no hardcoded values.
     """
-    def __init__(self, i2c_port: int = 1, i2c_addr: int = 0x3C, width: int = 128, height: int = 64):
+    def __init__(self, i2c_port: int = 1, i2c_addr: int = 0x3C, width: int = 128, height: int = 32):
         if not HAS_LUMA:
             raise ImportError("luma.oled is required for OledSSD1306. Install with: pip install luma.oled")
-            
+
         serial = i2c(port=i2c_port, address=i2c_addr)
         self.device = ssd1306(serial, width=width, height=height)
-        
-        # Use 8px Cozette bitmap font instead of default to fix bottom clipping
-        font_path = os.path.join(os.path.dirname(__file__), '..', 'utils', 'fonts', 'cozette.bdf')
-        self.font = ImageFont.load(font_path)
+
+        self.width = width
+        self.height = height
+        self.font = ImageFont.load_default()
+
+        # Dynamically compute the text grid from pixel dimensions and font metrics
+        self.cols, self.rows, self.line_height = compute_text_grid(width, height, self.font)
+
         self.clear()
 
     def write_lines(self, lines: list[str]):
         """Draw text lines to a monochrome buffer and flush to OLED."""
-        # Create a new blank 1-bit image (black background)
-        image = Image.new("1", (self.device.width, self.device.height))
+        image = Image.new("1", (self.width, self.height))
         draw = ImageDraw.Draw(image)
-        
-        # Draw the text lines (8 rows * 8px height = 64px)
+
         for i, line in enumerate(lines):
-            y = i * 8
-            draw.text((0, y), line, font=self.font, fill="white")
-            
-        # Send buffer to OLED hardware
+            y = i * self.line_height
+            if y + self.line_height > self.height:
+                break  # Don't render rows that would clip
+            draw_text_line(draw, image, line, y, self.font, self.width, fill="white")
+
         self.device.display(image)
 
     def clear(self):
