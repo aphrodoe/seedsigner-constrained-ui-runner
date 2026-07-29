@@ -52,8 +52,8 @@ def init_displays():
     # Tier 2: OLED
     if has_oled:
         try:
-            displays["16x8"] = OledSSD1306(i2c_port=1, i2c_addr=0x3C, width=128, height=64)
-            print("[OK] Connected to 128x64 OLED")
+            displays["16x8"] = OledSSD1306(i2c_port=1, i2c_addr=0x3C, width=128, height=32)
+            print("[OK] Connected to 128x32 OLED")
         except Exception as e:
             print(f"[FAIL] OLED init failed: {e}")
             

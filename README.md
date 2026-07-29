@@ -11,8 +11,7 @@ As of Week 8, this runner supports **29 unique text-renderable screen types**, c
 Supported outputs (Categorized by Tier):
 * **Tier 0**: 16x2 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
 * **Tier 1**: 20x4 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
-* **Tier 2**: 128x64 OLED (via Pixel-to-Text adapter) - *Upcoming Week 9 (ACEBOTT kit)*
-* **Tier 3**: 200x200 E-Paper (via Pixel-to-Text adapter) - *Upcoming Week 10 (Waveshare 1.54")*
+* **Graphical Pixel Displays**: 128x32 / 128x64 OLED (SSD1306) and 200x200 E-Paper (Waveshare 1.54") — *Dimensions dynamically mapped to text grid via `src/utils/graphics.py`*
 * **Audio**: Navigation cues (PWM Buzzer) - *Tested on standard 5V active buzzer*
 
 ## Setup
@@ -35,7 +34,7 @@ python3 -m src.main --display lcd_16x2_sim --scenario button_list_screen
 python3 -m src.main --display lcd_20x4_sim --scenario button_list_screen --variation scroll_many
 ```
 
-**Tier 2: 128x64 OLED (Expansive View)** — shows up to 7 items:
+**Graphical OLED (Dynamic Grid)** — rows and columns computed from pixel dimensions:
 ```bash
 python3 -m src.main --display lcd_16x8_sim --scenario button_list_screen --variation scroll_many
 ```
@@ -76,6 +75,28 @@ python3 tools/dual_runner.py
 * Keyboard controls: `W`, `A`, `S`, `D` to navigate, `Space` to select. 
 * **Side-by-Side vs Isolated Mode**: By default, the Dual Runner renders all display tiers simultaneously. Because it shares a single virtual controller, it prioritizes the scrolling limits of the smallest display (Tier 0). You can use the dropdown menu to isolate a specific tier (e.g., "Tier 3: E-Paper"), which will immediately un-link the shared scroll constraints and allow you to interact with that tier's 1-to-1 native scrolling behavior.
 
+## Interactive Hardware Tester
+
+For testing the full UI experience on physical hardware connected to a Raspberry Pi (e.g., over SSH), use the interactive hardware tester. It supports all display types and dynamically computes the text grid from the hardware's physical dimensions.
+
+```bash
+# Test on 128x32 OLED (SSD1306)
+./tools/interactive_hardware_test.py --display oled
+
+# Test on 16x2 Character LCD
+./tools/interactive_hardware_test.py --display lcd16x2
+
+# Test on 20x4 Character LCD
+./tools/interactive_hardware_test.py --display lcd20x4
+
+# Test on Waveshare 1.54" E-Paper
+./tools/interactive_hardware_test.py --display epaper
+```
+
+* Keyboard controls: `W`/`S` or Arrow keys to scroll, `N`/`Enter` for next screen, `Q` to quit.
+* The tool mirrors the current screen to your SSH terminal so you can see what the hardware is rendering.
+* Marquee animations run in real-time (non-blocking 300ms tick loop), matching `dual_runner.py`.
+
 ## Documentation
 
 * **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for architectural tiers (Tier 0-3), block pagination, sliding windows, and 2D spatial layouts.
@@ -93,11 +114,21 @@ python3 -m pytest tests/test_all_screens_golden.py
 ```
 *(Append `--update-golden` to overwrite baselines if you make intentional design changes)*
 
-## Hardware Screen Walkthrough
+## Hardware Screen Walkthrough (Passive)
 
-To physically verify the text UI layout alignment and pagination on your I2C/SPI displays, you can run the hardware walkthrough tool. This tool will auto-detect connected LCD, OLED, or E-Paper displays and pipe all 130+ screen variations directly to the hardware:
+To passively walk through all 130+ screen variations on auto-detected hardware (no interactive scrolling):
 
 ```bash
 ./tools/test_all_screens.py
 ```
 *(Press Enter to manually advance through the screens)*
+
+## Architecture: Shared Graphics Utility
+
+All graphical display drivers (OLED, E-Paper) delegate text rendering to a shared utility at `src/utils/graphics.py`. This module:
+
+1. **Dynamically measures** the loaded PIL font's ascent and average character width — no hardcoded pixel constants.
+2. **Computes the text grid** (`cols`, `rows`, `line_height`) from any pixel resolution via `compute_text_grid(width, height, font)`.
+3. **Renders proportional text** with automatic right-alignment of pagination indicators (e.g., `3/4`) and icon bitmap substitution via a single `draw_text_line()` function.
+
+This ensures that adding a new graphical display requires only writing a thin hardware driver that calls the shared API — all alignment, kerning, and icon logic is inherited automatically.

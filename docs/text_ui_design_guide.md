@@ -1,16 +1,26 @@
 # Text UI Design Guide
 
-This document outlines the core rendering rules, constraints, and navigation patterns for displaying the SeedSigner UI on character LCDs.
+This document outlines the core rendering rules, constraints, and navigation patterns for displaying the SeedSigner UI across constrained display hardware.
 
 ## 1. Core Constraints & Hardware Tiers
-Character LCDs cannot draw pixels. They rely on fixed-width character grids. We categorize displays into four architectural "Tiers" to adapt layouts to their spatial constraints:
+Displays are categorized into architectural "Tiers" based on their spatial capacity.
 
-*   **Tier 0 (Minimalist)**: 16x2 LCD. Extremely restrictive. Only two lines of text.
-*   **Tier 1 (Compact)**: 20x4 LCD. Standard constrained. Small sliding window.
-*   **Tier 2 (Comfortable)**: ~16x8 (e.g., 128x64 OLED via pixel-to-text adapter). Enough vertical space for full menus.
-*   **Tier 3 (Spacious)**: ~25x16 (e.g., 200x200 E-Paper). Abundant space for full frames and sidebars.
+For **character LCDs**, the grid is intrinsic to the hardware (e.g., a 20x4 LCD physically has 20 columns and 4 rows).
 
-Because of these constraints, the UI logic is fundamentally different from a pixel-based OLED or TFT screen.
+For **graphical pixel displays** (OLED, E-Paper), the text grid is **dynamically computed** from the physical pixel dimensions and the loaded font's metrics using `src/utils/graphics.py`:
+- `cols = pixel_width // average_char_width`
+- `rows = pixel_height // font_ascent`
+
+This means the tier assignment is automatic and hardware-agnostic — plugging in a different resolution display requires zero code changes.
+
+| Tier | Example Hardware | Grid | How Derived |
+|:-----|:-----------------|:-----|:------------|
+| Tier 0 | 16x2 Character LCD | 16 cols × 2 rows | Intrinsic hardware |
+| Tier 1 | 20x4 Character LCD, 128x32 OLED | 20×4 or 21×3 | Intrinsic (LCD) or computed (OLED) |
+| Tier 2 | 128x64 OLED | ~21 cols × 6 rows | Computed from pixels |
+| Tier 3 | 200x200 E-Paper | ~33 cols × 20 rows | Computed from pixels |
+
+Because of these constraints, the UI logic is fundamentally different from a pixel-based TFT screen.
 
 ## 2. Rendering Strategies
 
@@ -39,10 +49,16 @@ With 4 rows, we can display multiple items simultaneously. Row 0 remains the tit
 └────────────────────┘
 ```
 
-### 2.3 Tier 2 & 3: Expansive Lists & Full Frames
-On larger displays like OLEDs (Tier 2) and E-Paper (Tier 3), standard menus rarely require scrolling. 
-*   **Tier 2 (16x8)**: Renders a large block of items below the title row.
-*   **Tier 3 (25x16)**: Entire lists fit on screen. Future enhancements include drawing ASCII borders (`+---+`) around content zones and reserving columns for sidebars or persistent help text.
+### 2.3 Graphical Displays: Dynamic Grid Rendering
+On graphical pixel displays (OLED, E-Paper), the text grid is computed dynamically from the hardware's pixel resolution. The `TextRenderer` receives the computed `cols` and `rows` and applies the same tier logic as character LCDs — no special cases.
+
+All graphical rendering is delegated to the shared `src/utils/graphics.py` utility, which provides:
+- **`compute_text_grid(width, height, font)`**: Derives `cols`, `rows`, and `line_height` from pixel dimensions.
+- **`draw_text_line(draw, image, line, y, font, screen_width, fill)`**: Renders a single line with proportional kerning, icon bitmap substitution, and automatic right-alignment of spaced trailing text (e.g., pagination indicators like `3/4`).
+
+This architecture means adding support for a new graphical display requires only a thin hardware driver that calls the shared API. All alignment, icon rendering, and text layout logic is inherited automatically.
+
+Example: A 128x32 OLED with PIL's default font measures `avg_char_width ≈ 5.9px` and `font_ascent = 10px`, yielding a grid of `21 cols × 3 rows` (1 title + 2 items). A 200x200 E-Paper yields `33 cols × 20 rows`.
 
 ### 2.4 Vertical Centering for Text-Only Screens
 For screens that do not have active button lists (e.g., wallet descriptors, setting confirmations), the text block is automatically vertically centered within the available display rows. This ensures that on larger displays (Tier 2/3), the text is not awkwardly pinned to the top of the screen.
