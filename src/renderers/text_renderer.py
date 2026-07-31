@@ -113,7 +113,7 @@ class TextRenderer(
         elif state.screen_type == ScreenType.SETTINGS_QR_CONFIRMATION:
             lines = self._render_settings_qr_confirmation(state)
         elif state.screen_type in (ScreenType.DONATE, ScreenType.RESET,
-                                    ScreenType.POWER_OFF_NOT_REQUIRED):
+                                    ScreenType.POWER_OFF_NOT_REQUIRED, ScreenType.SEED_EXPORT_XPUB_CUSTOM_DERIVATION):
             lines = self._render_text_only(state)
         # ── Button-list fallback screens ────────────────────────────
         elif state.screen_type == ScreenType.POWER_OPTIONS:

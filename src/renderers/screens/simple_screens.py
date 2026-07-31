@@ -252,9 +252,9 @@ class SimpleScreensMixin:
         else:
             toast_text = f"[ {full_text} ]"
         
-        # Overlay toast on last row (or last 2 rows with separator on larger tiers)
-        if self.tier >= 1 and len(bg_lines) >= 2:
-            bg_lines[-2] = self._fixed("-" * self.cols)
+        # Overlay toast on last row (or last 2 rows with separator if we have >= 4 rows)
+        if self.rows >= 4 and len(bg_lines) >= 2:
+            bg_lines[-2] = "-" * int(self.cols * 1.5)  # Extended length to ensure full horizontal coverage on proportional displays
             bg_lines[-1] = self._center(toast_text)
         else:
             bg_lines[-1] = self._center(toast_text)

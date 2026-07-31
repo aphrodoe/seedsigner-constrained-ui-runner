@@ -112,9 +112,9 @@ def draw_text_line(draw: ImageDraw.Draw, image: Image.Image, line: str,
         screen_width: Physical pixel width of the display.
         fill: Text colour ("white" for OLED, 0 for E-Paper).
     """
-    # Detect right-aligned text (e.g. "Settings        3/4")
-    # Pattern: non-whitespace left part, 2+ spaces gap, non-whitespace right part
-    m = re.match(r'^(\S.*?)\s{2,}(\S.*?)\s*$', line)
+    # Detect right-aligned pagination indicators (e.g. "Settings        3/4")
+    # Only applies to the top row (y == 0) to prevent false positives on marquee buttons
+    m = re.match(r'^(\S.*?)\s{2,}(\d+/\d+)\s*$', line) if y == 0 else None
 
     if m:
         left_part = m.group(1)
