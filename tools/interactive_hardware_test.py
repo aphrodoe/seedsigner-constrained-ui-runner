@@ -29,20 +29,14 @@ from src.screen_state import ScreenState, ScreenType
 from src.renderers.text_renderer import TextRenderer
 
 
-def get_key_timeout(timeout=0.3):
-    """Non-blocking key reader with timeout. Returns None if no key pressed."""
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setcbreak(sys.stdin.fileno())
-        r, w, e = select.select([sys.stdin], [], [], timeout)
-        if r:
-            ch = sys.stdin.read(1)
-            if ch == '\x1b':
-                ch += sys.stdin.read(2)
-            return ch
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+def get_key_timeout(timeout=0.1):
+    """Non-blocking key reader. Terminal must already be in cbreak mode."""
+    r, w, e = select.select([sys.stdin], [], [], timeout)
+    if r:
+        ch = sys.stdin.read(1)
+        if ch == '\x1b':
+            ch += sys.stdin.read(2)
+        return ch
     return None
 
 
@@ -142,66 +136,100 @@ def main():
             all_screens.append((s_name, v_name))
     total_screens = len(all_screens)
 
-    for screen_idx, (s_name, v_name) in enumerate(all_screens, 1):
-        s_def = parser.scenarios[s_name]
-        ctx = parser.get_scenario_context(s_name, v_name)
-        state = ScreenState(s_name, ctx, visible_rows=text_rows - 1)
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
 
-        # Build a human-readable label for the current variation
-        variation_label = f" ({v_name})" if v_name else " (default)"
-        progress = f"[{screen_idx}/{total_screens}]"
+    try:
+        tty.setcbreak(sys.stdin.fileno())
+        
+        for screen_idx, (s_name, v_name) in enumerate(all_screens, 1):
+            s_def = parser.scenarios[s_name]
+            ctx = parser.get_scenario_context(s_name, v_name)
+            state = ScreenState(s_name, ctx, visible_rows=text_rows - 1)
 
-        quit_all = False
-        force_render = True
-        tick_count = 0
-        while True:
-            try:
-                # 1. Read input FIRST with a short timeout for maximum responsiveness
-                key = get_key_timeout(0.1)
-                if key:
-                    if key in ['w', '\x1b[A']:  # UP
-                        if state.move_up():
+            # Build a human-readable label for the current variation
+            variation_label = f" ({v_name})" if v_name else " (default)"
+            progress = f"[{screen_idx}/{total_screens}]"
+
+            quit_all = False
+            force_render = True
+            tick_count = 0
+            while True:
+                try:
+                    # 1. Read input FIRST with a short timeout for maximum responsiveness
+                    key = get_key_timeout(0.1)
+                    if key:
+                        if state.screen_type.name == "TOAST_OVERLAY":
+                            bg_ctx = state.context.get("background", {})
+                            state.context.update(bg_ctx)
+                            if bg_ctx.get("top_nav", {}).get("title") == "Home":
+                                state.screen_type = ScreenType.MAIN_MENU
+                            else:
+                                state.screen_type = ScreenType.BUTTON_LIST
                             force_render = True
-                    elif key in ['s', '\x1b[B']:  # DOWN
-                        if state.move_down():
-                            force_render = True
-                    elif key in ['n', '\r', '\n']:  # NEXT
-                        break
-                    elif key == 'q':
-                        quit_all = True
-                        break
+                            continue  # Consume the keypress to dismiss the toast
 
-                # 2. Advance marquee state
-                state.tick()
-                tick_count += 1
+                        if key in ['w', '\x1b[A']:  # UP
+                            if state.move_up():
+                                force_render = True
+                        elif key in ['s', '\x1b[B']:  # DOWN
+                            if state.move_down():
+                                force_render = True
+                        elif key in ['a', '\x1b[D']:  # LEFT
+                            if state.move_left():
+                                force_render = True
+                        elif key in ['d', '\x1b[C']:  # RIGHT
+                            if state.move_right():
+                                force_render = True
+                        elif key in ['\r', '\n', ' ']: # ENTER / SPACE (Interact)
+                            action = state.on_enter()
+                            if action == "UPDATE":
+                                force_render = True
+                            elif action == "SUBMIT":
+                                break # Move to next scenario
+                        elif key in ['n', 'N']:  # NEXT SCENARIO
+                            break
+                        elif key in ['q', 'Q']:  # QUIT
+                            quit_all = True
+                            break
 
-                # 3. Render only when needed:
-                #    - Immediately on user input (force_render)
-                #    - Every 3rd tick (~300ms) for smooth marquee animation
-                if force_render or tick_count >= 3:
-                    tick_count = 0
-                    lines = renderer.render(state)
-                    display.write_lines(lines)
+                    # 2. Advance time tracker
+                    tick_count += 1
 
-                    # Mirror to SSH terminal
-                    print("\033[H\033[J", end="")  # clear screen
-                    print(f"{progress} {s_name}{variation_label}")
-                    print(f"--- {display_type.upper()} [{text_cols}x{text_rows}] ---")
-                    for line in lines[:text_rows]:
-                        print(f"│{line}│")
-                    print("-" * (text_cols + 2))
-                    print("W/S/UP/DOWN: Scroll | N/ENTER: Next | Q: Quit")
+                    # 3. Render only when needed:
+                    #    - Immediately on user input (force_render)
+                    #    - Every 3rd tick (~300ms) for smooth marquee animation
+                    if force_render or tick_count >= 3:
+                        if not force_render:
+                            # Only advance the marquee state when we're actually going to render it
+                            # This fixes jumpy animations that occur when ticks outpace renders
+                            state.tick()
 
-                    force_render = False
+                        tick_count = 0
+                        lines = renderer.render(state)
+                        display.write_lines(lines)
 
-            except Exception as e:
-                print(f"Render error: {e}")
-                traceback.print_exc()
+                        # Mirror to SSH terminal
+                        print("\r\033[H\033[J", end="")  # clear screen with carriage return
+                        print(f"{progress} {s_name}{variation_label}\r")
+                        print(f"--- {display_type.upper()} [{text_cols}x{text_rows}] ---\r")
+                        for line in lines[:text_rows]:
+                            print(f"│{line}│\r")
+                        print("-" * (text_cols + 2) + "\r")
+                        print("W/S/A/D/Arrows: Scroll/Type | SPACE/ENTER: Select | N: Next | Q: Quit\r")
+
+                        force_render = False
+
+                except Exception as e:
+                    print(f"Render error: {e}")
+                    traceback.print_exc()
+                    break
+
+            if quit_all:
+                display.clear()
                 break
-
-        if quit_all:
-            display.clear()
-            return
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
 if __name__ == "__main__":

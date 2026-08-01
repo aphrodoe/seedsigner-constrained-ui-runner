@@ -24,6 +24,7 @@ class ScreenType(Enum):
     VERSION = "version_screen"
     TOAST_OVERLAY = "toast_overlay_screen"
     SEED_EXPORT_XPUB_DETAILS = "seed_export_xpub_details_screen"
+    SEED_EXPORT_XPUB_CUSTOM_DERIVATION = "seed_export_xpub_custom_derivation_screen"
     SEED_REVIEW_PASSPHRASE = "seed_review_passphrase_screen"
     SEED_WORDS = "seed_words_screen"
     MULTISIG_WALLET_DESCRIPTOR = "multisig_wallet_descriptor_screen"
@@ -471,15 +472,23 @@ class ScreenState:
                 self.scroll_offset = min(self.scroll_offset, self.max_scroll_offset)
             return
             
-        if not getattr(self, "items", None):
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            items = self.context.get("suggestions", [])
+            # Mnemonic entry uses an extra row for the keyboard input line
+            effective_visible_rows = max(1, self.visible_rows - 1)
+        else:
+            items = getattr(self, "items", None)
+            effective_visible_rows = self.visible_rows
+            
+        if not items:
             return
 
         if self.selected_index < self.scroll_offset:
             # Scroll up to reveal the item
             self.scroll_offset = self.selected_index
-        elif self.selected_index >= self.scroll_offset + self.visible_rows:
+        elif self.selected_index >= self.scroll_offset + effective_visible_rows:
             # Scroll down to reveal the item
-            self.scroll_offset = self.selected_index - self.visible_rows + 1
+            self.scroll_offset = self.selected_index - effective_visible_rows + 1
 
     def _update_dynamic_title(self):
         """Dynamically update titles like 'Dice Roll 1/50' based on entered_text length."""
