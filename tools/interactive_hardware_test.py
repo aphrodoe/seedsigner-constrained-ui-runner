@@ -59,12 +59,18 @@ def init_display(display_type):
 
     elif display_type == "lcd16x2":
         from src.drivers.lcd_i2c import LCDI2C
-        display = LCDI2C(i2c_addr=0x27, bus_num=1, rows=2, cols=16)
+        try:
+            display = LCDI2C(i2c_addr=0x27, bus_num=1, rows=2, cols=16)
+        except OSError:
+            display = LCDI2C(i2c_addr=0x3F, bus_num=1, rows=2, cols=16)
         return display, display.cols, display.rows
 
     elif display_type == "lcd20x4":
         from src.drivers.lcd_i2c import LCDI2C
-        display = LCDI2C(i2c_addr=0x3F, bus_num=1, rows=4, cols=20)
+        try:
+            display = LCDI2C(i2c_addr=0x3F, bus_num=1, rows=4, cols=20)
+        except OSError:
+            display = LCDI2C(i2c_addr=0x27, bus_num=1, rows=4, cols=20)
         return display, display.cols, display.rows
 
     elif display_type == "epaper":
@@ -198,8 +204,8 @@ def main():
 
                     # 3. Render only when needed:
                     #    - Immediately on user input (force_render)
-                    #    - Every 3rd tick (~300ms) for smooth marquee animation
-                    if force_render or tick_count >= 3:
+                    #    - Every tick (~100ms) for smooth marquee animation
+                    if force_render or tick_count >= 1:
                         if not force_render:
                             # Only advance the marquee state when we're actually going to render it
                             # This fixes jumpy animations that occur when ticks outpace renders

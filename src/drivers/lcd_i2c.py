@@ -19,8 +19,8 @@ LCD_NOBACKLIGHT = 0x00  # Off
 ENABLE = 0b00000100 # Enable bit
 
 # Timing constants
-E_PULSE = 0.0005
-E_DELAY = 0.0005
+E_PULSE = 0.00005
+E_DELAY = 0.00005
 
 class LCDI2C:
     def __init__(self, i2c_addr=0x27, bus_num=1, rows=2, cols=16):
@@ -31,6 +31,39 @@ class LCDI2C:
         self._backlight = LCD_BACKLIGHT
         
         self.row_offsets = [LCD_LINE_1, LCD_LINE_2, LCD_LINE_3, LCD_LINE_4]
+        
+        self.all_bitmaps = {
+            "✓": [0b00000, 0b00001, 0b00011, 0b10110, 0b11100, 0b01000, 0b00000, 0b00000], # Success
+            "⚠": [0b00100, 0b01010, 0b10101, 0b10001, 0b10101, 0b11111, 0b00000, 0b00000], # Warning Triangle
+            "‼": [0b01010, 0b01010, 0b01010, 0b01010, 0b00000, 0b01010, 0b01010, 0b00000], # Dire Warning
+            "✕": [0b00000, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b00000, 0b00000], # Cross
+            "✗": [0b00000, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b00000, 0b00000], # Cross alt
+            "●": [0b00000, 0b00000, 0b00100, 0b01110, 0b01110, 0b01110, 0b00100, 0b00000], # Bullet
+            "·": [0b00000, 0b00000, 0b00100, 0b01110, 0b01110, 0b01110, 0b00100, 0b00000], # Bullet alt
+            "•": [0b00000, 0b00000, 0b00100, 0b01110, 0b01110, 0b01110, 0b00100, 0b00000], # Bullet alt
+            "✎": [0b00011, 0b00101, 0b00110, 0b01100, 0b11000, 0b10000, 0b00000, 0b00000], # Pen
+            "✍": [0b00011, 0b00101, 0b00110, 0b01100, 0b11000, 0b10000, 0b00000, 0b00000], # Pen alt
+            "🖉": [0b00011, 0b00101, 0b00110, 0b01100, 0b11000, 0b10000, 0b00000, 0b00000], # Pen alt
+            "▦": [0b11011, 0b10101, 0b11011, 0b00000, 0b10010, 0b01001, 0b11011, 0b00000], # QR Code
+            "⚿": [0b01110, 0b10001, 0b01110, 0b00100, 0b00111, 0b00100, 0b00111, 0b00000], # Key
+            "⚒": [0b01100, 0b10010, 0b01100, 0b00100, 0b00010, 0b00001, 0b00000, 0b00000], # Wrench
+            "⚙": [0b01010, 0b01110, 0b11011, 0b01110, 0b01010, 0b00000, 0b00000, 0b00000], # Gear
+            "⌨": [0b00000, 0b00000, 0b11111, 0b10101, 0b11111, 0b01110, 0b00000, 0b00000], # Keyboard
+        }
+        self.cgram_map = {}
+        
+        self.emergency_fallback = {
+            "✓": "Y", "⚠": "!", "‼": "!!", "✕": "x", "✗": "x",
+            "●": "*", "·": ".", "•": ".", "✎": "E", "✍": "E", "🖉": "E",
+            "▦": "#", "⚿": "K", "⚒": "T", "⚙": "S", "⌨": "K"
+        }
+        self.ascii_fallback = {
+            "⎇": "*",      # Derivation
+            "₿": "B",      # Bitcoin
+            "ℹ": "i",      # Info
+            "@": "@",      # Fingerprint
+            "…": "...",    # Ellipsis
+        }
         self._init_lcd()
 
     def _init_lcd(self):
@@ -42,20 +75,6 @@ class LCDI2C:
         self._lcd_byte(0x28, LCD_CMD) # 101000 Data length, number of lines, font size
         self._lcd_byte(0x01, LCD_CMD) # 000001 Clear display
         time.sleep(E_DELAY)
-        
-        # Load custom character bitmaps into CGRAM slots 0-3
-        custom_chars = {
-            0: [0b00000, 0b00001, 0b00011, 0b10110, 0b11100, 0b01000, 0b00000, 0b00000], # ✓ (Success)
-            1: [0b00100, 0b01010, 0b01110, 0b01110, 0b11111, 0b00000, 0b00100, 0b00000], # ⚠ (Warning)
-            2: [0b01010, 0b01010, 0b01010, 0b01010, 0b00000, 0b01010, 0b01010, 0b00000], # ‼ (Dire Warning)
-            3: [0b00000, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b00000, 0b00000], # ✕ (Error)
-            4: [0b11011, 0b10101, 0b11011, 0b00000, 0b10010, 0b01001, 0b11011, 0b00000], # ▦ (QR Code)
-            5: [0b01110, 0b10001, 0b01110, 0b00100, 0b00111, 0b00100, 0b00111, 0b00000], # ⚿ (Key)
-            6: [0b01100, 0b10010, 0b01100, 0b00100, 0b00010, 0b00001, 0b00000, 0b00000], # ⚒ (Wrench)
-            7: [0b01010, 0b01110, 0b11011, 0b01110, 0b01010, 0b00000, 0b00000, 0b00000]  # ⚙ (Gear)
-        }
-        for loc, charmap in custom_chars.items():
-            self.load_custom_character(loc, charmap)
 
     def load_custom_character(self, location: int, charmap: list):
         """Load a custom 5x8 character into CGRAM (location 0-7)"""
@@ -98,18 +117,53 @@ class LCDI2C:
         if row >= self.rows:
             return
             
+        translated_text = ""
+        for char in text:
+            if char in self.cgram_map:
+                translated_text += chr(self.cgram_map[char])
+            elif char in self.all_bitmaps:
+                # Known bitmap but no CGRAM slot allocated (exceeded 8 slots)
+                translated_text += self.emergency_fallback.get(char, "?")
+            elif char in self.ascii_fallback:
+                translated_text += self.ascii_fallback[char]
+            elif ord(char) < 128:
+                translated_text += char
+            else:
+                translated_text += "?"
+                
         # Pad with spaces to clear any old characters
-        text = text.ljust(self.cols, " ")
+        translated_text = translated_text.ljust(self.cols, " ")
+        # Ensure we don't overflow the physical columns
+        translated_text = translated_text[:self.cols]
         
         self._lcd_byte(self.row_offsets[row], LCD_CMD)
         
-        for i in range(self.cols):
-            # Write characters (up to the maximum width)
-            if i < len(text):
-                self._lcd_byte(ord(text[i]), LCD_CHR)
+        for char in translated_text:
+            self._lcd_byte(ord(char), LCD_CHR)
 
     def write_lines(self, lines):
-        """Write multiple lines to the LCD"""
+        """Write multiple lines to the LCD, dynamically allocating CGRAM slots."""
+        # 1. Figure out which unique custom characters are needed for this frame
+        needed_chars = set()
+        for text in lines:
+            for char in text:
+                if char in self.all_bitmaps:
+                    needed_chars.add(char)
+        
+        # 2. Re-allocate CGRAM slots if the required characters have changed
+        new_cgram_map = {}
+        slot = 0
+        for char in needed_chars:
+            if slot < 8:
+                new_cgram_map[char] = slot
+                # Only upload to hardware if it wasn't already in this exact slot
+                if self.cgram_map.get(char) != slot:
+                    self.load_custom_character(slot, self.all_bitmaps[char])
+                slot += 1
+                
+        self.cgram_map = new_cgram_map
+
+        # 3. Write lines to the display
         for row, text in enumerate(lines):
             self.write_line(row, text)
             
