@@ -11,8 +11,10 @@ try:
     # pyrefly: ignore [missing-import]
     import epaper
     HAS_EPD = True
-except ImportError:
+    EPD_ERROR = None
+except Exception as e:
     HAS_EPD = False
+    EPD_ERROR = repr(e)
 
 from src.utils.graphics import compute_text_grid, draw_text_line
 
@@ -26,7 +28,7 @@ class EpaperWaveshare:
     """
     def __init__(self):
         if not HAS_EPD:
-            raise ImportError("waveshare-epaper is required for EpaperWaveshare. Install with: pip install waveshare-epaper")
+            raise ImportError(f"waveshare-epaper failed to load. Underlying error: {EPD_ERROR}")
 
         self.device = epaper.epaper('epd1in54_V2').EPD()
         self.device.init(0)  # 0 for full refresh, 1 for partial

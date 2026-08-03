@@ -4,3 +4,5 @@ Pillow>=10.0.0
 gpiozero==2.0
 pytest>=7.0.0
 waveshare-epaper>=1.4.0
+spidev>=3.6
+lgpio>=0.2.2
