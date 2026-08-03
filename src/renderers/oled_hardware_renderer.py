@@ -22,9 +22,25 @@ class OledHardwareRenderer(BaseRenderer):
         # Get the formatted lines from the TextRenderer
         lines = self.text_renderer.render(state)
         
+        # Only fallback characters that are not supported by the graphics engine's custom bitmaps
+        # and are not supported by the PIL default font.
+        ascii_fallback = {
+            "⎇": "*", "₿": "B", "ℹ": "i", "@": "@", "…": "..."
+        }
+        
+        translated_lines = []
+        for line in lines:
+            translated_line = ""
+            for char in line:
+                if char in ascii_fallback:
+                    translated_line += ascii_fallback[char]
+                else:
+                    translated_line += char
+            translated_lines.append(translated_line)
+
         # Write them to the hardware
-        self.oled.write_lines(lines)
-        return lines
+        self.oled.write_lines(translated_lines)
+        return translated_lines
 
     def clear(self):
         """Clear the hardware OLED."""
