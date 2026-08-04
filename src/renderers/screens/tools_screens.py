@@ -1,4 +1,8 @@
-from typing import List
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:
+    pass
 from src.screen_state import ScreenState
 
 class ToolsScreensMixin:
@@ -14,14 +18,14 @@ class ToolsScreensMixin:
             
         selected_bits = state.context.get("selected_final_bits", "")
         if selected_bits:
-            all_content.append(self._center(selected_bits.ljust(11, "-")))
+            all_content.append(self._center(selected_bits + "-" * max(0, 11 - len(selected_bits))))
             
         checksum_label = state.context.get("checksum_label", "Checksum")
         checksum_bits = state.context.get("checksum_bits", "")
         if checksum_bits:
             all_content.append(self._center(""))
             all_content.append(self._center(checksum_label))
-            all_content.append(self._center(checksum_bits.rjust(11, "-")))
+            all_content.append(self._center("-" * max(0, 11 - len(checksum_bits)) + checksum_bits))
             
         final_word = state.context.get("final_word_text", "")
         if final_word:

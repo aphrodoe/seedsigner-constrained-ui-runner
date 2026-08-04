@@ -1,4 +1,8 @@
-from typing import Any
+try:
+    typing = __import__('typing')
+    Any = typing.Any
+except ImportError:
+    pass
 from src.renderers.base_renderer import BaseRenderer
 from src.renderers.text_renderer import TextRenderer
 from src.screen_state import ScreenState

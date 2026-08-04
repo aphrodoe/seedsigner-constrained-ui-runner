@@ -1,4 +1,8 @@
-from typing import List
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:
+    pass
 from src.screen_state import ScreenState
 
 class SimpleScreensMixin:
@@ -254,7 +258,7 @@ class SimpleScreensMixin:
         
         # Overlay toast on last row (or last 2 rows with separator if we have >= 4 rows)
         if self.rows >= 4 and len(bg_lines) >= 2:
-            bg_lines[-2] = "-" * int(self.cols * 1.5)  # Extended length to ensure full horizontal coverage on proportional displays
+            bg_lines[-2] = "-" * self.cols
             bg_lines[-1] = self._center(toast_text)
         else:
             bg_lines[-1] = self._center(toast_text)

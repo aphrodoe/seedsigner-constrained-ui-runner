@@ -1,4 +1,8 @@
-from typing import List
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:
+    pass
 from src.screen_state import ScreenState
 
 class KeyboardMixin:
@@ -56,7 +60,7 @@ class KeyboardMixin:
             available = self.cols - len(mode_indicator)
             if len(input_str) > available:
                 input_str = ".." + input_str[-(available - 2):]
-            input_line = input_str.ljust(available) + mode_indicator
+            input_line = input_str + " " * max(0, available - len(input_str)) + mode_indicator
         else:
             if len(input_str) > self.cols:
                 input_str = ".." + input_str[-(self.cols - 2):]

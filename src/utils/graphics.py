@@ -66,10 +66,8 @@ def measure_font(font: ImageFont.ImageFont) -> dict:
             line_height: int  — vertical spacing per row (ascent only, tight packing)
             avg_char_width: float — average width across printable ASCII
     """
-    import string
-
     ascent, _descent = font.getmetrics()
-    chars = string.ascii_letters + string.digits + " "
+    chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
     widths = [font.getlength(c) for c in chars]
     avg = sum(widths) / len(widths)
 
@@ -122,7 +120,7 @@ def draw_text_line(draw: ImageDraw.Draw, image: Image.Image, line: str,
     """
     # Detect right-aligned pagination indicators (e.g. "Settings        3/4")
     # Only applies to the top row (y == 0) to prevent false positives on marquee buttons
-    m = re.match(r'^(\S.*?)\s{2,}(\d+/\d+)\s*$', line) if y == 0 else None
+    m = re.match(r'^(\S.*?)\s\s+(\d+/\d+)\s*$', line) if y == 0 else None
 
     if m:
         left_part = m.group(1)

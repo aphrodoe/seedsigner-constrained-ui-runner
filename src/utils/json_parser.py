@@ -1,6 +1,12 @@
 import json
 import os
-from typing import Dict, Any, List
+try:
+    typing = __import__('typing')
+    Dict = typing.Dict
+    Any = typing.Any
+    List = typing.List
+except ImportError:
+    pass
 
 class JSONParser:
     def __init__(self, file_path: str):
@@ -8,7 +14,9 @@ class JSONParser:
         self.scenarios = self._load_scenarios()
 
     def _load_scenarios(self) -> Dict[str, Any]:
-        if not os.path.exists(self.file_path):
+        try:
+            os.stat(self.file_path)
+        except OSError:
             raise FileNotFoundError(f"Scenario file not found: {self.file_path}")
         with open(self.file_path, 'r', encoding='utf-8') as f:
             return json.load(f)

@@ -1,11 +1,10 @@
-from enum import Enum
 import sys
 import tty
 import termios
 import select
 import os
 
-class InputEvent(Enum):
+class InputEvent:
     UP = "UP"
     DOWN = "DOWN"
     LEFT = "LEFT"

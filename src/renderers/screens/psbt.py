@@ -1,4 +1,8 @@
-from typing import List
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:
+    pass
 from src.screen_state import ScreenState
 
 class PSBTMixin:
@@ -112,8 +116,8 @@ class PSBTMixin:
         r_last = max((i for i, s in enumerate(right) if s), default=mid_row)
         
         for i in range(max_h):
-            l_str = left[i].rjust(left_w)
-            r_str = right[i].ljust(right_w)
+            l_str = " " * max(0, left_w - len(left[i])) + left[i]
+            r_str = right[i] + " " * max(0, right_w - len(right[i]))
             
             # Left side tree
             if left[i]:

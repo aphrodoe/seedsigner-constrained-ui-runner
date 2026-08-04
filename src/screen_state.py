@@ -1,8 +1,14 @@
-from enum import Enum
-from typing import Dict, Any, List
-import uuid
 
-class ScreenType(Enum):
+try:
+    typing = __import__('typing')
+    Dict = typing.Dict
+    Any = typing.Any
+    List = typing.List
+except ImportError:
+    pass
+
+
+class ScreenType:
     # ── Core screens (existing) ─────────────────────────────────────
     BUTTON_LIST = "button_list_screen"
     MAIN_MENU = "main_menu_screen"
@@ -53,38 +59,33 @@ class ScreenType(Enum):
     SETTINGS_QR_CONFIRMATION = "settings_qr_confirmation_screen"
     IO_TEST = "io_test_screen"
 
-    def is_keyboard(self):
-        return self in [
-            ScreenType.SEED_ADD_PASSPHRASE,
-            ScreenType.KEYBOARD
-        ]
-
-    def is_visual_only(self):
-        return self in [
-            ScreenType.CAMERA_PREVIEW_PILLARBOXED,
-            ScreenType.CAMERA_PREVIEW_OVERLAY,
-            ScreenType.CAMERA_ENTROPY_OVERLAY,
-            ScreenType.QR_DISPLAY,
-            ScreenType.SEED_TRANSCRIBE_ZOOMED_QR,
-            ScreenType.SEED_TRANSCRIBE_WHOLE_QR,
-            ScreenType.IO_TEST,
+    @classmethod
+    def is_keyboard(cls, val):
+        return val in [
+            cls.SEED_ADD_PASSPHRASE,
+            cls.KEYBOARD
         ]
 
     @classmethod
-    def from_str(cls, value: str):
-        for member in cls:
-            if member.value == value:
-                return member
-        raise ValueError(f"Unknown screen type: {value}")
+    def is_visual_only(cls, val):
+        return val in [
+            cls.CAMERA_PREVIEW_PILLARBOXED,
+            cls.CAMERA_PREVIEW_OVERLAY,
+            cls.CAMERA_ENTROPY_OVERLAY,
+            cls.QR_DISPLAY,
+            cls.SEED_TRANSCRIBE_ZOOMED_QR,
+            cls.SEED_TRANSCRIBE_WHOLE_QR,
+            cls.IO_TEST,
+        ]
 
 
 class ScreenState:
     _bip39_wordlist = None
 
-    def __init__(self, screen_type_str: str, context: Dict[str, Any], visible_rows: int = 1):
-        self.screen_type = ScreenType.from_str(screen_type_str)
+    def __init__(self, screen_type_str: str, context: dict, visible_rows: int = 1):
+        self.screen_type = screen_type_str
         self.context = context
-        self.state_id = uuid.uuid4().hex
+        self.state_id = str(id(self))
         self.visible_rows = visible_rows
         
         self.selected_index = 0
@@ -100,7 +101,7 @@ class ScreenState:
         self.char_index = 0
         self.keyboard_cols = 0
         
-        if self.screen_type.is_keyboard():
+        if ScreenType.is_keyboard(self.screen_type):
             self._init_keyboard()
         elif self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
             self._init_mnemonic_entry()
@@ -170,8 +171,14 @@ class ScreenState:
     def _init_mnemonic_entry(self):
         if ScreenState._bip39_wordlist is None:
             import os
-            wordlist_path = os.path.join(os.path.dirname(__file__), "bip39_english.txt")
-            if os.path.exists(wordlist_path):
+            wordlist_path = __file__.rsplit("/", 1)[0] + "/bip39_english.txt"
+            wordlist_exists = False
+            try:
+                os.stat(wordlist_path)
+                wordlist_exists = True
+            except OSError:
+                pass
+            if wordlist_exists:
                 with open(wordlist_path, "r") as f:
                     ScreenState._bip39_wordlist = [line.strip() for line in f if line.strip() and not line.startswith("Source:") and not line.startswith("---")]
             else:
@@ -261,7 +268,7 @@ class ScreenState:
         
     def move_up(self) -> bool:
         """Move cursor up. Returns True if selection changed or scrolled."""
-        if self.screen_type.is_keyboard():
+        if ScreenType.is_keyboard(self.screen_type):
             if self.visible_rows < 7:
                 return False
                 
@@ -335,7 +342,7 @@ class ScreenState:
         
     def move_down(self) -> bool:
         """Move cursor down. Returns True if UI needs re-render."""
-        if self.screen_type.is_keyboard():
+        if ScreenType.is_keyboard(self.screen_type):
             if self.visible_rows < 7:
                 return False
                 
@@ -403,7 +410,7 @@ class ScreenState:
 
     def move_left(self) -> bool:
         """Move cursor left. For keyboard, cycles chars left. For lists, pages up."""
-        if self.screen_type.is_keyboard() or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+        if ScreenType.is_keyboard(self.screen_type) or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
             if getattr(self, "focus", "keyboard") == "keyboard":
                 chars = getattr(self, "keyboard_chars", None)
                 if not chars:
@@ -423,7 +430,7 @@ class ScreenState:
 
     def move_right(self) -> bool:
         """Move cursor right. For keyboard, cycles chars right. For lists, pages down."""
-        if self.screen_type.is_keyboard() or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+        if ScreenType.is_keyboard(self.screen_type) or self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
             if getattr(self, "focus", "keyboard") == "keyboard":
                 chars = getattr(self, "keyboard_chars", None)
                 if not chars:
@@ -504,7 +511,7 @@ class ScreenState:
 
     def on_enter(self) -> str:
         """Handle ENTER key. Returns 'SUBMIT' if finished, 'UPDATE' if text changed, or 'SELECT'."""
-        if self.screen_type.is_keyboard():
+        if ScreenType.is_keyboard(self.screen_type):
             chars = getattr(self, "keyboard_chars", None)
             if not chars:
                 _, chars = self.keyboard_modes[self.active_mode_index]

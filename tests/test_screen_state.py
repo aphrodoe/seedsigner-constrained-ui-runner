@@ -1,11 +1,7 @@
 import pytest
 from src.screen_state import ScreenState, ScreenType
 
-def test_screen_type_parsing():
-    assert ScreenType.from_str("button_list_screen") == ScreenType.BUTTON_LIST
-    
-    with pytest.raises(ValueError):
-        ScreenType.from_str("unknown_screen")
+
 
 def test_initial_state():
     context = {"button_list": [{"label": "A"}, {"label": "B"}]}

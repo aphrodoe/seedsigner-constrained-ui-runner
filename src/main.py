@@ -66,7 +66,7 @@ def main():
                 needs_render = state.move_right()
             elif event == InputEvent.ENTER:
                 audio.play_select()
-                if state.screen_type.is_keyboard():
+                if ScreenType.is_keyboard(state.screen_type):
                     action = state.on_enter()
                     if action == "UPDATE":
                         needs_render = True

@@ -2,7 +2,9 @@
 TextRenderer: Core text layout engine for character LCD displays.
 """
 
-from typing import List
+typing = __import__('typing')
+
+List = typing.List
 from src.screen_state import ScreenState, ScreenType
 from src.renderers.text_helpers import TextHelpersMixin
 from src.renderers.screens.button_list import ButtonListMixin
@@ -39,7 +41,7 @@ class TextRenderer(
     def render(self, state: ScreenState) -> List[str]:
         """Return exactly `self.rows` strings, each exactly `self.cols` chars wide."""
         # Visual-only screens (camera, QR, I/O test) — not applicable to text UI
-        if state.screen_type.is_visual_only():
+        if ScreenType.is_visual_only(state.screen_type):
             title = state.context.get("top_nav", {}).get("title", "Visual Only")
             lines = [self._title_row(title, "", state)]
             lines.append(self._center("[Visual Only]"))
@@ -54,7 +56,7 @@ class TextRenderer(
             lines = self._render_status(state)
         elif state.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
             lines = self._render_seed_mnemonic_entry(state)
-        elif state.screen_type.is_keyboard():
+        elif ScreenType.is_keyboard(state.screen_type):
             lines = self._render_keyboard(state)
         elif state.screen_type == ScreenType.SPLASH:
             lines = self._render_splash(state)

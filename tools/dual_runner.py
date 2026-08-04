@@ -388,7 +388,7 @@ class DualRunnerApp:
         if self.current_state:
             needs_render = False
             # Dismiss toast on any keypress to match hardware behavior
-            if self.current_state.screen_type.name == "TOAST_OVERLAY":
+            if self.current_state.screen_type == ScreenType.TOAST_OVERLAY:
                 bg_ctx = self.current_state.context.get("background", {})
                 self.current_state.context.update(bg_ctx)
                 if bg_ctx.get("top_nav", {}).get("title") == "Home":
@@ -400,7 +400,7 @@ class DualRunnerApp:
             
             # Disable Up/Down for keyboards in All Tiers mode since grids conflict
             is_all_tiers = "All Tiers" in self.tier_var.get()
-            is_kbd = self.current_state.screen_type.is_keyboard()
+            is_kbd = ScreenType.is_keyboard(self.current_state.screen_type)
             
             if (key == InputEvent.UP or key == InputEvent.DOWN) and is_all_tiers and is_kbd:
                 return # Block 2D jumps when state is shared across different grids
@@ -414,7 +414,7 @@ class DualRunnerApp:
             elif key == InputEvent.RIGHT:
                 needs_render = self.current_state.move_right()
             elif key == InputEvent.ENTER:
-                if self.current_state.screen_type.is_keyboard() or self.current_state.screen_type.name == "SEED_MNEMONIC_ENTRY":
+                if ScreenType.is_keyboard(self.current_state.screen_type) or self.current_state.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
                     action = self.current_state.on_enter()
                     if action == "UPDATE":
                         needs_render = True

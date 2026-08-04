@@ -1,4 +1,8 @@
-from typing import List
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:
+    pass
 from src.screen_state import ScreenState, ScreenType
 
 class TextHelpersMixin:

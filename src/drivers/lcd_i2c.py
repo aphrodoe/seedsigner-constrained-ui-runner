@@ -132,7 +132,7 @@ class LCDI2C:
                 translated_text += "?"
                 
         # Pad with spaces to clear any old characters
-        translated_text = translated_text.ljust(self.cols, " ")
+        translated_text = translated_text + " " * max(0, self.cols - len(translated_text))
         # Ensure we don't overflow the physical columns
         translated_text = translated_text[:self.cols]
         

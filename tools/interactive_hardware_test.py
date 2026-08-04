@@ -165,7 +165,7 @@ def main():
                     # 1. Read input FIRST with a short timeout for maximum responsiveness
                     key = get_key_timeout(0.1)
                     if key:
-                        if state.screen_type.name == "TOAST_OVERLAY":
+                        if state.screen_type == ScreenType.TOAST_OVERLAY:
                             bg_ctx = state.context.get("background", {})
                             state.context.update(bg_ctx)
                             if bg_ctx.get("top_nav", {}).get("title") == "Home":
