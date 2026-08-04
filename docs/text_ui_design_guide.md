@@ -54,6 +54,7 @@ On graphical pixel displays (OLED, E-Paper), the text grid is computed dynamical
 
 All graphical rendering is delegated to the shared `src/utils/graphics.py` utility, which provides:
 - **`compute_text_grid(width, height, font)`**: Derives `cols`, `rows`, and `line_height` from pixel dimensions.
+- **Bundled Font**: We ship `DejaVuSansMono.ttf` and force its usage in OLED/E-Paper drivers. This guarantees a true monospace bounding box across all host platforms, preventing proportional width collapse and ASCII art distortion.
 - **`draw_text_line(draw, image, line, y, font, screen_width, fill)`**: Renders a single line with proportional kerning, icon bitmap substitution, and automatic right-alignment of spaced trailing text (e.g., pagination indicators like `3/4`).
 
 This architecture means adding support for a new graphical display requires only a thin hardware driver that calls the shared API. All alignment, icon rendering, and text layout logic is inherited automatically.
@@ -87,25 +88,27 @@ For screens requiring immediate attention (e.g., `dire_warning_animated`), the e
 
 ## 4. Icon-to-Text Mapping & CGRAM
 
-We map visual states to ASCII/Unicode text equivalents, and where possible, inject custom 5x8 bitmaps into the LCD hardware's CGRAM (Slots 0-7).
+We map upstream visual intents to ASCII/Unicode text equivalents. To render beautiful interfaces across vastly different display technologies, we use two advanced techniques:
 
-| Upstream LVGL Concept | Constrained UI Equivalent | Hardware CGRAM |
-| :--- | :--- | :---: |
-| `success` (Checkmark) | `✓` | Yes |
-| `warning` (Triangle) | `⚠` | Yes |
-| `dire_warning` (Hexagon)| `‼` | Yes |
-| `error` (Cross)         | `✕` | Yes |
-| Main Menu (Scan)        | `▦` | Yes |
-| Main Menu (Seeds)       | `⚿` | Yes |
-| Main Menu (Tools)       | `⚒` | Yes |
-| Main Menu (Settings)    | `⚙` | Yes |
+1. **Dynamic CGRAM Allocator (Character LCDs)**: The HD44780 controller is physically limited to 8 custom characters at a time. The rendering engine scans every single frame and dynamically remaps the 8 hardware slots to whatever icons are needed on the current screen. If a screen requires more than 8 unique icons (very rare), the engine automatically degrades the lowest-priority icons to pure ASCII equivalents.
+2. **Native Pixel-Art Engine (Graphical Displays)**: OLED and E-Paper displays delegate to `src/utils/graphics.py`, which intercepts Unicode icons and natively draws crisp, hand-crafted 8x8 pixel-art bitmaps instead of relying on the host font.
+
+| Upstream LVGL Concept | Constrained UI Equivalent | Hardware Support |
+| :--- | :--- | :--- |
+| `success` (Checkmark) | `✓` | Native OLED/E-Paper / Dynamic LCD |
+| `warning` (Triangle) | `⚠` | Native OLED/E-Paper / Dynamic LCD |
+| `dire_warning` (Hexagon)| `‼` | Native OLED/E-Paper / Dynamic LCD |
+| `error` (Cross)         | `✕` / `✗` | Native OLED/E-Paper / Dynamic LCD |
+| Main Menu (Scan)        | `▦` | Native OLED/E-Paper / Dynamic LCD |
+| Main Menu (Seeds)       | `⚿` | Native OLED/E-Paper / Dynamic LCD |
+| Main Menu (Tools)       | `⚒` | Native OLED/E-Paper / Dynamic LCD |
+| Main Menu (Settings)    | `⚙` | Native OLED/E-Paper / Dynamic LCD |
+| Bullet Point            | `●` / `·` / `•` | Native OLED/E-Paper / Dynamic LCD |
+| Edit / Pen              | `✎` / `✍` / `🖉`| Native OLED/E-Paper / Dynamic LCD |
+| Keyboard Mode           | `⌨` | Native OLED/E-Paper / Dynamic LCD |
 | Derivation Branch       | `⎇` | ASCII Fallback (`*`) |
-| Fingerprint             | `@` | Native ASCII |
 | Bitcoin                 | `₿` | ASCII Fallback (`B`) |
-| Radio Button (Filled)   | `●` | ASCII Fallback (`o`) |
-| Keyboard Mode           | `⌨` | ASCII Fallback (`K`) |
-| Edit                    | `✎` | ASCII Fallback (`E`) |
-| Alternate Cross         | `✗` | ASCII Fallback (`x`) |
+| Fingerprint             | `@` | Native ASCII |
 | Info                    | `ℹ` | ASCII Fallback (`i`) |
 
 ## 5. Keyboard Navigation & Entry

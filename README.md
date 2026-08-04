@@ -123,12 +123,17 @@ To passively walk through all 130+ screen variations on auto-detected hardware (
 ```
 *(Press Enter to manually advance through the screens)*
 
-## Architecture: Shared Graphics Utility
+## Architecture: Shared Graphics Utility & Dynamic CGRAM
 
 All graphical display drivers (OLED, E-Paper) delegate text rendering to a shared utility at `src/utils/graphics.py`. This module:
 
 1. **Dynamically measures** the loaded PIL font's ascent and average character width — no hardcoded pixel constants.
 2. **Computes the text grid** (`cols`, `rows`, `line_height`) from any pixel resolution via `compute_text_grid(width, height, font)`.
-3. **Renders proportional text** with automatic right-alignment of pagination indicators (e.g., `3/4`) and icon bitmap substitution via a single `draw_text_line()` function.
+3. **Bundles a Monospace Font**: The repository ships with `DejaVuSansMono.ttf` to guarantee that text alignment, bounded wrapping, and ASCII art render flawlessly on any host OS, bypassing unpredictable system-default fonts.
+4. **Renders proportional text** with automatic right-alignment of pagination indicators (e.g., `3/4`) and custom icon bitmap substitution via a single `draw_text_line()` function. It natively draws 8x8 pixel-art versions of all SeedSigner icons (Warning, Dire Warning, Checkmark, etc.) regardless of the host font's capabilities.
 
-This ensures that adding a new graphical display requires only writing a thin hardware driver that calls the shared API — all alignment, kerning, and icon logic is inherited automatically.
+For character LCDs (Tier 0 & 1), the engine uses a **Dynamic CGRAM Allocator**:
+1. The HD44780 controller only has 8 custom character slots.
+2. The `TextRenderer` parses each frame and identifies all unique custom icons requested.
+3. The allocator assigns the available 8 slots on-the-fly to the highest-priority icons.
+4. Any icons that exceed the 8-slot limit are safely degraded to ASCII equivalents, completely eliminating the hardware bottleneck while preserving the UX.

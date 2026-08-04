@@ -35,7 +35,9 @@ class EpaperWaveshare:
         self.width = self.device.width
         self.height = self.device.height
 
-        self.font = ImageFont.load_default()
+        import os
+        font_path = os.path.join(os.path.dirname(__file__), '../utils/fonts/DejaVuSansMono.ttf')
+        self.font = ImageFont.truetype(font_path, size=14)
 
         # Dynamically compute the text grid from pixel dimensions and font metrics
         self.cols, self.rows, self.line_height = compute_text_grid(self.width, self.height, self.font)

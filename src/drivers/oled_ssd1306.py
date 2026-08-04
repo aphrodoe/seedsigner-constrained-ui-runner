@@ -36,7 +36,9 @@ class OledSSD1306:
 
         self.width = width
         self.height = height
-        self.font = ImageFont.load_default()
+        import os
+        font_path = os.path.join(os.path.dirname(__file__), '../utils/fonts/DejaVuSansMono.ttf')
+        self.font = ImageFont.truetype(font_path, size=10)
 
         # Dynamically compute the text grid from pixel dimensions and font metrics
         self.cols, self.rows, self.line_height = compute_text_grid(width, height, self.font)

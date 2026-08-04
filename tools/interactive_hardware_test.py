@@ -208,14 +208,18 @@ def main():
                     if force_render or tick_count >= 1:
                         if not force_render:
                             # Only advance the marquee state when we're actually going to render it
-                            # This fixes jumpy animations that occur when ticks outpace renders
-                            state.tick()
+                            # E-Paper partial refresh blocks for ~300ms. Advance 3 ticks per render
+                            # so animations (marquee, flashing boundaries) feel fast despite low FPS.
+                            if display_type == "epaper":
+                                state.tick()
+                                state.tick()
+                                state.tick()
+                            else:
+                                state.tick()
 
                         tick_count = 0
                         lines = renderer.render(state)
-                        display.write_lines(lines)
-
-                        # Mirror to SSH terminal
+                        # Mirror to SSH terminal FIRST so it feels instant
                         print("\r\033[H\033[J", end="")  # clear screen with carriage return
                         print(f"{progress} {s_name}{variation_label}\r")
                         print(f"--- {display_type.upper()} [{text_cols}x{text_rows}] ---\r")
@@ -223,6 +227,9 @@ def main():
                             print(f"│{line}│\r")
                         print("-" * (text_cols + 2) + "\r")
                         print("W/S/A/D/Arrows: Scroll/Type | SPACE/ENTER: Select | N: Next | Q: Quit\r")
+                        sys.stdout.flush()
+
+                        display.write_lines(lines)
 
                         force_render = False
 
