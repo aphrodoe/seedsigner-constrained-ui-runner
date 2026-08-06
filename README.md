@@ -14,6 +14,14 @@ Supported outputs (Categorized by Tier):
 * **Graphical Pixel Displays**: 128x32 / 128x64 OLED (SSD1306) and 200x200 E-Paper (Waveshare 1.54") — *Dimensions dynamically mapped to text grid via `src/utils/graphics.py`*
 * **Audio**: Navigation cues (PWM Buzzer) - *Tested on standard 5V active buzzer*
 
+## Multi-Platform Support (CPython & MicroPython)
+
+The core text rendering engine is **100% pure Python** with zero standard library dependencies (`os.path`, `threading`, `uuid` have been bypassed or polyfilled). 
+
+This allows the UI to run on two vastly different architectures:
+1. **Raspberry Pi Zero (CPython)**: Using `smbus2` for I2C and `Pillow`/`luma.oled` for graphical drawing.
+2. **ESP32-S3 (MicroPython 1.27)**: Using our native `machine.I2C` LCD driver and the lightweight `framebuf_mpy.py` renderer for OLEDs and E-Paper. No Pillow required.
+
 ## Setup
 
 ```bash
