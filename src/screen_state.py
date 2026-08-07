@@ -63,7 +63,8 @@ class ScreenType:
     def is_keyboard(cls, val):
         return val in [
             cls.SEED_ADD_PASSPHRASE,
-            cls.KEYBOARD
+            cls.KEYBOARD,
+            cls.SEED_MNEMONIC_ENTRY,
         ]
 
     @classmethod
@@ -101,10 +102,10 @@ class ScreenState:
         self.char_index = 0
         self.keyboard_cols = 0
         
-        if ScreenType.is_keyboard(self.screen_type):
-            self._init_keyboard()
-        elif self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
             self._init_mnemonic_entry()
+        elif ScreenType.is_keyboard(self.screen_type):
+            self._init_keyboard()
         
         self.items = self._extract_items()
         
@@ -184,7 +185,12 @@ class ScreenState:
             else:
                 ScreenState._bip39_wordlist = []
                 
-        self.entered_text = self.context.get("initial_letters", self.context.get("entered_text", ""))
+        initial = self.context.get("initial_letters", self.context.get("entered_text", ""))
+        if isinstance(initial, list):
+            self.entered_text = "".join(initial)
+        else:
+            self.entered_text = str(initial)
+            
         self.context["entered_text"] = self.entered_text
         self.alphabet = list("abcdefghijklmnopqrstuvwxyz") + ["[DEL]", "[OK]"]
         self.char_index = 0
@@ -268,6 +274,24 @@ class ScreenState:
         
     def move_up(self) -> bool:
         """Move cursor up. Returns True if selection changed or scrolled."""
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "keyboard":
+                self.focus = "suggestions"
+                return True
+                
+            suggestions = self.context.get("suggestions", [])
+            if suggestions and self.selected_index > 0:
+                self.selected_index -= 1
+                self._adjust_scroll()
+                return True
+            elif self.scroll_offset > 0:
+                self.scroll_offset -= 1
+                return True
+            else:
+                self.focus = "keyboard"
+                return True
+                
         if ScreenType.is_keyboard(self.screen_type):
             if self.visible_rows < 7:
                 return False
@@ -291,25 +315,6 @@ class ScreenState:
                 self.char_index = 0
                 return True
             return False
-            
-            
-        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
-            self.focus = getattr(self, "focus", "keyboard")
-            if self.focus == "keyboard":
-                self.focus = "suggestions"
-                return True
-                
-            suggestions = self.context.get("suggestions", [])
-            if suggestions and self.selected_index > 0:
-                self.selected_index -= 1
-                self._adjust_scroll()
-                return True
-            elif self.scroll_offset > 0:
-                self.scroll_offset -= 1
-                return True
-            else:
-                self.focus = "keyboard"
-                return True
 
         self._user_has_moved = True
         changed = False
@@ -342,6 +347,22 @@ class ScreenState:
         
     def move_down(self) -> bool:
         """Move cursor down. Returns True if UI needs re-render."""
+        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+            self.focus = getattr(self, "focus", "keyboard")
+            if self.focus == "keyboard":
+                self.focus = "suggestions"
+                return True
+                
+            suggestions = self.context.get("suggestions", [])
+            if suggestions and self.selected_index < len(suggestions) - 1:
+                self.selected_index += 1
+                self._adjust_scroll()
+                return True
+            elif self.scroll_offset < self.max_scroll_offset:
+                self.scroll_offset += 1
+                return True
+            return False
+            
         if ScreenType.is_keyboard(self.screen_type):
             if self.visible_rows < 7:
                 return False
@@ -363,22 +384,6 @@ class ScreenState:
             elif len(self.keyboard_modes) > 1:
                 self.active_mode_index = (self.active_mode_index + 1) % len(self.keyboard_modes)
                 self.char_index = 0
-                return True
-            return False
-            
-        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
-            self.focus = getattr(self, "focus", "keyboard")
-            if self.focus == "keyboard":
-                self.focus = "suggestions"
-                return True
-                
-            suggestions = self.context.get("suggestions", [])
-            if suggestions and self.selected_index < len(suggestions) - 1:
-                self.selected_index += 1
-                self._adjust_scroll()
-                return True
-            elif self.scroll_offset < self.max_scroll_offset:
-                self.scroll_offset += 1
                 return True
             return False
 
@@ -511,15 +516,35 @@ class ScreenState:
 
     def on_enter(self) -> str:
         """Handle ENTER key. Returns 'SUBMIT' if finished, 'UPDATE' if text changed, or 'SELECT'."""
+        focus = getattr(self, "focus", "keyboard")
+        
+        # 1. Handle List / Suggestions Selection
+        if focus == "list" or focus == "suggestions":
+            if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                suggestions = self.context.get("suggestions", [])
+                if suggestions and self.selected_index < len(suggestions):
+                    self.entered_text = suggestions[self.selected_index]
+                    self.context["entered_text"] = self.entered_text
+                return "SUBMIT"
+            else:
+                return "SELECT"
+                
+        # 2. Handle Keyboard Selection
         if ScreenType.is_keyboard(self.screen_type):
             chars = getattr(self, "keyboard_chars", None)
             if not chars:
-                _, chars = self.keyboard_modes[self.active_mode_index]
+                if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                    chars = self.alphabet
+                else:
+                    _, chars = self.keyboard_modes[self.active_mode_index]
             
             char = chars[self.char_index]
             if char == "[DEL]":
                 self.entered_text = self.entered_text[:-1]
                 self._update_dynamic_title()
+                if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                    self._update_mnemonic_suggestions()
+                    self.context["entered_text"] = self.entered_text
                 return "UPDATE"
             elif char == "[OK]":
                 return "SUBMIT"
@@ -538,31 +563,15 @@ class ScreenState:
                     char = " "
                 self.entered_text += char
                 self._update_dynamic_title()
-                return "UPDATE"
-                
-        if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
-            self.focus = getattr(self, "focus", "keyboard")
-            
-            if self.focus == "suggestions":
-                suggestions = self.context.get("suggestions", [])
-                if suggestions:
-                    self.entered_text = suggestions[self.selected_index]
+                if self.screen_type == ScreenType.SEED_MNEMONIC_ENTRY:
+                    self._update_mnemonic_suggestions()
                     self.context["entered_text"] = self.entered_text
-                return "SUBMIT"
                 
-            char = self.alphabet[self.char_index]
-            if char == "[DEL]":
-                self.entered_text = self.entered_text[:-1]
-                self._update_mnemonic_suggestions()
-                self.context["entered_text"] = self.entered_text
-                return "UPDATE"
-            elif char == "[OK]":
-                # If they explicitly click OK, submit the current word
-                return "SUBMIT"
-            else:
-                self.entered_text += char
-                self._update_mnemonic_suggestions()
-                self.context["entered_text"] = self.entered_text
+                # Auto-submit if we hit the requested character limit (e.g. for Dice Rolls)
+                limit = self.context.get("return_after_n_chars")
+                if limit and len(self.entered_text) >= limit:
+                    return "SUBMIT"
+                    
                 return "UPDATE"
                 
         return "SELECT"

@@ -66,3 +66,5 @@ class KeyboardInput:
                 return InputEvent.ENTER
             elif ch == 'q' or ch == '\x03': # q or Ctrl+C
                 return InputEvent.QUIT
+            elif ch == 'b' or ch == 'B':
+                return InputEvent.BACK

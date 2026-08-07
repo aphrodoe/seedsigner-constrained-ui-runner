@@ -4,7 +4,13 @@ from src.renderers.base_renderer import BaseRenderer
 
 class DisplayManager:
     def __init__(self, config_path: str = "config.json"):
-        self.config_path = config_path
+        # Resolve config relative to the root of our runner repo
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if not os.path.isabs(config_path):
+            self.config_path = os.path.join(base_dir, config_path)
+        else:
+            self.config_path = config_path
+            
         self.config = self._load_config()
         
     def _load_config(self) -> dict:
@@ -46,7 +52,14 @@ class DisplayManager:
             return OledHardwareRenderer(width=128, height=64)
         elif display_type == "oled_128x32":
             from src.renderers.oled_hardware_renderer import OledHardwareRenderer
-            return OledHardwareRenderer(width=128, height=32)
+            renderer = OledHardwareRenderer(width=128, height=32)
+            # Physical bezels on generic 128x32 OLEDs heavily obscure the 4th row.
+            # Limit the logical engine to 3 rows (1 top nav + 2 items)
+            renderer.rows = 3
+            renderer.text_renderer.rows = 3
+            renderer.text_renderer.item_rows = 2
+            renderer.visible_rows = 2
+            return renderer
         elif display_type == "epaper_200x200":
             from src.renderers.epaper_hardware_renderer import EpaperHardwareRenderer
             return EpaperHardwareRenderer()
