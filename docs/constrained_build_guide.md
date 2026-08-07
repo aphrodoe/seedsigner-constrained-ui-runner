@@ -35,6 +35,18 @@ You can interact with the engine immediately using the hardware tester tool. Thi
 # Test on 16x2 Character LCD
 ./tools/interactive_hardware_test.py --display lcd16x2
 ```
+### 1.4 Running the Full SeedSigner OS
+To run the full upstream SeedSigner OS application logic using this constrained UI runner as the display driver:
+
+1. Clone the upstream SeedSigner repository (e.g. to `~/keith-version/seedsigner` or similar).
+2. Configure `config.json` in this repository to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc).
+3. From the upstream SeedSigner `src` directory, run:
+
+```bash
+cd ~/seedsigner/src
+PYTHONPATH="/home/pi/seedsigner-constrained-ui-runner:$PYTHONPATH" python3 main.py
+```
+This replaces the standard LVGL graphical display with the constrained hardware outputs, providing a 1-to-1 functional mapping of the entire UI flow.
 
 ---
 
@@ -92,3 +104,46 @@ By default, `mpy_main.py` expects the following wiring. (You can change these in
 To avoid CPython dependencies like `Pillow` or `smbus2`, we use custom native drivers on the ESP32:
 - `src/drivers/lcd_i2c_mpy.py` uses `machine.I2C` for character LCDs.
 - `src/drivers/framebuf_mpy.py` uses the built-in `framebuf.FrameBuffer` for pixel displays like the SSD1306 OLED, converting complex Unicode icons to ASCII fallbacks automatically.
+
+---
+
+## 3. Configuration (`config.json`)
+
+The engine behavior and hardware initialization are controlled via `config.json` in the root of the runner directory. When running the main SeedSigner OS flow, this file must accurately reflect your hardware setup.
+
+```json
+{
+  "display": {
+    "type": "oled_128x32",
+    "i2c_address": "0x3C",
+    "i2c_bus": 1
+  },
+  "audio": {
+    "enabled": false,
+    "gpio_pin": 18
+  },
+  "input": {
+    "type": "keyboard"
+  }
+}
+```
+
+### 3.1 Display Settings
+* **`type`**: The specific hardware display being used. Supported types include:
+  * `"oled_128x32"` - SSD1306 128x32 pixel OLED (I2C)
+  * `"oled_128x64"` - SSD1306 128x64 pixel OLED (I2C)
+  * `"lcd_16x2"` - Standard 16x2 character LCD with I2C backpack
+  * `"lcd_20x4"` - Standard 20x4 character LCD with I2C backpack
+  * `"epaper_200x200"` - Waveshare 1.54" E-Paper display (SPI)
+* **`i2c_address`**: The I2C address of your display (e.g. `"0x3C"` for most OLEDs, `"0x27"` for most LCD backpacks).
+* **`i2c_bus`**: The hardware I2C bus number (typically `1` for Raspberry Pi).
+
+### 3.2 Audio Settings
+* **`enabled`**: `true` or `false`. If enabled, the engine will trigger PWM buzzer sounds during specific screen events (like errors or success screens).
+* **`gpio_pin`**: The BCM GPIO pin number the positive leg of the buzzer is connected to (e.g. `18`).
+
+### 3.3 Input Settings
+* **`type`**: The input driver to initialize.
+  * `"keyboard"` - SSH/terminal keyboard listener (Maps WASD/Arrows to directions, Enter to select, and 'b' or ESC to back).
+  * `"gpio"` - Standard SeedSigner GPIO push buttons (Requires physical buttons wired to the Pi).
+  * `"none"` - Disables local inputs (useful for passive simulators).

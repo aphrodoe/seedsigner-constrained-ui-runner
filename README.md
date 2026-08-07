@@ -105,6 +105,22 @@ For testing the full UI experience on physical hardware connected to a Raspberry
 * The tool mirrors the current screen to your SSH terminal so you can see what the hardware is rendering.
 * Marquee animations run in real-time (non-blocking 300ms tick loop), matching `dual_runner.py`.
 
+## Running Full SeedSigner OS
+
+You can run the full upstream SeedSigner OS application logic using this constrained UI runner as the display driver. This replaces the standard LVGL graphical display with the constrained hardware outputs.
+
+1. Ensure the upstream SeedSigner repository is available on your device (e.g. at `~/seedsigner/src`), specifically the fork from Keith (https://github.com/kdmukAI-bot/seedsigner).
+2. Ensure this runner is available in a separate directory (e.g. at `~/seedsigner-constrained-ui-runner`).
+3. Inject this runner into the Python path and start the main SeedSigner application:
+
+```bash
+# Run from the upstream SeedSigner src directory
+cd ~/seedsigner/src
+PYTHONPATH="/home/pi/seedsigner-constrained-ui-runner:$PYTHONPATH" python3 main.py
+```
+
+*Note: You may need to configure your `config.json` in the constrained UI runner directory to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc).*
+
 ## Documentation
 
 * **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for architectural tiers (Tier 0-3), block pagination, sliding windows, and 2D spatial layouts.
