@@ -14,6 +14,14 @@ Supported outputs (Categorized by Tier):
 * **Graphical Pixel Displays**: 128x32 / 128x64 OLED (SSD1306) and 200x200 E-Paper (Waveshare 1.54") — *Dimensions dynamically mapped to text grid via `src/utils/graphics.py`*
 * **Audio**: Navigation cues (PWM Buzzer) - *Tested on standard 5V active buzzer*
 
+## Airgapped MicroSD Workflows
+
+Because constrained hardware (like standard I2C LCDs on a Raspberry Pi Zero) typically lacks a camera module and a high-resolution graphical display, standard SeedSigner QR-code data ingestion is impossible. 
+
+This runner solves this by securely routing all data ingress (reading PSBTs) and data egress (writing XPUBs and signed PSBTs) through an attached SPI MicroSD card module. The runner natively intercepts the SeedSigner OS camera/QR hardware calls and seamlessly maps them to file I/O operations, preserving the entire upstream Bitcoin signing logic without modification.
+
+For detailed hardware setup instructions (including the 5MHz SPI overlay), required sudoers permissions, and an automated Python script for generating valid test PSBTs to verify the workflow end-to-end, please see the **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**.
+
 ## Multi-Platform Support (CPython & MicroPython)
 
 The core text rendering engine is **100% pure Python** with zero standard library dependencies (`os.path`, `threading`, `uuid` have been bypassed or polyfilled). 
