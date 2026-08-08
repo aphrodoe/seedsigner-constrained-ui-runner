@@ -42,32 +42,21 @@ class HardwareInput:
             self.GPIO = None
         else:
             try:
-                import RPi.GPIO as GPIO
-                current_mode = GPIO.getmode()
-                if current_mode is None:
-                    GPIO.setmode(GPIO.BCM)
-                elif current_mode != GPIO.BCM:
-                    print(f"WARNING: GPIO mode is {current_mode}, expected {GPIO.BCM}")
-                GPIO.setwarnings(False)
-                
+                from gpiozero import Button
                 # Standard SeedSigner / Waveshare HAT GPIO pins
-                self.pins = {
-                    "UP": 6,
-                    "DOWN": 19,
-                    "LEFT": 5,
-                    "RIGHT": 26,
-                    "ENTER": 13,
-                    "KEY1": 21,  # Often used as back/power/shortcut
-                    "KEY2": 20,
-                    "KEY3": 16
+                self.buttons = {
+                    "UP": Button(6, pull_up=True),
+                    "DOWN": Button(19, pull_up=True),
+                    "LEFT": Button(5, pull_up=True),
+                    "RIGHT": Button(26, pull_up=True),
+                    "ENTER": Button(13, pull_up=True),
+                    "KEY1": Button(21, pull_up=True),
+                    "KEY2": Button(20, pull_up=True),
+                    "KEY3": Button(16, pull_up=True)
                 }
-                for pin in self.pins.values():
-                    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-                
-                self.GPIO = GPIO
             except Exception as e:
-                print(f"WARNING: RPi.GPIO failed to init: {e}. Running without physical buttons.")
-                self.GPIO = None
+                print(f"WARNING: gpiozero failed to init: {e}. Running without physical buttons.")
+                self.buttons = None
 
     def read(self):
         event = None
@@ -77,15 +66,11 @@ class HardwareInput:
             elif self.btn_left.value() == 0: event = "LEFT"
             elif self.btn_right.value() == 0: event = "RIGHT"
             elif self.btn_enter.value() == 0: event = "ENTER"
-        elif self.GPIO:
-            if self.GPIO.input(self.pins["UP"]) == self.GPIO.LOW: event = "UP"
-            elif self.GPIO.input(self.pins["DOWN"]) == self.GPIO.LOW: event = "DOWN"
-            elif self.GPIO.input(self.pins["LEFT"]) == self.GPIO.LOW: event = "LEFT"
-            elif self.GPIO.input(self.pins["RIGHT"]) == self.GPIO.LOW: event = "RIGHT"
-            elif self.GPIO.input(self.pins["ENTER"]) == self.GPIO.LOW: event = "ENTER"
-            elif self.GPIO.input(self.pins["KEY1"]) == self.GPIO.LOW: event = "KEY1"
-            elif self.GPIO.input(self.pins["KEY2"]) == self.GPIO.LOW: event = "KEY2"
-            elif self.GPIO.input(self.pins["KEY3"]) == self.GPIO.LOW: event = "KEY3"
+        elif self.buttons:
+            for key, btn in self.buttons.items():
+                if btn.is_pressed:
+                    event = key
+                    break
         
         # Debounce
         now = time.time() if not IS_MICROPYTHON else time.ticks_ms()
