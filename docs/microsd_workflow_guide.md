@@ -29,6 +29,8 @@ pi ALL=(root) NOPASSWD: /usr/bin/umount /mnt/sd
 pi ALL=(root) NOPASSWD: /usr/bin/tee /mnt/sd/*
 pi ALL=(root) NOPASSWD: /usr/bin/mkdir -p /mnt/sd
 pi ALL=(root) NOPASSWD: /usr/bin/mv /mnt/sd/* /mnt/sd/*
+pi ALL=(root) NOPASSWD: /usr/bin/tee /sys/bus/spi/drivers/mmc_spi/unbind
+pi ALL=(root) NOPASSWD: /usr/bin/tee /sys/bus/spi/drivers/mmc_spi/bind
 ```
 
 ## 2. Environment Fixes

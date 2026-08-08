@@ -45,45 +45,56 @@ class HardwareInput:
                 from gpiozero import Button
                 # Standard SeedSigner / Waveshare HAT GPIO pins
                 self.buttons = {
-                    "UP": Button(6, pull_up=True),
-                    "DOWN": Button(19, pull_up=True),
-                    "LEFT": Button(5, pull_up=True),
-                    "RIGHT": Button(26, pull_up=True),
-                    "ENTER": Button(13, pull_up=True),
-                    "KEY1": Button(21, pull_up=True),
-                    "KEY2": Button(20, pull_up=True),
-                    "KEY3": Button(16, pull_up=True)
+                    "UP": Button(6, pull_up=True, bounce_time=0.05),
+                    "DOWN": Button(19, pull_up=True, bounce_time=0.05),
+                    "LEFT": Button(5, pull_up=True, bounce_time=0.05),
+                    "RIGHT": Button(26, pull_up=True, bounce_time=0.05),
+                    "ENTER": Button(13, pull_up=True, bounce_time=0.05),
+                    "KEY1": Button(21, pull_up=True, bounce_time=0.05),
+                    "KEY2": Button(20, pull_up=True, bounce_time=0.05),
+                    "KEY3": Button(16, pull_up=True, bounce_time=0.05)
                 }
+                self.event_queue = []
+                
+                # Bind hardware interrupts
+                def make_callback(key):
+                    return lambda: self.event_queue.append(key)
+                    
+                for key, btn in self.buttons.items():
+                    btn.when_pressed = make_callback(key)
+                    
             except Exception as e:
                 print(f"WARNING: gpiozero failed to init: {e}. Running without physical buttons.")
                 self.buttons = None
 
     def read(self):
-        event = None
         if IS_MICROPYTHON:
+            event = None
             if self.btn_up.value() == 0: event = "UP"
             elif self.btn_down.value() == 0: event = "DOWN"
             elif self.btn_left.value() == 0: event = "LEFT"
             elif self.btn_right.value() == 0: event = "RIGHT"
             elif self.btn_enter.value() == 0: event = "ENTER"
-        elif self.buttons:
-            for key, btn in self.buttons.items():
-                if btn.is_pressed:
-                    event = key
-                    break
-        
-        # Debounce
-        now = time.time() if not IS_MICROPYTHON else time.ticks_ms()
-        diff = (now - self.last_press_time) * 1000 if not IS_MICROPYTHON else time.ticks_diff(now, self.last_press_time)
-        
-        if event:
-            if event != self.last_pressed or diff > 300:
-                self.last_pressed = event
-                self.last_press_time = now
-                return event
-        else:
-            self.last_pressed = None
             
+            # Manual debounce for MicroPython polling
+            now = time.ticks_ms()
+            diff = time.ticks_diff(now, self.last_press_time)
+            
+            if event:
+                if event != self.last_pressed or diff > 300:
+                    self.last_pressed = event
+                    self.last_press_time = now
+                    return event
+            else:
+                self.last_pressed = None
+                
+            return None
+        elif getattr(self, 'buttons', None) is not None:
+            # CPython hardware interrupts
+            if self.event_queue:
+                return self.event_queue.pop(0)
+            return None
+        
         return None
 
 def init():
