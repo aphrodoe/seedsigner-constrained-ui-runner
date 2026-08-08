@@ -127,6 +127,34 @@ def init():
     _hardware_input = HardwareInput()
     _initialized = True
 
+    # Monkey-patch lvgl_screen_runner to intercept optical flows
+    try:
+        import seedsigner.gui.lvgl_screen_runner as runner
+        runner.run_camera_scan = _intercept_run_camera_scan
+        runner.run_camera_entropy = _intercept_run_camera_entropy
+        runner.run_qr_display_screen = _intercept_run_qr_display_screen
+        
+        # Prevent upstream Renderer from trying to claim SPI0 for ST7789
+        from seedsigner.hardware.displays.display_driver import DisplayDriverFactory
+        class DummyDisplay:
+            width = 240
+            height = 240
+            def show_image(self, *args, **kwargs): pass
+            def clear(self, *args, **kwargs): pass
+            def show(self, *args, **kwargs): pass
+        DisplayDriverFactory.instantiate_display_driver = lambda *args, **kwargs: DummyDisplay()
+        
+        # Patch UrPsbtQrEncoder to avoid cUR dependency crash on Pi
+        import seedsigner.models.encode_qr
+        class DummyEncoder:
+            def __init__(self, psbt, **kwargs):
+                self.psbt = psbt
+        seedsigner.models.encode_qr.UrPsbtQrEncoder = DummyEncoder
+        
+        print("constrained_text_screens: monkey-patched lvgl_screen_runner and upstream display.")
+    except ImportError:
+        pass
+
 # --- LVGL Stubs for unmodified upstream SeedSigner ---
 def native_display_init(width=0, height=0):
     # Upstream Pi Zero initialization calls this instead of init()
@@ -140,6 +168,158 @@ def set_camera_rotation(degrees):
 
 def set_screensaver_timeout(ms):
     pass
+
+# --- Optical Flow Interception ---
+def _intercept_run_camera_entropy(*, seed_hash=None):
+    global _current_state
+    from src.screen_state import ScreenState, ScreenType
+    # Fallback to Dice for constrained displays
+    cfg = {
+        "title": "Camera Offline",
+        "text": "Image Entropy is not supported on this hardware. Please use Dice Rolls.",
+        "status_type": "warning",
+        "button_data": [{"text": "OK"}]
+    }
+    state = ScreenState(ScreenType.LARGE_ICON_STATUS, cfg)
+    _current_state = state
+    _renderer.render(state)
+    
+    # Flush pending inputs to avoid auto-dismissal
+    clear_result_queue()
+    if hasattr(HardwareInput, '_keyboard_hook'):
+        while HardwareInput._keyboard_hook.read_event(timeout=0): pass
+        
+    time.sleep(0.5) # Network debounce for SSH keyboard emulator
+    
+    # Wait for user input to clear the warning
+    while True:
+        event = poll_for_result()
+        if event is not None:
+            if event[0] == "button_selected":
+                break
+        time.sleep(0.05)
+        
+    return None # Upstream treats None as Cancelled and returns gracefully
+
+def _intercept_run_camera_scan(decoder, *, instructions_text=None):
+    global _current_state
+    try:
+        from src.hardware.microsd import MicroSDManager
+    except ImportError:
+        class MicroSDManager:
+            @classmethod
+            def list_files(cls): return []
+    
+    from seedsigner.hardware.scan_consumer import ScanResult
+    
+    files = MicroSDManager.list_files()
+    if not files:
+        cfg = {
+            "title": "No SD Card",
+            "text": "Please insert an SD card with .psbt or .json files.",
+            "status_type": "error",
+            "button_data": [{"text": "OK"}]
+        }
+        state = ScreenState(ScreenType.LARGE_ICON_STATUS, cfg)
+        _current_state = state
+        _renderer.render(state)
+        
+        # Flush pending inputs
+        clear_result_queue()
+        if hasattr(HardwareInput, '_keyboard_hook'):
+            while HardwareInput._keyboard_hook.read_event(timeout=0): pass
+            
+        time.sleep(0.5) # Network debounce
+        while True:
+            event = poll_for_result()
+            if event is not None and event[0] == "button_selected":
+                break
+            time.sleep(0.05)
+        return ScanResult(decoder, False, True, "cancelled", 0, 0)
+        
+    # Build list for user
+    button_data = [{"text": f} for f in files]
+    cfg = {
+        "title": "Load from SD Card",
+        "button_data": button_data
+    }
+    
+    state = ScreenState(ScreenType.BUTTON_LIST, cfg)
+    _current_state = state
+    _renderer.render(state)
+    
+    time.sleep(0.5) # Network debounce
+    
+    selected_index = None
+    while True:
+        event = poll_for_result()
+        if event is not None:
+            if event[0] == "button_selected":
+                if event[1] == RET_CODE__BACK_BUTTON:
+                    return ScanResult(decoder, False, True, "cancelled", 0, 0)
+                selected_index = event[1]
+                break
+        time.sleep(0.05)
+        
+    filename = files[selected_index]
+    file_bytes = MicroSDManager.read_file(filename)
+    # If the file is a raw binary PSBT, convert it to base64 so the QR decoder can parse it
+    if file_bytes.startswith(b"psbt\xff"):
+        import base64
+        file_text = base64.b64encode(file_bytes).decode('utf-8')
+    else:
+        file_text = file_bytes.decode('utf-8').strip()
+        
+    # Feed it into the decoder as if it was scanned from a camera frame
+    decoder.add_data(file_text)
+    
+    return ScanResult(decoder, True, False, "complete", 1, 0)
+
+def _intercept_run_qr_display_screen(encoder, *, allow_screensaver=False):
+    global _current_state
+    try:
+        from src.hardware.microsd import MicroSDManager
+    except ImportError:
+        class MicroSDManager:
+            @classmethod
+            def write_file(cls, name, data): pass
+            
+    status_text = "Data written to SD Card."
+    
+    if hasattr(encoder, "psbt"):
+        psbt_bytes = encoder.psbt.serialize()
+        MicroSDManager.write_file("signed_tx.psbt", psbt_bytes)
+        status_text = "Signed PSBT saved to SD Card!"
+    elif hasattr(encoder, "xpub_data") or hasattr(encoder, "derivation"):
+        from seedsigner.models.encode_qr import build_xpub_data
+        xd = build_xpub_data(getattr(encoder, "seed", None), 
+                             getattr(encoder, "derivation", ""), 
+                             getattr(encoder, "network", "main"), 
+                             getattr(encoder, "sig_type", ""))
+        MicroSDManager.write_file("xpub.txt", xd.xpubstring.encode())
+        status_text = "XPUB saved to SD Card!"
+        
+    cfg = {
+        "title": "Success",
+        "text": status_text,
+        "status_type": "success",
+        "button_data": [{"text": "OK"}]
+    }
+    state = ScreenState(ScreenType.LARGE_ICON_STATUS, cfg)
+    _current_state = state
+    _renderer.render(state)
+    
+    # Flush pending inputs
+    clear_result_queue()
+    if hasattr(HardwareInput, '_keyboard_hook'):
+        while HardwareInput._keyboard_hook.read_event(timeout=0): pass
+        
+    time.sleep(0.5) # Network debounce
+    while True:
+        event = poll_for_result()
+        if event is not None and event[0] == "button_selected":
+            break
+        time.sleep(0.05)
 
 def get_inactive_time_ms():
     global _hardware_input
@@ -184,11 +364,13 @@ def poll_for_result():
     result_tuple = None
     
     if event:
-        # SeedSigner OS contract expects certain return tuples
-        if event == "KEY1" or event == "KEY2":
+        if event == "KEY1" or event == "KEY2" or event == "ESC":
             # Map physical hardware buttons to standard topnav actions
-            # LVGL native API expects ("button_selected", 1000, "topnav_back")
-            return ("button_selected", 1000, "topnav_back")
+            if _current_state.screen_type == "main_menu_screen" or _current_state.context.get("show_back_button", True) == False:
+                # Main menu has no back button, ignore
+                needs_render = True
+            else:
+                return ("button_selected", 1000, "topnav_back")
             
         if ScreenType.is_keyboard(_current_state.screen_type):
             if event == "UP":

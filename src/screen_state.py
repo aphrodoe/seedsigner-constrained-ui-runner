@@ -232,7 +232,7 @@ class ScreenState:
                 normalized.append({"label": str(item[0]), "value": item[1]})
             elif isinstance(item, dict):
                 if "label" not in item:
-                    item["label"] = ""
+                    item["label"] = item.get("text", "")
                 if "value" not in item:
                     item["value"] = item["label"]
                 normalized.append(item)
