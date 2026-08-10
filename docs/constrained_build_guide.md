@@ -15,7 +15,45 @@ The Pi Zero is the standard SeedSigner target. We run the text UI engine directl
 - Connected Display (16x2 LCD, SSD1306 OLED, or Waveshare E-Paper)
 - Passive Buzzer (optional, for audio feedback)
 
-### 1.2 Software Setup
+### 1.2 Wiring Schematic & Pinout
+
+Wire your components to the Pi Zero exactly as shown below. 
+
+```mermaid
+graph TD
+    PI((Pi Zero GPIO))
+    
+    subgraph "MicroSD SPI Reader"
+    PI -- "GPIO 10" --> MOSI
+    PI -- "GPIO 9" --> MISO
+    PI -- "GPIO 11" --> SCLK
+    PI -- "GPIO 8 (CE0)" --> CS
+    end
+    
+    subgraph "I2C Display (OLED/LCD)"
+    PI -- "GPIO 2" --> SDA
+    PI -- "GPIO 3" --> SCL
+    end
+    
+    subgraph "Physical Push Buttons"
+    PI -- "GPIO 6" --> UP
+    PI -- "GPIO 19" --> DOWN
+    PI -- "GPIO 5" --> LEFT
+    PI -- "GPIO 26" --> RIGHT
+    PI -- "GPIO 13" --> ENTER
+    PI -- "GPIO 21" --> BACK
+    PI -- "GPIO 20" --> KEY2
+    PI -- "GPIO 16" --> KEY3
+    end
+```
+
+| Component | Pi Zero BCM Pin | Notes |
+| :--- | :--- | :--- |
+| **SPI SD Card** | MOSI: `10`, MISO: `9`, CLK: `11`, CS: `8` | CS must be `8` (CE0) for the `mmc-spi` driver. |
+| **I2C Display** | SDA: `2`, SCL: `3` | Powers off `3.3V` or `5V` (Check display specs). |
+| **Buttons** | UP:`6`, DOWN:`19`, L:`5`, R:`26`, ENTER:`13`, BACK:`21` | All buttons must be wired to Ground (`GND`). |
+
+### 1.3 Software Setup
 1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository as a submodule while saving hundreds of megabytes of disk space:
    ```bash
    git clone --recursive --shallow-submodules --depth 1 https://github.com/aphrodoe/seedsigner-constrained-ui-runner.git
@@ -29,7 +67,32 @@ The Pi Zero is the standard SeedSigner target. We run the text UI engine directl
    ```
 3. Enable I2C and SPI via `sudo raspi-config` (Interfacing Options).
 
-### 1.3 Hardware Testing
+### 1.4 Hardware Configuration & Sudoers
+
+To enable stable SPI communication for the MicroSD card (without kernel timeout errors) and to allow the Python script to hot-swap cards without a root password, you must configure the Pi OS kernel and permissions.
+
+1. **Kernel Overlays (`/boot/firmware/config.txt`)**
+   Append these exact lines to enable the `mmc-spi` driver at 5MHz:
+   ```text
+   dtparam=spi=on
+   dtoverlay=spi0-1cs
+   dtoverlay=mmc-spi,spi0-0,brm=5000000
+   ```
+   *(Reboot required after changes).*
+
+2. **Sudoers I/O Permissions**
+   Create `/etc/sudoers.d/010_seedsigner-sd` with the following content to allow seamless mounting and kernel binding:
+   ```bash
+   pi ALL=(root) NOPASSWD: /usr/bin/mount -t vfat -o uid=1000\,gid=1000 /dev/mmcblk2p1 /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/bin/umount /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/bin/tee /mnt/sd/*
+   pi ALL=(root) NOPASSWD: /usr/bin/mkdir -p /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/bin/mv /mnt/sd/* /mnt/sd/*
+   pi ALL=(root) NOPASSWD: /usr/bin/tee /sys/bus/spi/drivers/mmc_spi/unbind
+   pi ALL=(root) NOPASSWD: /usr/bin/tee /sys/bus/spi/drivers/mmc_spi/bind
+   ```
+
+### 1.5 Hardware Testing
 You can interact with the engine immediately using the hardware tester tool. This script dynamically pulls the exact dimensions of your display (e.g., 20x4 or 128x32) and starts a navigable UI session.
 
 ```bash
@@ -39,7 +102,7 @@ You can interact with the engine immediately using the hardware tester tool. Thi
 # Test on 16x2 Character LCD
 ./tools/interactive_hardware_test.py --display lcd16x2
 ```
-### 1.4 Running the Full SeedSigner OS
+### 1.6 Running the Full SeedSigner OS
 The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner OS code and automatically applies the Constrained UI monkey-patches at runtime without needing to modify any upstream files!
 
 ```bash
@@ -53,7 +116,7 @@ python3 run_seedsigner.py
 This replaces the standard LVGL graphical display with the constrained hardware outputs, providing a 1-to-1 functional mapping of the entire UI flow.
 ---
 
-## 2. ESP32-S3 (MicroPython)
+## 2. ESP32-S3 (Under Testing and Development)
 
 Because our rendering engine separates state logic from hardware I/O, the entire text algorithm runs perfectly on MicroPython 1.27.
 
