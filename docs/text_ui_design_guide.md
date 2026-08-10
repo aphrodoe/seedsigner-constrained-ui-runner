@@ -11,7 +11,7 @@ For **graphical pixel displays** (OLED, E-Paper), the text grid is **dynamically
 - `cols = pixel_width // average_char_width`
 - `rows = pixel_height // font_ascent`
 
-This means the tier assignment is automatic and hardware-agnostic — plugging in a different resolution display requires zero code changes.
+This means the tier assignment is automatic and hardware-agnostic, hence plugging in a different resolution display requires zero code changes.
 
 | Tier | Example Hardware | Grid | How Derived |
 |:-----|:-----------------|:-----|:------------|
@@ -50,11 +50,11 @@ With 4 rows, we can display multiple items simultaneously. Row 0 remains the tit
 ```
 
 ### 2.3 Graphical Displays: Dynamic Grid Rendering
-On graphical pixel displays (OLED, E-Paper), the text grid is computed dynamically from the hardware's pixel resolution. The `TextRenderer` receives the computed `cols` and `rows` and applies the same tier logic as character LCDs — no special cases.
+On graphical pixel displays (OLED, E-Paper), the text grid is computed dynamically from the hardware's pixel resolution. The `TextRenderer` receives the computed `cols` and `rows` and applies the same tier logic as character LCDs.
 
 All graphical rendering is delegated to the shared `src/utils/graphics.py` utility, which provides:
 - **`compute_text_grid(width, height, font)`**: Derives `cols`, `rows`, and `line_height` from pixel dimensions.
-- **Bundled Font**: We ship `DejaVuSansMono.ttf` and force its usage in OLED/E-Paper drivers. This guarantees a true monospace bounding box across all host platforms, preventing proportional width collapse and ASCII art distortion.
+- **Bundled Font**: Bundled with the repository is `DejaVuSansMono.ttf` and it is used in OLED/E-Paper drivers. This guarantees a true monospace bounding box across all host platforms, preventing proportional width collapse and ASCII art distortion.
 - **`draw_text_line(draw, image, line, y, font, screen_width, fill)`**: Renders a single line with proportional kerning, icon bitmap substitution, and automatic right-alignment of spaced trailing text (e.g., pagination indicators like `3/4`).
 
 This architecture means adding support for a new graphical display requires only a thin hardware driver that calls the shared API. All alignment, icon rendering, and text layout logic is inherited automatically.
@@ -78,13 +78,13 @@ For screens that do not have active button lists (e.g., wallet descriptors, sett
 ## 3. Advanced Text Rendering
 
 ### 3.1 Marquee Animations (Horizontal Scrolling)
-To avoid losing critical context to static truncation (`..`), the engine actively utilizes time-based marquee animations driven by a central `marquee_tick`:
+To avoid losing critical context to truncation, the engine actively utilizes time-based marquee animations driven by a central `marquee_tick`:
 *   **Long Titles**: If a title exceeds available columns, it pauses for 5 ticks, smoothly scrolls to the end, pauses for 5 ticks, and repeats.
 *   **Selected Items**: Menu items that are currently selected `> ` will dynamically marquee if they exceed the column constraints. Unselected items remain statically truncated to preserve focus.
 *   **Splash Screens**: Subtitle/Partner rows are smoothly scrolled across the bottom row.
 
 ### 3.2 Flashing Borders (`warning_edges`)
-For screens requiring immediate attention (e.g., `dire_warning_animated`), the engine draws `!` characters around word-wrapped text. If the `animated` flag is true, these edge characters will strobe on and off every ~600ms.
+For screens requiring immediate attention, the engine draws `!` characters around word-wrapped text. If the `animated` flag is true, these edge characters will strobe on and off every ~600ms.
 
 ## 4. Icon-to-Text Mapping & CGRAM
 
@@ -128,13 +128,23 @@ On smaller displays, keyboards rely on a 1D horizontal array (a sliding list of 
 └──────────────────┘
 ```
 
-### 5.2 2D Spatial Grids (Tier 2 & Tier 3 - Planned)
-For larger matrix displays, the 1D carousel is inefficient. Future implementation will map the upstream `KeyboardScreen`'s `cols` and `rows` values to render a fully 2D interactive grid (e.g., 3x5 layout for BIP-39 word entry). This requires upgrading the layout engine to use a 2D `ScreenBuffer` coordinate system (`[X, Y]`).
+### 5.2 2D Spatial Grids (Tier 2 & Tier 3)
+For larger matrix displays, the 1D carousel is inefficient. The layout engine now maps the upstream `KeyboardScreen`'s `cols` and `rows` values to render a fully interactive 2D grid, utilizing a coordinate system (`[X, Y]`).
+
+**Example (128x64 OLED Keyboard):**
+```text
+Dice Roll 1/5
+[1]
+
+    [1]   2    3
+     4    6    5
+       [DEL]
+```
 
 ### 5.3 The "Back" Button Constraint
-Because text displays compress 2D spatial layouts into 1D loops, upstream LVGL's top-left `<` button is difficult to reach via the D-Pad. To deal with this on a global scale:
-1. **Keyboard Screens**: We append `[BACK]` as an explicit item alongside `[DEL]` and `[OK]` within the character carousel.
-2. **Hardware Escape**: For immediate top-level escapes, it is recommended to bind one of the dedicated physical side buttons (e.g., Key3) exclusively to "Back/Cancel".
+To navigate backward in the UI cleanly across constrained displays:
+- **Hardware Escape**: We bind the dedicated physical "Back" side button (Key1 / Pin 40) exclusively to the top-level "Back/Cancel" action.
+- Because we have a dedicated physical back button, we no longer need to clutter character grids, carousels, or menus with artificial `[BACK]` text items, freeing up valuable screen real estate for actual content.
 
 ## 6. PSBT Flow Validation
 

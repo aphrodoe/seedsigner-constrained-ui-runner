@@ -25,7 +25,6 @@ echo spi0.0 > /sys/bus/spi/drivers/mmc_spi/bind
 
 This forces the Linux kernel to immediately re-probe the SPI bus, discovering the freshly inserted SD card perfectly every time.
 
-> [!NOTE]
 > **SPI Conflict Mitigation:** This re-probe targets specifically `spi0.0` (Chip Select 0). If you are using an SPI E-Paper display, you must wire the E-Paper's CS pin to `spi0.1` (Chip Select 1 / GPIO 7). Because the script only unbinds `spi0.0`, the E-Paper display will never flash or lose connection during SD card hot-swapping!
 
 ## 3. Automated Filesystem Repair (`fsck.fat`)

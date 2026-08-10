@@ -1,10 +1,10 @@
-# Constrained UI Build & Deployment Guide
+# Constrained UI Build Guide
 
-This guide covers how to deploy the constrained UI text engine to physical hardware. Our architecture supports two distinct platforms: the **Raspberry Pi Zero** (running Linux/CPython) and the **ESP32-S3** (running MicroPython 1.27).
+This guide covers how to run the constrained text UI for SeedSigner on physical hardware. The architecture supports two distinct platforms: the **Raspberry Pi Zero** (running Linux/CPython) and the **ESP32-S3** (running MicroPython 1.27).
 
 ---
 
-## 1. Raspberry Pi Zero (CPython)
+## 1. Raspberry Pi Zero (Recommended)
 
 The Pi Zero is the standard SeedSigner target. We run the text UI engine directly in CPython using standard Linux I2C/SPI interfaces.
 
@@ -14,47 +14,48 @@ The Pi Zero is the standard SeedSigner target. We run the text UI engine directl
 - SSH Access enabled
 - Connected Display (16x2 LCD, SSD1306 OLED, or Waveshare E-Paper)
 - Passive Buzzer (optional, for audio feedback)
+- 6x Tactile Push Buttons (for directional navigation)
+- MicroSD card reader module (for PSBT workflows)
 
 ### 1.2 Wiring Schematic & Pinout
 
-Wire your components to the Pi Zero exactly as shown below. 
+Wire your components to the Pi Zero exactly as shown in the diagrams below.
 
-```mermaid
-graph TD
-    PI((Pi Zero GPIO))
-    
-    subgraph "MicroSD SPI Reader"
-    PI -- "GPIO 10" --> MOSI
-    PI -- "GPIO 9" --> MISO
-    PI -- "GPIO 11" --> SCLK
-    PI -- "GPIO 8 (CE0)" --> CS
-    end
-    
-    subgraph "I2C Display (OLED/LCD)"
-    PI -- "GPIO 2" --> SDA
-    PI -- "GPIO 3" --> SCL
-    end
-    
-    subgraph "Physical Push Buttons"
-    PI -- "GPIO 6" --> UP
-    PI -- "GPIO 19" --> DOWN
-    PI -- "GPIO 5" --> LEFT
-    PI -- "GPIO 26" --> RIGHT
-    PI -- "GPIO 13" --> ENTER
-    PI -- "GPIO 21" --> BACK
-    PI -- "GPIO 20" --> KEY2
-    PI -- "GPIO 16" --> KEY3
-    end
-```
+<details open>
+<summary><b>1. OLED (SSD1306) Wiring</b></summary>
+<br>
 
-| Component | Pi Zero BCM Pin | Notes |
-| :--- | :--- | :--- |
-| **SPI SD Card** | MOSI: `10`, MISO: `9`, CLK: `11`, CS: `8` | CS must be `8` (CE0) for the `mmc-spi` driver. |
-| **I2C Display** | SDA: `2`, SCL: `3` | Powers off `3.3V` or `5V` (Check display specs). |
-| **Buttons** | UP:`6`, DOWN:`19`, L:`5`, R:`26`, ENTER:`13`, BACK:`21` | All buttons must be wired to Ground (`GND`). |
+![Pi Zero OLED Schematic](pi_zero_oled.png)
+
+</details>
+
+<details>
+<summary><b>2. Character LCD Wiring</b></summary>
+<br>
+
+![Pi Zero LCD Schematic](pi_zero_lcd.png)
+
+</details>
+
+<details>
+<summary><b>3. Waveshare E-Paper Wiring</b></summary>
+<br>
+
+![Pi Zero E-Paper Schematic](pi_zero_epaper.png)
+
+</details>
+
+### Complete Pin Mapping Summary
+
+| Component | Physical Pin (1-40) | GPIO (BCM) | Notes |
+| :--- | :--- | :--- | :--- |
+| **SPI MicroSD** | VCC: `17`, GND: `39`, MOSI: `19`, MISO: `21`, SCK: `23`, CS: `24` | CS: `8` (CE0) | **CS** must be CE0 for `mmc-spi` compatibility. |
+| **I2C Displays (OLED/LCD)** | VCC: `1` or `2`, GND: `6`, SDA: `3`, SCL: `5` | SDA: `2`, SCL: `3` | Use Pin 1 (3.3V) for OLED, Pin 2 (5V) for LCD. |
+| **SPI E-Paper** | VCC: `1`, GND: `6`, MOSI: `19`, SCK: `23`, CS: `26`, DC: `18`, RST: `22`, BUSY: `16` | CS: `7` (CE1) | Shares `MOSI`/`SCK` with MicroSD. **CS** must be CE1! |
+| **Push Buttons** | UP: `31`, DOWN: `35`, L: `29`, R: `37`, ENT: `33`, BACK: `40`, GND: `9` | UP: `6`, DN: `19`, L: `5`, R: `26`, ENT: `13`, BCK: `21` | All buttons share the same GND rail. |
 
 ### 1.3 Software Setup
-1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository as a submodule while saving hundreds of megabytes of disk space:
+1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository (Keith's LVGL fork's integration/lvgl-mpy branch) as a submodule:
    ```bash
    git clone --recursive --shallow-submodules --depth 1 https://github.com/aphrodoe/seedsigner-constrained-ui-runner.git
    cd seedsigner-constrained-ui-runner
@@ -102,8 +103,8 @@ You can interact with the engine immediately using the hardware tester tool. Thi
 # Test on 16x2 Character LCD
 ./tools/interactive_hardware_test.py --display lcd16x2
 ```
-### 1.6 Running the Full SeedSigner OS
-The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner OS code and automatically applies the Constrained UI monkey-patches at runtime without needing to modify any upstream files!
+### 1.6 Running the Full SeedSigner codebase
+The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner code and automatically applies the Constrained UI monkey-patches at runtime, similar to Keith's work (https://github.com/kdmukAI-bot/seedsigner/blob/integration/lvgl-mpy/docs/architecture/view-to-screen-json-contract.md).
 
 ```bash
 # Ensure your virtual environment is active
@@ -114,16 +115,15 @@ python3 run_seedsigner.py
 ```
 
 This replaces the standard LVGL graphical display with the constrained hardware outputs, providing a 1-to-1 functional mapping of the entire UI flow.
----
 
-## 2. ESP32-S3 (Under Testing and Development)
+## 2. ESP32-S3 (Under Testing, will be updated soon)
 
 Because our rendering engine separates state logic from hardware I/O, the entire text algorithm runs perfectly on MicroPython 1.27.
 
 ### 2.1 Requirements
 - ESP32-S3 Development Board
-- Display (I2C LCD or I2C OLED)
-- 5x Tactile Push Buttons (for directional navigation)
+- Display
+- 6x Tactile Push Buttons (for directional navigation)
 - `esptool` and `mpremote` installed on your host machine.
 
 ### 2.2 Flashing MicroPython

@@ -6,13 +6,7 @@ This repository contains the standalone Python runner for constrained hardware i
 
 Instead of directly drawing pixels to a 240x240 screen, this engine consumes JSON payloads that describe the *intent* of a screen (e.g., a list of buttons, a warning, or a QR code) and renders them optimally for the connected hardware.
 
-As of Week 8, this runner supports **29 unique text-renderable screen types**, covering the entire signing flow (including PSBT details, multisig descriptors, message signing, and complex keyboard entry). 6 screens remain strictly visual-only (QR code display and Camera overlays).
-
-Supported outputs (Categorized by Tier):
-* **Tier 0**: 16x2 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
-* **Tier 1**: 20x4 Character LCD (I2C) - *Tested on generic HD44780 + I2C backpack*
-* **Graphical Pixel Displays**: 128x32 / 128x64 OLED (SSD1306) and 200x200 E-Paper (Waveshare 1.54") — *Dimensions dynamically mapped to text grid via `src/utils/graphics.py`*
-* **Audio**: Navigation cues (PWM Buzzer) - *Tested on standard 5V active buzzer*
+For a comprehensive overview of supported hardware tiers, Airgapped MicroSD workflows, and architectural guidelines, **please refer directly to the [docs/](docs/) folder.**
 
 ## Airgapped MicroSD Workflows
 
@@ -32,52 +26,7 @@ This allows the UI to run on two vastly different architectures:
 
 ## Setup
 
-```bash
-pip install -r requirements.txt
-```
-
-## Terminal Simulators
-
-These simulate the exact character output that would appear on a physical LCD directly in your laptop's terminal without any hardware connected. Use the **Up/Down arrow keys** to navigate, **Enter** to select, and **q** to quit.
-
-**Tier 0: 16x2 LCD (Block Pagination)** — shows one item at a time:
-```bash
-python3 -m src.main --display lcd_16x2_sim --scenario button_list_screen
-```
-
-**Tier 1: 20x4 LCD (Sliding Window)** — shows a 3-item scrollable window:
-```bash
-python3 -m src.main --display lcd_20x4_sim --scenario button_list_screen --variation scroll_many
-```
-
-**Graphical OLED (Dynamic Grid)** — rows and columns computed from pixel dimensions:
-```bash
-python3 -m src.main --display lcd_16x8_sim --scenario button_list_screen --variation scroll_many
-```
-
-**Testing Status Screens (Simulators):**
-```bash
-python3 -m src.main --display lcd_20x4_sim --scenario large_icon_status_screen --variation warning
-```
-
-## Running on Physical Hardware
-
-To run the runner directly on physical I2C LCD displays connected to the Raspberry Pi:
-
-**16x2 Physical LCD:**
-```bash
-python3 -m src.main --display lcd_16x2 --scenario button_list_screen
-```
-
-**20x4 Physical LCD:**
-```bash
-python3 -m src.main --display lcd_20x4 --scenario large_icon_status_screen --variation dire_warning
-```
-
-**Testing Audio (Buzzer):**
-```bash
-python3 -m src.main --display lcd_16x2 --audio --scenario button_list_screen
-```
+For complete, step-by-step installation instructions and hardware wiring diagrams, please see the **[Constrained UI Build Guide](docs/constrained_build_guide.md)**.
 
 ## Interactive Dual Runner (Developer Tool)
 
@@ -117,20 +66,25 @@ For testing the full UI experience on physical hardware connected to a Raspberry
 
 You can run the full upstream SeedSigner OS application logic using this constrained UI runner as the display driver. This replaces the standard LVGL graphical display with the constrained hardware outputs.
 
-1. Ensure the upstream SeedSigner repository is available on your device (e.g. at `~/seedsigner/src`), specifically the fork from Keith (https://github.com/kdmukAI-bot/seedsigner).
-2. Ensure this runner is available in a separate directory (e.g. at `~/seedsigner-constrained-ui-runner`).
-3. Inject this runner into the Python path and start the main SeedSigner application:
+Instead of manually cloning the upstream repository, this runner uses a unified setup script to automatically pull the correct upstream LVGL branch as a git submodule and install all hardware dependencies.
 
+1. Run the unified setup script:
 ```bash
-# Run from the upstream SeedSigner src directory
-cd ~/seedsigner/src
-PYTHONPATH="/home/pi/seedsigner-constrained-ui-runner:$PYTHONPATH" python3 main.py
+./setup.sh
 ```
 
-*Note: You may need to configure your `config.json` in the constrained UI runner directory to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc).*
+2. Activate the virtual environment and start the OS:
+```bash
+source venv/bin/activate
+python3 run_seedsigner.py
+```
+
+*Note: Configure your `config.json` in the constrained UI runner directory to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc) before running the OS.*
 
 ## Documentation
 
+* **[Constrained UI Build Guide](docs/constrained_build_guide.md)**: The definitive, step-by-step setup guide including hardware configurations, software installation, and Fritzing wiring diagrams for all supported displays.
+* **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**: Architectural rationale for the SPI-based hot-swappable MicroSD data ingress/egress pipeline.
 * **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for architectural tiers (Tier 0-3), block pagination, sliding windows, and 2D spatial layouts.
 
 ## Running Tests
@@ -145,27 +99,3 @@ To run the automated Golden UI tests (verifies text snapshots across all hardwar
 python3 -m pytest tests/test_all_screens_golden.py
 ```
 *(Append `--update-golden` to overwrite baselines if you make intentional design changes)*
-
-## Hardware Screen Walkthrough (Passive)
-
-To passively walk through all 130+ screen variations on auto-detected hardware (no interactive scrolling):
-
-```bash
-./tools/test_all_screens.py
-```
-*(Press Enter to manually advance through the screens)*
-
-## Architecture: Shared Graphics Utility & Dynamic CGRAM
-
-All graphical display drivers (OLED, E-Paper) delegate text rendering to a shared utility at `src/utils/graphics.py`. This module:
-
-1. **Dynamically measures** the loaded PIL font's ascent and average character width — no hardcoded pixel constants.
-2. **Computes the text grid** (`cols`, `rows`, `line_height`) from any pixel resolution via `compute_text_grid(width, height, font)`.
-3. **Bundles a Monospace Font**: The repository ships with `DejaVuSansMono.ttf` to guarantee that text alignment, bounded wrapping, and ASCII art render flawlessly on any host OS, bypassing unpredictable system-default fonts.
-4. **Renders proportional text** with automatic right-alignment of pagination indicators (e.g., `3/4`) and custom icon bitmap substitution via a single `draw_text_line()` function. It natively draws 8x8 pixel-art versions of all SeedSigner icons (Warning, Dire Warning, Checkmark, etc.) regardless of the host font's capabilities.
-
-For character LCDs (Tier 0 & 1), the engine uses a **Dynamic CGRAM Allocator**:
-1. The HD44780 controller only has 8 custom character slots.
-2. The `TextRenderer` parses each frame and identifies all unique custom icons requested.
-3. The allocator assigns the available 8 slots on-the-fly to the highest-priority icons.
-4. Any icons that exceed the 8-slot limit are safely degraded to ASCII equivalents, completely eliminating the hardware bottleneck while preserving the UX.
