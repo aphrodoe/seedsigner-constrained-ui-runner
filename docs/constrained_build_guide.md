@@ -16,12 +16,16 @@ The Pi Zero is the standard SeedSigner target. We run the text UI engine directl
 - Passive Buzzer (optional, for audio feedback)
 
 ### 1.2 Software Setup
-1. Clone this repository onto your Pi.
-2. Create a virtual environment and install requirements:
+1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository as a submodule while saving hundreds of megabytes of disk space:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
+   git clone --recursive --shallow-submodules --depth 1 https://github.com/aphrodoe/seedsigner-constrained-ui-runner.git
+   cd seedsigner-constrained-ui-runner
+   ```
+   *(If you already cloned it without the flag, just run `./setup.sh` anyway, it will pull the submodule for you!)*
+
+2. Run the automated setup script to build the virtual environment and install all dependencies:
+   ```bash
+   ./setup.sh
    ```
 3. Enable I2C and SPI via `sudo raspi-config` (Interfacing Options).
 
@@ -36,18 +40,17 @@ You can interact with the engine immediately using the hardware tester tool. Thi
 ./tools/interactive_hardware_test.py --display lcd16x2
 ```
 ### 1.4 Running the Full SeedSigner OS
-To run the full upstream SeedSigner OS application logic using this constrained UI runner as the display driver:
-
-1. Clone the upstream SeedSigner repository (e.g. to `~/keith-version/seedsigner` or similar).
-2. Configure `config.json` in this repository to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc).
-3. From the upstream SeedSigner `src` directory, run:
+The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner OS code and automatically applies the Constrained UI monkey-patches at runtime without needing to modify any upstream files!
 
 ```bash
-cd ~/seedsigner/src
-PYTHONPATH="/home/pi/seedsigner-constrained-ui-runner:$PYTHONPATH" python3 main.py
-```
-This replaces the standard LVGL graphical display with the constrained hardware outputs, providing a 1-to-1 functional mapping of the entire UI flow.
+# Ensure your virtual environment is active
+source venv/bin/activate
 
+# Run the OS
+python3 run_seedsigner.py
+```
+
+This replaces the standard LVGL graphical display with the constrained hardware outputs, providing a 1-to-1 functional mapping of the entire UI flow.
 ---
 
 ## 2. ESP32-S3 (MicroPython)

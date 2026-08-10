@@ -1,0 +1,4 @@
+[submodule "vendor/seedsigner"]
+	path = vendor/seedsigner
+	url = https://github.com/kdmukAI-bot/seedsigner/
+	branch = integration/lvgl-mpy

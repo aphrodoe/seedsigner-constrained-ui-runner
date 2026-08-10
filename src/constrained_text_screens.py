@@ -140,12 +140,20 @@ def init():
             def show(self, *args, **kwargs): pass
         DisplayDriverFactory.instantiate_display_driver = lambda *args, **kwargs: DummyDisplay()
         
-        # Patch UrPsbtQrEncoder to avoid cUR dependency crash on Pi
+        # Patch UR encoders to avoid cUR dependency crash on Pi
         import seedsigner.models.encode_qr
-        class DummyEncoder:
+        class DummyPsbtEncoder:
             def __init__(self, psbt, **kwargs):
                 self.psbt = psbt
-        seedsigner.models.encode_qr.UrPsbtQrEncoder = DummyEncoder
+        seedsigner.models.encode_qr.UrPsbtQrEncoder = DummyPsbtEncoder
+        
+        class DummyXpubEncoder:
+            def __init__(self, seed, derivation, network, sig_type, **kwargs):
+                self.seed = seed
+                self.derivation = derivation
+                self.network = network
+                self.sig_type = sig_type
+        seedsigner.models.encode_qr.UrXpubQrEncoder = DummyXpubEncoder
         
         print("constrained_text_screens: monkey-patched lvgl_screen_runner and upstream display.")
     except ImportError:
