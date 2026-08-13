@@ -2,7 +2,8 @@
   "display": {
     "type": "oled_128x32",
     "i2c_address": "0x3C",
-    "i2c_bus": 1
+    "i2c_bus": 1,
+    "_comment": "Defaulting to oled_128x32 as tested. Change to oled_128x64 if using a larger display."
   },
   "audio": {
     "enabled": false,

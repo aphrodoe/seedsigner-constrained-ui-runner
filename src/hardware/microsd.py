@@ -53,7 +53,7 @@ class MicroSDManager:
                     # Automatically repair FAT32 dirty bit / corruption if user unsafely ejected from their laptop
                     subprocess.run(["sudo", "fsck.fat", "-a", "-w", dev], capture_output=True)
                     
-                    subprocess.run(["sudo", "mount", dev, cls.MOUNT_POINT], check=True, capture_output=True)
+                    subprocess.run(["sudo", "mount", "-t", "vfat", "-o", "uid=1000,gid=1000", dev, cls.MOUNT_POINT], check=True, capture_output=True)
                     if cls.is_mounted():
                         return True
             return False

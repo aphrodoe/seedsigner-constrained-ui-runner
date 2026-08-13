@@ -50,9 +50,7 @@ class HardwareInput:
                     "LEFT": Button(5, pull_up=True, bounce_time=0.05),
                     "RIGHT": Button(26, pull_up=True, bounce_time=0.05),
                     "ENTER": Button(13, pull_up=True, bounce_time=0.05),
-                    "KEY1": Button(21, pull_up=True, bounce_time=0.05),
-                    "KEY2": Button(20, pull_up=True, bounce_time=0.05),
-                    "KEY3": Button(16, pull_up=True, bounce_time=0.05)
+                    "KEY1": Button(21, pull_up=True, bounce_time=0.05)
                 }
                 self.event_queue = []
                 
@@ -426,12 +424,6 @@ def poll_for_result():
     if needs_render:
         if hasattr(_renderer, 'render'):
             _renderer.render(_current_state)
-        else:
-            # Re-wrap pure hardware driver in TextRenderer logic
-            from src.renderers.text_renderer import TextRenderer
-            tr = TextRenderer(rows=getattr(_renderer, 'rows', 4), cols=getattr(_renderer, 'cols', 20))
-            _renderer.write_lines(tr._render_screen(_current_state))
-            
     # Polling should not block heavily, but a small sleep prevents thrashing
     if not IS_MICROPYTHON:
         time.sleep(0.01)
