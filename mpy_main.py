@@ -54,7 +54,19 @@ def main():
         # 20x4 LCD
         lcd_driver = LCDI2CMPY(i2c=i2c, i2c_addr=0x27, rows=4, cols=20)
         from src.renderers.text_renderer import TextRenderer
-        renderer = TextRenderer(lcd_driver)
+        text_renderer = TextRenderer(rows=4, cols=20)
+        # Wrap so render() outputs to the LCD hardware
+        class LCDRendererWrapper:
+            def __init__(self, driver, tr):
+                self.driver = driver
+                self.text_renderer = tr
+                self.rows = tr.rows
+                self.cols = tr.cols
+                self.visible_rows = tr.item_rows
+            def render(self, state):
+                lines = self.text_renderer.render(state)
+                self.driver.write_lines(lines)
+        renderer = LCDRendererWrapper(lcd_driver, text_renderer)
         print("LCD initialized.")
 
     # Setup Buttons (GPIO Pins with Pull-Ups)

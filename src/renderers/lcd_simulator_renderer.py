@@ -10,9 +10,7 @@ from src.screen_state import ScreenState
 
 class LCDSimulatorRenderer(BaseRenderer):
     def __init__(self, rows: int, cols: int):
-        super().__init__(visible_rows=rows - 1)  # row 0 is the title
-        self.rows = rows
-        self.cols = cols
+        super().__init__(rows, cols)  # BaseRenderer sets rows/cols/visible_rows (row 0 is the title)
         self.text_renderer = TextRenderer(rows, cols)
 
     def render(self, state: ScreenState):

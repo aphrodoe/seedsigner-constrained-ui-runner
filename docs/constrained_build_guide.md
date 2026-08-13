@@ -49,7 +49,7 @@ Wire your components to the Pi Zero exactly as shown in the diagrams below.
 
 | Component | Physical Pin (1-40) | GPIO (BCM) | Notes |
 | :--- | :--- | :--- | :--- |
-| **SPI MicroSD** | VCC: `17`, GND: `39`, MOSI: `19`, MISO: `21`, SCK: `23`, CS: `24` | CS: `8` (CE0) | **CS** must be CE0 for `mmc-spi` compatibility. |
+| **SPI MicroSD** | VCC: `17`, GND: `25`, MOSI: `19`, MISO: `21`, SCK: `23`, CS: `24` | CS: `8` (CE0) | **CS** must be CE0 for `mmc-spi` compatibility. |
 | **I2C Displays (OLED/LCD)** | VCC: `1` or `2`, GND: `6`, SDA: `3`, SCL: `5` | SDA: `2`, SCL: `3` | Use Pin 1 (3.3V) for OLED, Pin 2 (5V) for LCD. |
 | **SPI E-Paper** | VCC: `1`, GND: `6`, MOSI: `19`, SCK: `23`, CS: `26`, DC: `18`, RST: `22`, BUSY: `16` | CS: `7` (CE1) | Shares `MOSI`/`SCK` with MicroSD. **CS** must be CE1! |
 | **Push Buttons** | UP: `31`, DOWN: `35`, L: `29`, R: `37`, ENT: `33`, BACK: `40`, GND: `9` | UP: `6`, DN: `19`, L: `5`, R: `26`, ENT: `13`, BCK: `21` | All buttons share the same GND rail. |

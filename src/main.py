@@ -2,7 +2,7 @@ import sys
 import argparse
 from src.display_manager import DisplayManager
 from src.utils.json_parser import JSONParser
-from src.screen_state import ScreenState
+from src.screen_state import ScreenState, ScreenType
 from src.input.keyboard_input import KeyboardInput, InputEvent
 from src.renderers.audio_renderer import AudioRenderer
 

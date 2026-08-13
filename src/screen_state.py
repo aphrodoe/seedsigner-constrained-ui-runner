@@ -55,9 +55,11 @@ class ScreenType:
     QR_DISPLAY = "qr_display_screen"
     SEED_TRANSCRIBE_ZOOMED_QR = "seed_transcribe_zoomed_qr_screen"
     SEED_TRANSCRIBE_WHOLE_QR = "seed_transcribe_whole_qr_screen"
+    IO_TEST = "io_test_screen"
+
+    # ── Screens with dedicated text renderers (not visual-only) ────
     SEED_TRANSCRIBE_SEEDQR_FORMAT = "seed_transcribe_seedqr_format_screen"
     SETTINGS_QR_CONFIRMATION = "settings_qr_confirmation_screen"
-    IO_TEST = "io_test_screen"
 
     @classmethod
     def is_keyboard(cls, val):
@@ -172,7 +174,7 @@ class ScreenState:
     def _init_mnemonic_entry(self):
         if ScreenState._bip39_wordlist is None:
             import os
-            wordlist_path = __file__.rsplit("/", 1)[0] + "/bip39_english.txt"
+            wordlist_path = __file__.rsplit("/", 1)[0] + "/data/bip39_english.txt"
             wordlist_exists = False
             try:
                 os.stat(wordlist_path)

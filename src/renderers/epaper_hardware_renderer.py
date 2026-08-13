@@ -17,10 +17,10 @@ class EpaperHardwareRenderer(BaseRenderer):
         self.epaper = EpaperWaveshare()
         
         # 6x8 font on a 200x200 screen -> 33 cols, 25 rows
-        self.cols = self.epaper.width // 6
-        self.rows = self.epaper.height // 8
-        
-        super().__init__(visible_rows=self.rows - 1)
+        rows = self.epaper.height // 8
+        cols = self.epaper.width // 6
+
+        super().__init__(rows, cols)
         self.text_renderer = TextRenderer(rows=self.rows, cols=self.cols)
 
     def render(self, state: ScreenState) -> Any:

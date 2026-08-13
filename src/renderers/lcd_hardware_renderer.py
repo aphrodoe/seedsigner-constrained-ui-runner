@@ -10,9 +10,7 @@ from src.screen_state import ScreenState
 
 class LCDHardwareRenderer(BaseRenderer):
     def __init__(self, rows: int, cols: int, i2c_addr: int = 0x27, bus_num: int = 1):
-        super().__init__(visible_rows=rows - 1)
-        self.rows = rows
-        self.cols = cols
+        super().__init__(rows, cols)
         self.text_renderer = TextRenderer(rows=rows, cols=cols)
         
         # Initialize hardware
