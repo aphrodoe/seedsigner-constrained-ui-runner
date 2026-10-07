@@ -58,3 +58,8 @@ venv.bak/
 .idea/
 tools/screenshots_export/
 seedsigner-screenshots/
+
+# Fellowship working context — local only, not published
+worklog/
+docs/fellowship/
+CLAUDE.md
