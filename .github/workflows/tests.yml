@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 is upstream SeedSigner's floor; 3.12 is what development happens on.
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Deliberately NOT requirements.txt: that pulls spidev, lgpio and
+      # waveshare-epaper, which need a real Pi to build and are irrelevant to
+      # the rendering engine. The suite needs pytest and Pillow and nothing
+      # else — no hardware, no vendored upstream submodule.
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest "Pillow>=10.0.0"
+
+      - name: Run test suite
+        run: python -m pytest tests/ -q
