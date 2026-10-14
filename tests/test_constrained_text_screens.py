@@ -132,6 +132,14 @@ def test_object_form_buttons_report_their_label(bridge):
     assert press(bridge, "ENTER") == ("button_selected", 0, "Mainnet")
 
 
+@pytest.mark.parametrize("label", ["Backup seed", "Back to Main Menu", "Cancel"])
+def test_buttons_named_like_back_are_still_buttons(bridge, label):
+    # Real upstream labels. The View acts on the index it gets back: "Back to Main
+    # Menu" routes to the main menu, which RET_CODE__BACK_BUTTON would not do.
+    bridge.button_list_screen({"button_list": ["Export Xpub", label]})
+    assert press(bridge, "DOWN", "ENTER") == ("button_selected", 1, label)
+
+
 def test_back_key_rides_the_index_slot(bridge):
     bridge.button_list_screen({"top_nav": {"show_back_button": True}, "button_list": ["A"]})
     assert press(bridge, "KEY1") == ("button_selected", RET_CODE__BACK_BUTTON, "topnav_back")

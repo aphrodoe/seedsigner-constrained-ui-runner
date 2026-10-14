@@ -397,14 +397,11 @@ def poll_for_result():
                 needs_render = _current_state.move_down()
             elif event == "ENTER":
                 if _current_state.selected_index < len(_current_state.items):
-                    selected = _current_state.items[_current_state.selected_index]
-                    label = selected.get("label", "")
-                    
-                    # Intercept dynamic back button if mapped directly to an item
-                    if "back" in label.lower() or "cancel" in label.lower():
-                        result_tuple = ("button_selected", 1000, "topnav_back")
-                    else:
-                        result_tuple = ("button_selected", _current_state.selected_index, label)
+                    label = _current_state.items[_current_state.selected_index].get("label", "")
+                    # Always the index. The View decides what its own button means:
+                    # "Back to Main Menu" routes to the main menu and "Cancel" has its
+                    # own handling, neither of which RET_CODE__BACK_BUTTON would do.
+                    result_tuple = ("button_selected", _current_state.selected_index, label)
         else:
             # Static screen without items (like Splash Screen or Status Screen)
             # ANY button press dismisses it.
