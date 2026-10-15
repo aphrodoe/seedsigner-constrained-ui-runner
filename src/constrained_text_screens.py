@@ -331,6 +331,15 @@ def get_inactive_time_ms():
         return int(diff)
     return 0
 
+def _draw(state):
+    """Draw `state` on whatever display init() installed: a full renderer with
+    .render(), as every CPython DisplayManager renderer is, or a bare line driver
+    with .write_lines() and a rows x cols grid, as MicroPython's framebuf driver is."""
+    if hasattr(_renderer, "render"):
+        _renderer.render(state)
+    elif _renderer is not None:
+        _renderer.write_lines(TextRenderer(_renderer.rows, _renderer.cols).render(state))
+
 def clear_result_queue():
     global _result_queue
     _result_queue.clear()
@@ -421,8 +430,7 @@ def poll_for_result():
         needs_render = True
         
     if needs_render:
-        if hasattr(_renderer, 'render'):
-            _renderer.render(_current_state)
+        _draw(_current_state)
     # Polling should not block heavily, but a small sleep prevents thrashing
     if not IS_MICROPYTHON:
         time.sleep(0.01)
@@ -449,12 +457,7 @@ def _make_screen_builder(screen_name):
 
         
         # Immediate render upon building (pure builder contract expects side-effect of drawing)
-        if hasattr(_renderer, 'render'):
-            _renderer.render(_current_state)
-        else:
-            from src.renderers.text_renderer import TextRenderer
-            tr = TextRenderer(_renderer)
-            _renderer.write_lines(tr._render_screen(_current_state))
+        _draw(_current_state)
             
     return builder
 

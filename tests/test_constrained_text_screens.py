@@ -32,6 +32,18 @@ class FakeRenderer:
         self.drawn.append(state.screen_type)
 
 
+class FakeLineDriver:
+    """A bare line driver, like MicroPython's framebuf driver: write_lines() only."""
+
+    rows, cols = 8, 16
+
+    def __init__(self):
+        self.frames = []
+
+    def write_lines(self, lines):
+        self.frames.append(list(lines))
+
+
 class ScriptedInput:
     def __init__(self):
         self.pending = []
@@ -174,3 +186,16 @@ def test_splash_dismisses_itself(bridge):
     bridge._current_state.start_time = time.time() - 3.0
     assert bridge.poll_for_result() == ("button_selected", 0, "OK")
 
+
+# --- display backends --------------------------------------------------------
+
+def test_a_bare_line_driver_gets_full_frames(bridge, monkeypatch):
+    # MicroPython's framebuf driver has write_lines() and a rows x cols grid, no render().
+    driver = FakeLineDriver()
+    monkeypatch.setattr(bridge, "_renderer", driver)
+    bridge.button_list_screen({"top_nav": {"title": "Seeds"}, "button_list": ["A", "B"]})
+    press(bridge, "DOWN")
+    assert len(driver.frames) == 2  # once when built, again on navigation
+    for frame in driver.frames:
+        assert len(frame) == driver.rows
+        assert all(len(line) == driver.cols for line in frame)
