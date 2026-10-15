@@ -150,6 +150,12 @@ def test_back_key_is_ignored_on_the_main_menu(bridge):
     assert press(bridge, "KEY1") is None
 
 
+def test_back_key_is_ignored_when_the_view_hides_back(bridge):
+    # The runner nests show_back_button inside top_nav (seedsigner.gui.lvgl_config.top_nav).
+    bridge.button_list_screen({"top_nav": {"show_back_button": False}, "button_list": ["OK"]})
+    assert press(bridge, "KEY1") is None
+
+
 def test_keyboard_submit_returns_the_entered_text(bridge):
     bridge.keyboard_screen({"keys": ["1", "2", "3"], "show_save_button": True})
     # Keys become 1 2 3 [DEL] [OK]: enter 1, step right, enter 2, step to [OK], submit.

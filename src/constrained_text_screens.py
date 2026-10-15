@@ -368,7 +368,9 @@ def poll_for_result():
     if event:
         if event == "KEY1" or event == "KEY2" or event == "ESC":
             # Map physical hardware buttons to standard topnav actions
-            if _current_state.screen_type == "main_menu_screen" or _current_state.context.get("show_back_button", True) == False:
+            # The runner nests show_back_button inside top_nav (seedsigner.gui.lvgl_config.top_nav).
+            top_nav = _current_state.context.get("top_nav") or {}
+            if _current_state.screen_type == "main_menu_screen" or not top_nav.get("show_back_button", True):
                 # Main menu has no back button, ignore
                 needs_render = True
             else:
