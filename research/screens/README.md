@@ -116,6 +116,36 @@ can't depend on salvage.
   - $25 as an Adafruit breakout. Bare panels come in 2,240-unit MOQs with 28-week lead times.
 - **Verdict.** **Out** for a low-cost build.
 
+## Recommendation
+
+**Generic carrier: one 4-pin I2C header, labelled, plus an SPI header.**
+- The I2C header takes all three families that pass on every axis: character LCDs through their
+  backpack, and SSD1306/SH1106 OLEDs. Label the GND and VCC order on the silkscreen, because
+  OLED modules disagree on it.
+- Power the header from 3.3 V, so no module can put 5 V on the microcontroller's pins. A
+  character LCD then runs at 3.3 V (check its contrast) or brings its own level shifter.
+- An SPI header with the Waveshare pin order keeps a TFT or e-paper possible without committing
+  to either.
+
+**Integrated board: a 128×64 OLED.**
+- The 0.96" SSD1306 is the cheapest (₹130) and the only display with an official MicroPython
+  driver. It's 3.3 V native, small, and gives 16×8 text, the renderer's tier 2.
+- The 1.3" SH1106 is the same grid on larger glass for ~₹200 more, worth it if legibility at
+  arm's length matters more than price.
+- Its one weak axis, OLED life and burn-in, is answered by how a signing device is used: on
+  for minutes, off otherwise, with a screensaver.
+
+**Upgrade option: the ST7789 240×240 IPS.** It's cheap as a bare module, colour, and the panel
+class SeedSigner's LVGL screens target. Choosing it means an LVGL firmware, and drawing without
+a full framebuffer on chips without PSRAM. That's a decision for a later revision, not the first
+board.
+
+**Out:**
+- **Nokia 5110:** no new supply.
+- **Sharp Memory LCD:** single source, not sold in India.
+- **E-paper as the main display:** its refresh guidance and the image surviving power-off both
+  argue against it on a device that shows secrets.
+
 ## Sources
 
 Prices and listings:
