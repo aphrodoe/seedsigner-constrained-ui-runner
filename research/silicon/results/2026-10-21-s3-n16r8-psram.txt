@@ -1,0 +1,19 @@
+# embit profile — ESP32-S3 N16R8, octal PSRAM, Bluetooth disabled
+# firmware: firmware/ SEEDSIGNER_S3_DEVKIT, stock MicroPython 1.27.0 + native secp256k1 + hashlib-ext, embit frozen
+# run: 2026-10-21, profile_embit.py, psbt_1in.psbt + psbt_10in.psbt
+# 'alloc' = bytes allocated with GC disabled (upper bound on peak); 'retained' = live after collect
+
+impl    SeedSigner constrained, ESP32-S3 N16R8 with ESP32S3
+version 3.4.0; MicroPython v1.27.0-dirty on 2026-10-20
+start  gc_alloc 4432  gc_free 8317104  int_free 344483  int_largest 262144  int_low 308316
+
+import embit (code load)     104 ms  alloc    28960  retained   22608  int_free  344483 ->  343775  int_low  308316
+bip39 mnemonic->seed         142 ms  alloc     1344  retained       0  int_free  343775 ->  343687  int_low  308316
+bip32 root from seed           2 ms  alloc     1408  retained     272  int_free  343687 ->  343687  int_low  308316
+bip32 m/84h/0h/0h/0/0         78 ms  alloc    10272  retained    1648  int_free  343687 ->  343687  int_low  308316
+psbt parse    1 in            13 ms  alloc     8192  retained    1904  int_free  343687 ->  343687  int_low  308316
+psbt sign     1 in            59 ms  alloc     8064  retained      64  int_free  343687 ->  343687  int_low  308316
+psbt parse   10 in            63 ms  alloc    38736  retained    9872  int_free  343687 ->  343687  int_low  308316
+psbt sign    10 in           616 ms  alloc   116032  retained    4032  int_free  343687 ->  343687  int_low  308316
+
+end    gc_alloc 45008  int_free 343687  int_largest 262144  int_low 308316
