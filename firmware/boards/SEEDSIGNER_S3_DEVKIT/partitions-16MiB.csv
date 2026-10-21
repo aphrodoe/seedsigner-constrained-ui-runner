@@ -1,0 +1,8 @@
+# 16MiB layout, from Keith's partitions-16MiB-waveshare.csv. The factory app gets
+# 12MB so the frozen SeedSigner app and embit fit later; MicroPython 1.27 turns
+# the unpartitioned remainder (~3.7MB) into the VFS at boot.
+# Name,   Type, SubType,  Offset,   Size
+nvs,      data, nvs,      0x9000,   0x6000,
+phy_init, data, phy,      0xf000,   0x1000,
+factory,  app,  factory,  0x10000,  0xC00000,
+coredump, data, coredump, 0xC10000, 0x40000,

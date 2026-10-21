@@ -5,6 +5,21 @@ except ImportError:
     pass
 from src.screen_state import ScreenState, ScreenType
 
+
+# MicroPython's str.center, format-spec and %-style padding all count UTF-8
+# bytes, not characters, so any line holding a glyph like ✓ comes out short;
+# its center also splits an odd margin the other way. Pad with len() instead,
+# which counts characters on both, matching CPython's output exactly.
+def center(text, width):
+    marg = width - len(text)
+    left = marg // 2 + (marg & width & 1)
+    return " " * left + text + " " * (marg - left)
+
+
+def ljust(text, width):
+    return text + " " * (width - len(text))
+
+
 class TextHelpersMixin:
     def _determine_tier(self) -> int:
         if self.rows <= 2:
@@ -21,13 +36,13 @@ class TextHelpersMixin:
     def _center(self, text: str) -> str:
         if len(text) > self.cols:
             text = text[: self.cols - 2] + ".."
-        return text.center(self.cols)
+        return center(text, self.cols)
 
     def _fixed(self, text: str) -> str:
         """Pad or truncate `text` to exactly `self.cols` characters."""
         if len(text) > self.cols:
             return text[: self.cols]
-        return f"{text:<{self.cols}}"
+        return ljust(text, self.cols)
 
     def _highlight_address(self, address: str) -> str:
         """Generic address formatter."""
@@ -79,28 +94,29 @@ class TextHelpersMixin:
             lines.append(" " * self.cols)
         return lines[: self.rows]
 
-    def _word_wrap(self, text: str) -> List[str]:
-        """Simple greedy word-wrap into rows of `self.cols` width, breaking long words if needed."""
+    def _word_wrap(self, text: str, width: int = 0) -> List[str]:
+        """Simple greedy word-wrap into rows of `width` (default `self.cols`), breaking long words if needed."""
+        cols = width or self.cols
         words = text.split()
         lines: List[str] = []
         current = ""
         for word in words:
             if not current:
-                if len(word) > self.cols:
+                if len(word) > cols:
                     # Break long word
-                    while len(word) > self.cols:
-                        lines.append(word[:self.cols])
-                        word = word[self.cols:]
+                    while len(word) > cols:
+                        lines.append(word[:cols])
+                        word = word[cols:]
                     current = word
                 else:
                     current = word
-            elif len(current) + 1 + len(word) > self.cols:
+            elif len(current) + 1 + len(word) > cols:
                 lines.append(current)
-                if len(word) > self.cols:
+                if len(word) > cols:
                     # Break long word
-                    while len(word) > self.cols:
-                        lines.append(word[:self.cols])
-                        word = word[self.cols:]
+                    while len(word) > cols:
+                        lines.append(word[:cols])
+                        word = word[cols:]
                     current = word
                 else:
                     current = word
@@ -169,7 +185,7 @@ class TextHelpersMixin:
                 return self._fixed(f"{title_visible}{suffix}")
             else:
                 title = title[: avail - 2] + ".."
-        return self._fixed(f"{title:<{avail}}{suffix}")
+        return self._fixed(ljust(title, avail) + suffix)
 
     def _item_row(self, label: str, selected: bool, state: ScreenState = None, index: int = -1) -> str:
         """Build an item row with a `> ` or `  ` prefix, sliding horizontally if selected and too long."""

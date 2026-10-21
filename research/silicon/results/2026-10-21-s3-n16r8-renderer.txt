@@ -1,0 +1,39 @@
+# This repo's text renderer + bridge on the device -- C3 proxy (PSRAM off), src/ frozen
+# firmware: firmware/ SEEDSIGNER_S3_DEVKIT, variant NOPSRAM, micropython.bin 1,411,376 B. run: 2026-10-21.
+#
+# First time the renderer ran on MicroPython. Getting here took four fixes, each now covered by
+# tests/test_micropython_imports.py: an unguarded `typing` import; `textwrap` (status screen) and `base64`
+# (bridge) which MicroPython doesn't ship; str.center/format padding, which MicroPython measures in UTF-8
+# bytes (a line with a check mark came out 18 wide on a 20-column LCD) and splits odd margins the other way;
+# and the passphrase keyboard's charsets in a dict, whose order MicroPython doesn't keep (it opened on
+# symbols). After them, all 12 frames below (6 screens x 2 tiers) match CPython byte for byte.
+#
+# 'alloc' is each step's peak with GC off; 'retained' is what stays after a collect (negative = noise from
+# the previous step's garbage). int_free doesn't move: rendering never grows the heap.
+
+## profile_renderer.py
+
+impl  SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3
+
+import renderer core                    53 ms  alloc    8864  retained   5856  int_free  285888 ->  285888
+import bridge                           51 ms  alloc    8864  retained   6096  int_free  285888 ->  285888
+20x4 LCD   large_icon_status             8 ms  alloc    2768  retained    -16  int_free  285888 ->  285888
+20x4 LCD   psbt_overview                 9 ms  alloc    3136  retained   -256  int_free  285888 ->  285888
+20x4 LCD   seed_add_passphrase           9 ms  alloc    4336  retained    352  int_free  285888 ->  285888
+20x4 LCD   button_list                   7 ms  alloc    2384  retained    384  int_free  285888 ->  285888
+20x4 LCD   psbt_math                     7 ms  alloc    2336  retained   -240  int_free  285888 ->  285888
+20x4 LCD   main_menu                     6 ms  alloc    1952  retained   -240  int_free  285888 ->  285888
+OLED 16x8  large_icon_status             8 ms  alloc    2912  retained    192  int_free  285888 ->  285888
+OLED 16x8  psbt_overview                 8 ms  alloc    3312  retained    -48  int_free  285888 ->  285888
+OLED 16x8  seed_add_passphrase          13 ms  alloc    7040  retained    -16  int_free  285888 ->  285888
+OLED 16x8  button_list                   8 ms  alloc    2752  retained    592  int_free  285888 ->  285888
+OLED 16x8  psbt_math                     8 ms  alloc    2800  retained    -32  int_free  285888 ->  285888
+OLED 16x8  main_menu                     7 ms  alloc    2112  retained    -32  int_free  285888 ->  285888
+
+renderer + bridge resident: 14016 bytes over baseline
+
+first frame, rendered on-device (20x4, large_icon_status_screen):
+  |Backup Verified     |
+  |     ✓ Success!     |
+  |All mnemonic backup |
+  |> OK                |

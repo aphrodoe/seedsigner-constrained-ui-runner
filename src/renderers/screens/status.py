@@ -4,6 +4,7 @@ try:
 except ImportError:
     pass
 from src.screen_state import ScreenState
+from src.renderers.text_helpers import center
 
 class StatusMixin:
     def _render_status(self, state: ScreenState) -> List[str]:
@@ -63,7 +64,7 @@ class StatusMixin:
         if ascii_art:
             for art_line in ascii_art:
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{art_line.center(wrap_cols)}{edge_char}")
+                    content_lines.append(f"{edge_char}{center(art_line, wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(art_line))
             
@@ -72,24 +73,23 @@ class StatusMixin:
             else:
                 content_lines.append(self._center(""))
 
-        import textwrap
 
         headline = state.context.get("status_headline", "")
         if headline:
             if icon.strip() and self.tier >= 2:
                 icon_line = f"---{icon}---"
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{icon_line.center(wrap_cols)}{edge_char}")
+                    content_lines.append(f"{edge_char}{center(icon_line, wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(icon_line))
                 headline_text = headline
             else:
                 headline_text = f"{icon} {headline}" if icon.strip() else headline
                 
-            wrapped = textwrap.wrap(headline_text, width=wrap_cols)
+            wrapped = self._word_wrap(headline_text, wrap_cols)
             for line in wrapped:
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{line.center(wrap_cols)}{edge_char}")
+                    content_lines.append(f"{edge_char}{center(line, wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(line))
                     
@@ -107,10 +107,10 @@ class StatusMixin:
                 else:
                     content_lines.append(self._center(""))
                     
-            wrapped = textwrap.wrap(text, width=wrap_cols)
+            wrapped = self._word_wrap(text, wrap_cols)
             for line in wrapped:
                 if warning_edges:
-                    content_lines.append(f"{edge_char}{line.center(wrap_cols)}{edge_char}")
+                    content_lines.append(f"{edge_char}{center(line, wrap_cols)}{edge_char}")
                 else:
                     content_lines.append(self._center(line))
 

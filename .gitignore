@@ -63,3 +63,6 @@ seedsigner-screenshots/
 worklog/
 docs/fellowship/
 CLAUDE.md
+
+# Firmware build output
+firmware/build/

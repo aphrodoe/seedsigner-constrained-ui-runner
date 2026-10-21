@@ -267,8 +267,8 @@ def _intercept_run_camera_scan(decoder, *, instructions_text=None):
     file_bytes = MicroSDManager.read_file(filename)
     # If the file is a raw binary PSBT, convert it to base64 so the QR decoder can parse it
     if file_bytes.startswith(b"psbt\xff"):
-        import base64
-        file_text = base64.b64encode(file_bytes).decode('utf-8')
+        import binascii
+        file_text = binascii.b2a_base64(file_bytes).decode('utf-8').strip()
     else:
         file_text = file_bytes.decode('utf-8').strip()
         

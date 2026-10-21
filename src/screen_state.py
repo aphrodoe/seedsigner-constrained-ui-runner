@@ -151,13 +151,15 @@ class ScreenState:
             self.entered_text = self.context.get("initial_value", "")
         else:
             # Default charsets if none provided (for seed_add_passphrase_screen)
-            charsets = self.context.get("charset_modes", {
-                "lower": "abcdefghijklmnopqrstuvwxyz ",
-                "upper": "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-                "digits": "0123456789",
-                "symbols": "!@#$%^&*()-_=+[]{}|;:,.<>/?"
-            })
-            self.keyboard_modes = list(charsets.items())
+            # Pairs, not a dict: MicroPython dicts don't keep insertion order, and
+            # the first mode is the one the keyboard opens on.
+            charsets = self.context.get("charset_modes") or [
+                ("lower", "abcdefghijklmnopqrstuvwxyz "),
+                ("upper", "ABCDEFGHIJKLMNOPQRSTUVWXYZ "),
+                ("digits", "0123456789"),
+                ("symbols", "!@#$%^&*()-_=+[]{}|;:,.<>/?"),
+            ]
+            self.keyboard_modes = list(charsets.items() if isinstance(charsets, dict) else charsets)
             
             initial_mode = self.context.get("initial_mode", "")
             for i, (name, _) in enumerate(self.keyboard_modes):
