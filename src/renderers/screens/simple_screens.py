@@ -4,6 +4,7 @@ try:
 except ImportError:
     pass
 from src.screen_state import ScreenState
+from src.renderers.text_helpers import center
 
 class SimpleScreensMixin:
     def _render_loading(self, state: ScreenState) -> List[str]:
@@ -79,7 +80,7 @@ class SimpleScreensMixin:
         
         def _anim_center(text: str) -> str:
             if len(text) <= self.cols:
-                return text.center(self.cols)
+                return center(text, self.cols)
             diff = len(text) - self.cols
             total_frames = diff + 10
             frame = state.marquee_tick % total_frames
@@ -87,7 +88,7 @@ class SimpleScreensMixin:
             elif frame >= 5 + diff: offset = diff
             else: offset = frame - 5
             visible = text[offset : offset + self.cols]
-            return visible.center(self.cols)
+            return center(visible, self.cols)
         
         if self.tier >= 2:
             lines = []

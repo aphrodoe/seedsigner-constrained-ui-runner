@@ -2,9 +2,12 @@
 TextRenderer: Core text layout engine for character LCD displays.
 """
 
-typing = __import__('typing')
+try:
+    typing = __import__('typing')
+    List = typing.List
+except ImportError:  # MicroPython has no typing; List only appears in annotations
+    pass
 
-List = typing.List
 from src.screen_state import ScreenState, ScreenType
 from src.renderers.text_helpers import TextHelpersMixin
 from src.renderers.screens.button_list import ButtonListMixin

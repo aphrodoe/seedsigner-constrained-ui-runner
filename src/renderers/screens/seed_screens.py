@@ -4,6 +4,7 @@ try:
 except ImportError:
     pass
 from src.screen_state import ScreenState
+from src.renderers.text_helpers import ljust
 
 class SeedScreensMixin:
     def _render_seed_finalize(self, state: ScreenState) -> List[str]:
@@ -43,7 +44,7 @@ class SeedScreensMixin:
         def _fmt(text: str) -> str:
             if len(text) > usable_cols:
                 text = text[:usable_cols]
-            return f"{text:<{usable_cols}}"
+            return ljust(text, usable_cols)
             
         fp_label = state.context.get("fingerprint_label", "Fingerprint")
         fp = state.context.get("fingerprint", "")
