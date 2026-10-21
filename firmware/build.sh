@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the constrained SeedSigner firmware in Keith's ESP-IDF image.
 #
-#   firmware/build.sh [BOARD]        -> firmware/build/<BOARD>/
+#   firmware/build.sh [BOARD] [VARIANT]   -> firmware/build/<BOARD>[-<VARIANT>]/
 #
 # Stock MicroPython (the pinned checkout inside seedsigner-micropython-builder,
 # left unpatched) + this repo's out-of-tree board + crypto-only user modules.
@@ -14,7 +14,8 @@ WORKSPACE="$(cd "$HERE/../.." && pwd)"
 BUILDER="$WORKSPACE/seedsigner-micropython-builder"
 MP="$BUILDER/deps/micropython/upstream"
 BOARD="${1:-SEEDSIGNER_S3_DEVKIT}"
-OUT="$HERE/build/$BOARD"
+VARIANT="${2:-}"
+OUT="$HERE/build/$BOARD${VARIANT:+-$VARIANT}"
 IMAGE="${IMAGE:-ghcr.io/kdmukai-bot/seedsigner-micropython-builder-base:idf-v5.5.5}"
 
 # ESP-IDF's component manager rewrites MicroPython's tracked
@@ -44,6 +45,7 @@ docker run --rm \
         idf.py -B '$OUT' \
             -D MICROPY_BOARD='$BOARD' \
             -D MICROPY_BOARD_DIR='$HERE/boards/$BOARD' \
+            ${VARIANT:+-D MICROPY_BOARD_VARIANT='$VARIANT'} \
             -D USER_C_MODULES='$HERE/crypto.cmake' \
             -D MICROPY_FROZEN_MANIFEST='$HERE/manifest.py' \
             -D EXTRA_COMPONENT_DIRS='$BUILDER/deps/esp-secp256k1;$BUILDER/deps/esp-hashlib-ext' \

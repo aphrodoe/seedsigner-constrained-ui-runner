@@ -1,4 +1,7 @@
+#ifndef MICROPY_HW_BOARD_NAME
+// Can be set by a variant (see mpconfigvariant_*.cmake).
 #define MICROPY_HW_BOARD_NAME               "SeedSigner constrained, ESP32-S3 N16R8"
+#endif
 #define MICROPY_HW_MCU_NAME                 "ESP32S3"
 
 // The devkit's CH343P bridge sits on UART0; keep the REPL there.

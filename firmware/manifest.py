@@ -20,6 +20,12 @@ module("hmac.py", base_path=_B + "/deps/third-party")
 package("urtypes", base_path=_B + "/deps/third-party")
 package("embit", base_path=_B + "/deps/embit/src")
 
+# This repo's text renderer and the bridge SeedSigner's Views talk to. The
+# Pillow/smbus2 renderers inside it are only imported lazily, by
+# DisplayManager.create_renderer(), so freezing the whole package is safe.
+# ponytail: frozen as top-level "src"; give it a real package name before D1 ships.
+package("src", base_path="..")
+
 # The SeedSigner app, staged by Keith's stager into <builder>/frozen_app/:
 #   cd seedsigner-micropython-builder
 #   SS_APP_DIR=$PWD/deps/seedsigner SS_EMBIT_DIR=$PWD/deps/embit \
