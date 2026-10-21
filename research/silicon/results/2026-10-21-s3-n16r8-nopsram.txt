@@ -1,0 +1,91 @@
+# C3 proxy — ESP32-S3 N16R8 with PSRAM DISABLED, Bluetooth disabled
+# firmware: firmware/ SEEDSIGNER_S3_DEVKIT, variant NOPSRAM (CONFIG_SPIRAM not set). Stock MicroPython 1.27.0
+#           + native crypto; embit, urtypes, logging and the SeedSigner app (fd9ba8f) frozen. micropython.bin 1,344,768 B
+# run: 2026-10-21. Each script started from a soft reset; the session ran first, straight after flashing.
+#
+# READ int_low CAREFULLY: ESP-IDF's per-region low-water counters survive a MicroPython soft reset and only
+# clear on a hard reset. int_low is valid only in the first run after flashing (session_c3_proxy). In the two
+# profiles below it reads 43,396 from the start: that is the session's own headroom probe, not their low-water.
+
+## session_c3_proxy.py — realistic session with this repo's renderer and bridge, GC on (the answer)
+# Rebuilt with src/ frozen (micropython.bin 1,411,376 B), hard reset before the run.
+
+impl  SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3
+boot (nothing loaded)               0 ms  gc_alloc    5216  gc_free  300448  int_free  285888  int_largest  241664  int_low  285864
+import app, all views             239 ms  gc_alloc   97552  gc_free  206576  int_free  219640  int_largest  176128  int_low  219616
+Set LANGUAGE locale to en
+Controller.get_instance()          33 ms  gc_alloc  100912  gc_free  170448  int_free  186512  int_largest  143360  int_low  186488
+import thread exited             1000 ms  gc_alloc  104864  gc_free  199264  int_free  219640  int_largest  176128  int_low  186488
+import renderer + bridge          107 ms  gc_alloc  118000  gc_free  186128  int_free  219640  int_largest  176128  int_low  186488
+render main menu + PSBT overview     16 ms  gc_alloc  118464  gc_free  185664  int_free  219640  int_largest  176128  int_low  186488
+bip39 mnemonic->seed              139 ms  gc_alloc  118160  gc_free  185968  int_free  219552  int_largest  176128  int_low  186488
+bip32 root from seed                2 ms  gc_alloc  118448  gc_free  185680  int_free  219552  int_largest  176128  int_low  186488
+bip32 m/84h/0h/0h/0/0              85 ms  gc_alloc  120224  gc_free  183904  int_free  219552  int_largest  176128  int_low  186488
+psbt parse 10 in                   63 ms  gc_alloc  131472  gc_free  170608  int_free   88476  int_largest   46080  int_low   88452
+psbt sign 10 in                   630 ms  gc_alloc  135584  gc_free  166496  int_free   88476  int_largest   46080  int_low   87964
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 87964 bytes
+largest single allocation still possible: 44032 bytes
+
+# Why int_low halved when the renderer joined: not because the session needs 98 KB more. At "psbt parse"
+# one allocation missed in the existing heap areas, and MicroPython's split heap (SPLIT_HEAP_AUTO, always on
+# in the esp32 port) then grows by MIN(largest free system block, MAX(current heap, request)) -- roughly
+# doubling, py/gc.c gc_try_add_heap. It took a 131,076 B area, and gc_free right after shows 170 KB of the
+# Python heap still empty. The live peak is gc_alloc 135,584. Whether a miss happens depends on heap layout:
+# the earlier run below, without the renderer's 14 KB resident, never missed. profile_embit (GC off) shows the
+# same 131,076 B step. So int_low is set by the growth policy; the real requirement is ~136 KB of Python heap.
+
+## session_c3_proxy.py — earlier run, app + embit only, on the 1,344,768 B build
+
+impl  SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3
+boot (nothing loaded)               0 ms  gc_alloc    4336  gc_free  301328  int_free  285888  int_largest  241664  int_low  285864
+import app, all views             235 ms  gc_alloc   96688  gc_free  207440  int_free  219640  int_largest  176128  int_low  219616
+Set LANGUAGE locale to en
+Controller.get_instance()          33 ms  gc_alloc  100192  gc_free  171168  int_free  186512  int_largest  143360  int_low  186488
+import thread exited             1000 ms  gc_alloc  104032  gc_free  200096  int_free  219640  int_largest  176128  int_low  186488
+bip39 mnemonic->seed              139 ms  gc_alloc  104224  gc_free  199904  int_free  219552  int_largest  176128  int_low  186488
+bip32 root from seed                2 ms  gc_alloc  104512  gc_free  199616  int_free  219552  int_largest  176128  int_low  186488
+bip32 m/84h/0h/0h/0/0              79 ms  gc_alloc  106288  gc_free  197840  int_free  219552  int_largest  176128  int_low  186488
+psbt parse 10 in                   90 ms  gc_alloc  117536  gc_free  186592  int_free  219552  int_largest  176128  int_low  186488
+psbt sign 10 in                   842 ms  gc_alloc  121648  gc_free  182480  int_free  219552  int_largest  176128  int_low  186488
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 186488 bytes
+largest single allocation still possible: 171008 bytes
+
+## profile_embit.py — GC off per step (upper bound on each step's peak)
+
+impl    SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3
+version 3.4.0; MicroPython v1.27.0-dirty on 2026-10-21
+start  gc_alloc 4400  gc_free 301264  int_free 285092  int_largest 241664  int_low 43396
+
+import embit (code load)      55 ms  alloc    28752  retained   22336  int_free  285092 ->  285092  int_low   43396
+bip39 mnemonic->seed         139 ms  alloc     1248  retained       0  int_free  285092 ->  285092  int_low   43396
+bip32 root from seed           2 ms  alloc     1312  retained     272  int_free  285092 ->  285092  int_low   43396
+bip32 m/84h/0h/0h/0/0         78 ms  alloc    10080  retained    1632  int_free  285092 ->  285092  int_low   43396
+psbt parse    1 in            13 ms  alloc     8096  retained    1648  int_free  285092 ->  285092  int_low   43396
+psbt sign     1 in            59 ms  alloc     7968  retained      64  int_free  285092 ->  285092  int_low   43396
+psbt parse   10 in            62 ms  alloc    38640  retained    9616  int_free  285092 ->  219552  int_low   43396
+psbt sign    10 in           620 ms  alloc   115936  retained    3984  int_free  219552 ->   88476  int_low   43396
+
+end    gc_alloc 44640  int_free 88476  int_largest 46080  int_low 43396
+
+## profile_app.py — GC off per step
+
+impl    SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3
+start  gc_alloc 3552  int_free 285092  int_largest 241664
+
+import seedsigner.controller           61 ms  alloc    26304  retained   23072  int_free  285092 ->  285092
+import views.seed_views                64 ms  alloc    41360  retained   34240  int_free  285092 ->  219552
+import views.psbt_views                50 ms  alloc    31872  retained   26656  int_free  219552 ->  219552
+import views.scan_views                 7 ms  alloc     2400  retained    1904  int_free  219552 ->  219552
+import views.settings_views             6 ms  alloc     3712  retained    3024  int_free  219552 ->  219552
+import views.tools_views               14 ms  alloc     6592  retained    5600  int_free  219552 ->  219552
+
+whole app resident: 92128 bytes over baseline
+
+Set LANGUAGE locale to en
+Controller.get_instance()              30 ms  alloc     5504  retained    3728  int_free  219552 ->  186424
+
+end    gc_alloc 103984  (+100432)  int_free 186424  int_largest 143360  int_low 43396
