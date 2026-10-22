@@ -10,6 +10,7 @@ class MicroSDManager:
     or read, read-write only to write. A mount left in place goes stale when the
     card is swapped, and a read-write one marks the FAT dirty until unmounted."""
     MOUNT_POINT = "/mnt/sd"
+    DEVICES = ("/dev/sda1", "/dev/sda", "/dev/mmcblk1p1", "/dev/mmcblk1", "/dev/mmcblk2p1", "/dev/mmcblk2")
     
     @classmethod
     def _rescan_bus(cls):
@@ -59,14 +60,11 @@ class MicroSDManager:
                 subprocess.run(["sudo", "mkdir", "-p", cls.MOUNT_POINT], check=True)
             
         try:
-            # Try once
-            devices_to_try = ["/dev/sda1", "/dev/sda", "/dev/mmcblk1p1", "/dev/mmcblk1", "/dev/mmcblk2p1", "/dev/mmcblk2"]
-            
             # If none exist, force a kernel rescan of the SPI bus (hot-plug support)
-            if not any(os.path.exists(d) for d in devices_to_try):
+            if not any(os.path.exists(d) for d in cls.DEVICES):
                 cls._rescan_bus()
                 
-            for dev in devices_to_try:
+            for dev in cls.DEVICES:
                 if os.path.exists(dev):
                     if writable:
                         # Repair before writing into a FAT that may be damaged (unsafe
