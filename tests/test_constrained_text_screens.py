@@ -292,3 +292,73 @@ def test_display_writes_xpub(sd_bridge):
     encoder = types.SimpleNamespace(derivation="m/84h/0h/0h", network="main", sig_type="ss")
     sd_bridge._intercept_run_qr_display_screen(encoder)
     assert sd_bridge._sd["writes"] == [("xpub.txt", b"xpub/m/84h/0h/0h/main")]
+
+
+# --- MicroPython display selection: /config.json, same format as the Pi's ---
+
+import json
+
+
+class FakeI2C:
+    def __init__(self, *args, **kwargs):
+        self.writes = []
+
+    def writeto(self, addr, data):
+        self.writes.append(addr)
+
+
+class FakeSSD1306:
+    def __init__(self, width, height, i2c, addr=0x3C):
+        self.width, self.height, self.addr = width, height, addr
+
+    def fill(self, c): pass
+    def text(self, s, x, y, c): pass
+    def show(self): pass
+
+
+@pytest.fixture
+def mpy(monkeypatch, tmp_path):
+    machine = types.SimpleNamespace(I2C=FakeI2C, Pin=lambda n, *a, **k: n)
+    monkeypatch.setitem(sys.modules, "machine", machine)
+    monkeypatch.setitem(sys.modules, "ssd1306", types.SimpleNamespace(SSD1306_I2C=FakeSSD1306))
+    monkeypatch.setattr(cts, "machine", machine, raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    def with_config(display):
+        (tmp_path / "config.json").write_text(json.dumps({"display": display}))
+        return cts._mpy_display()
+    return with_config
+
+
+def test_mpy_defaults_to_the_20x4_lcd_without_a_config(mpy, tmp_path):
+    display = cts._mpy_display()
+    assert (display.rows, display.cols, display.i2c_addr) == (4, 20, 0x27)
+
+
+@pytest.mark.parametrize("kind, rows, cols", [("lcd_20x4", 4, 20), ("lcd_16x2", 2, 16)])
+def test_mpy_lcd_from_config(mpy, kind, rows, cols):
+    display = mpy({"type": kind, "i2c_address": "0x3F"})
+    assert (display.rows, display.cols, display.i2c_addr) == (rows, cols, 0x3F)
+
+
+def test_mpy_oled_128x64(mpy):
+    display = mpy({"type": "oled_128x64"})
+    assert (display.rows, display.cols, display.display.addr) == (8, 16, 0x3C)
+
+
+def test_mpy_oled_128x32_keeps_three_rows_like_the_pi(mpy):
+    """The bezel on generic 128x32 modules hides the 4th text row; display_manager
+    limits it to 3 on the Pi, and the device must lay out the same screens."""
+    display = mpy({"type": "oled_128x32", "i2c_address": "0x3C"})
+    assert (display.rows, display.cols, display.display.height) == (3, 16, 32)
+
+
+def test_mpy_unknown_display_type_fails_loudly(mpy):
+    with pytest.raises(ValueError):
+        mpy({"type": "epaper_200x200"})
+
+
+def test_mpy_selected_display_draws_through_the_bridge(mpy, bridge):
+    bridge._renderer = mpy({"type": "lcd_20x4"})
+    bridge.main_menu_screen({"top_nav": {"title": "Home"}, "button_list": ["Scan", "Seeds", "Tools", "Settings"]})
+    assert bridge._renderer.i2c.writes  # the frame went out over I2C

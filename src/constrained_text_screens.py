@@ -95,6 +95,37 @@ class HardwareInput:
         
         return None
 
+def _mpy_display():
+    """The device's display, from the "display" block of config.json on its
+    filesystem -- the same format and type names as the Pi's. Without one, a 20x4
+    LCD at 0x27. I2C0 on SCL 9 / SDA 8."""
+    import json
+    try:
+        with open("config.json") as f:
+            cfg = json.load(f).get("display", {})
+    except (OSError, ValueError):
+        cfg = {}
+    kind = cfg.get("type", "lcd_20x4")
+    addr = cfg.get("i2c_address")
+    if isinstance(addr, str):
+        addr = int(addr, 16)
+    i2c = machine.I2C(0, scl=machine.Pin(9), sda=machine.Pin(8), freq=400000)
+    if kind in ("lcd_20x4", "lcd_16x2"):
+        from src.drivers.lcd_i2c_mpy import LCDI2CMPY
+        cols, rows = (int(n) for n in kind[4:].split("x"))
+        return LCDI2CMPY(i2c, addr or 0x27, rows=rows, cols=cols)
+    if kind in ("oled_128x64", "oled_128x32"):
+        import ssd1306
+        from src.drivers.framebuf_mpy import MicroPythonFramebufRenderer
+        width, height = (int(n) for n in kind[5:].split("x"))
+        display = MicroPythonFramebufRenderer(ssd1306.SSD1306_I2C(width, height, i2c, addr=addr or 0x3C),
+                                              width=width, height=height)
+        if height == 32:
+            display.rows = 3  # the bezel hides the 4th row; display_manager does the same on the Pi
+        return display
+    raise ValueError("Unknown display type: " + kind)
+
+
 def init():
     global _renderer, _hardware_input, _initialized
     
@@ -105,14 +136,10 @@ def init():
     
     if IS_MICROPYTHON:
         try:
-            i2c = machine.I2C(0, scl=machine.Pin(9), sda=machine.Pin(8), freq=400000)
-            import ssd1306
-            from src.drivers.framebuf_mpy import MicroPythonFramebufRenderer
-            oled = ssd1306.SSD1306_I2C(128, 64, i2c)
-            _renderer = MicroPythonFramebufRenderer(oled)
-            print("constrained_text_screens: OLED framebuf initialized.")
+            _renderer = _mpy_display()
+            print("constrained_text_screens: %dx%d display initialized." % (_renderer.cols, _renderer.rows))
         except Exception as e:
-            print("constrained_text_screens: Failed to init OLED on MPY", e)
+            print("constrained_text_screens: Failed to init display on MPY", e)
     else:
         manager = DisplayManager("config.json")
         _renderer = manager.create_renderer()

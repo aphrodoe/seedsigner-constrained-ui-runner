@@ -13,6 +13,8 @@ include("$(PORT_DIR)/boards/manifest.py")
 _B = "../../seedsigner-micropython-builder"
 
 require("logging")
+# The OLED driver, from micropython-lib; the bridge imports it for oled_* displays.
+require("ssd1306")
 module("hashlib.py", base_path=_B + "/deps/third-party")
 module("hmac.py", base_path=_B + "/deps/third-party")
 # urtypes pulls PSBTs out of UR-encoded QR data; frozen for parity with Keith's
