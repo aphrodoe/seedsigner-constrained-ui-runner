@@ -1,0 +1,29 @@
+# tools/verify_microsd_pi.py on the bench Pi -- 2026-10-22
+# Pi Zero v1.3, Raspberry Pi OS (kernel 6.12.75+rpt-rpi-v6), SPI card reader on spi0.0 (spi-sd overlay, 5 MHz),
+# 3.75 GiB SDHC card as /dev/mmcblk2p1. Branch fix/readonly-microsd. Laptop step done on Ubuntu.
+#
+# Afterwards, `fsck.fat -n` found no dirty bit: the card came back from the laptop dirty, and the repair before
+# the step-3 write cleared it. That run used the new sudoers line for fsck.fat; the Pi's old sudoers had none, so
+# before this fix the repair could only ever run when someone typed the sudo password.
+# Also seen: the kernel polls this slot ("cd polling") and found the reinserted card by itself, with no rescan.
+
+
+== 1. Reading changes nothing
+   Insert a card holding a .psbt/.txt/.json file, last ejected safely. Then press Enter.    card: /dev/mmcblk2p1
+  PASS  listed 1 file(s), read ['test_tx.psbt'] (172 bytes)
+  PASS  unmounted after list and read
+  PASS  card byte-identical after list and read
+
+== 2. Writing
+  PASS  unmounted after write
+  PASS  write reads back
+  PASS  dirty bit clear after write
+
+== 3. Card pulled from a laptop without ejecting
+   Take the card to your laptop, copy any new file named laptop_<something>.txt onto it, and pull the card out WITHOUT ejecting. Put it back in the Pi. Then press Enter.    laptop left the dirty bit set: True (depends on the laptop's OS; informational)
+  PASS  new laptop file listed without a reboot: ['laptop_test.txt', 'test_tx.psbt', 'verify_microsd.txt']
+  PASS  card byte-identical after listing it
+  PASS  write after an unsafe ejection works
+  PASS  unmounted at the end
+
+ALL PASSED: 0 check(s) failed
