@@ -199,3 +199,96 @@ def test_a_bare_line_driver_gets_full_frames(bridge, monkeypatch):
     for frame in driver.frames:
         assert len(frame) == driver.rows
         assert all(len(line) == driver.cols for line in frame)
+
+
+# --- MicroSD interceptors: the runner's camera scan and QR display, rerouted to the card ---
+
+import base64
+import sys
+import types
+
+from src.hardware.microsd import MicroSDManager
+
+
+class Recorded:
+    def __init__(self, *args):
+        self.args = args
+
+
+class FakeDecoder:
+    def __init__(self):
+        self.data = []
+
+    def add_data(self, text):
+        self.data.append(text)
+
+
+@pytest.fixture
+def sd_bridge(bridge, monkeypatch):
+    """The bridge, with the card and seedsigner's ScanResult/build_xpub_data faked."""
+    card = {"files": [], "contents": {}, "reads": [], "writes": []}
+    monkeypatch.setattr(MicroSDManager, "list_files", classmethod(lambda cls: list(card["files"])))
+    monkeypatch.setattr(MicroSDManager, "read_file",
+                        classmethod(lambda cls, name: card["reads"].append(name) or card["contents"][name]))
+    monkeypatch.setattr(MicroSDManager, "write_file",
+                        classmethod(lambda cls, name, data, binary=True: card["writes"].append((name, data))))
+    for name, attrs in {
+        "seedsigner": {}, "seedsigner.hardware": {}, "seedsigner.models": {},
+        "seedsigner.hardware.scan_consumer": {"ScanResult": Recorded},
+        "seedsigner.models.encode_qr": {
+            "build_xpub_data": lambda seed, derivation, network, sig_type:
+                types.SimpleNamespace(xpubstring=f"xpub/{derivation}/{network}")},
+    }.items():
+        monkeypatch.setitem(sys.modules, name, types.SimpleNamespace(**attrs))
+    events = []
+    monkeypatch.setattr(bridge, "poll_for_result", lambda: events.pop(0) if events else ("button_selected", 0, "OK"))
+    bridge._sd, bridge._events = card, events
+    return bridge
+
+
+def test_scan_with_no_files_shows_error_and_cancels(sd_bridge):
+    result = sd_bridge._intercept_run_camera_scan(FakeDecoder())
+    assert sd_bridge._renderer.drawn == [ScreenType.LARGE_ICON_STATUS]
+    assert result.args[1:4] == (False, True, "cancelled")
+
+
+def test_scan_lists_card_and_feeds_chosen_text_file(sd_bridge):
+    sd_bridge._sd["files"] = ["a.psbt", "b.txt"]
+    sd_bridge._sd["contents"]["b.txt"] = b"  cHNidP8B...\n"
+    sd_bridge._events.append(("button_selected", 1, "b.txt"))
+    decoder = FakeDecoder()
+    result = sd_bridge._intercept_run_camera_scan(decoder)
+    assert sd_bridge._current_state.screen_type == ScreenType.BUTTON_LIST
+    assert sd_bridge._sd["reads"] == ["b.txt"]
+    assert decoder.data == ["cHNidP8B..."]
+    assert result.args[1:4] == (True, False, "complete")
+
+
+def test_scan_base64s_a_binary_psbt(sd_bridge):
+    raw = b"psbt\xff" + bytes(range(64))
+    sd_bridge._sd["files"] = ["tx.psbt"]
+    sd_bridge._sd["contents"]["tx.psbt"] = raw
+    decoder = FakeDecoder()
+    sd_bridge._intercept_run_camera_scan(decoder)
+    assert decoder.data == [base64.b64encode(raw).decode()]
+
+
+def test_scan_back_cancels_without_reading(sd_bridge):
+    sd_bridge._sd["files"] = ["tx.psbt"]
+    sd_bridge._events.append(("button_selected", RET_CODE__BACK_BUTTON, "back"))
+    result = sd_bridge._intercept_run_camera_scan(FakeDecoder())
+    assert sd_bridge._sd["reads"] == []
+    assert result.args[1:4] == (False, True, "cancelled")
+
+
+def test_display_writes_signed_psbt(sd_bridge):
+    encoder = types.SimpleNamespace(psbt=types.SimpleNamespace(serialize=lambda: b"signed"))
+    sd_bridge._intercept_run_qr_display_screen(encoder)
+    assert sd_bridge._sd["writes"] == [("signed_tx.psbt", b"signed")]
+    assert sd_bridge._current_state.screen_type == ScreenType.LARGE_ICON_STATUS
+
+
+def test_display_writes_xpub(sd_bridge):
+    encoder = types.SimpleNamespace(derivation="m/84h/0h/0h", network="main", sig_type="ss")
+    sd_bridge._intercept_run_qr_display_screen(encoder)
+    assert sd_bridge._sd["writes"] == [("xpub.txt", b"xpub/m/84h/0h/0h/main")]
