@@ -116,6 +116,26 @@ can't depend on salvage.
   - $25 as an Adafruit breakout. Bare panels come in 2,240-unit MOQs with 28-week lead times.
 - **Verdict.** **Out** for a low-cost build.
 
+## Tested on an ESP32-S3
+
+The 20×4 LCD and the 0.91" OLED have been driven from MicroPython on an ESP32-S3, drawing
+SeedSigner's main menu through the bridge. Photos: [`docs/esp32_s3_lcd_20x4.jpg`](../../docs/esp32_s3_lcd_20x4.jpg)
+and [`docs/esp32_s3_oled_128x32.jpg`](../../docs/esp32_s3_oled_128x32.jpg).
+
+- **The 20×4 LCD runs at 3.3 V.** The module tested (PCF8574 backpack at `0x27`) showed nothing
+  until its contrast trimmer was turned well down, then read cleanly. A 3.3 V I2C header
+  therefore works for at least this module; others may need more contrast range than 3.3 V
+  gives.
+- **A full LCD frame takes 141 ms** over I2C at 400 kHz. The 4-bit protocol sends each
+  character as several I2C writes. Rendering the frame takes 6–13 ms. Since the bridge redraws
+  the whole display on every poll, a character LCD needs changed-cells-only updates before
+  navigation feels responsive.
+- **The OLED shows no icons.** MicroPython's built-in 8×8 font is ASCII, so the bridge's
+  fallbacks appear (`#` for Scan, `K` for Seeds). The LCD loads the same icons as custom
+  characters. Drawing the icons as 8×8 bitmaps on pixel displays is a small follow-up.
+- **Not yet tested on the ESP32:** the e-paper and the TFT. Both have run only on a Raspberry Pi
+  Zero.
+
 ## Recommendation
 
 **Generic carrier: one 4-pin I2C header, labelled, plus an SPI header.**
