@@ -2,8 +2,13 @@ import os
 import subprocess
 import shutil
 import time
+from contextlib import contextmanager
+
 
 class MicroSDManager:
+    """The card is mounted only for the length of one operation: read-only to list
+    or read, read-write only to write. A mount left in place goes stale when the
+    card is swapped, and a read-write one marks the FAT dirty until unmounted."""
     MOUNT_POINT = "/mnt/sd"
     
     @classmethod
@@ -31,7 +36,20 @@ class MicroSDManager:
         return os.path.ismount(cls.MOUNT_POINT)
         
     @classmethod
-    def mount(cls):
+    @contextmanager
+    def _mounted(cls, writable=False):
+        # Never reuse a mount: it may be of a card that's since been swapped.
+        if cls.is_mounted() and not cls.unmount():
+            raise IOError("MicroSD card is busy")
+        if not cls.mount(writable):
+            raise IOError("Failed to mount MicroSD card")
+        try:
+            yield
+        finally:
+            cls.unmount()
+
+    @classmethod
+    def mount(cls, writable=False):
         if cls.is_mounted():
             return True
         if not os.path.exists(cls.MOUNT_POINT):
@@ -50,10 +68,13 @@ class MicroSDManager:
                 
             for dev in devices_to_try:
                 if os.path.exists(dev):
-                    # Automatically repair FAT32 dirty bit / corruption if user unsafely ejected from their laptop
-                    subprocess.run(["sudo", "fsck.fat", "-a", "-w", dev], capture_output=True)
-                    
-                    subprocess.run(["sudo", "mount", "-t", "vfat", "-o", "uid=1000,gid=1000", dev, cls.MOUNT_POINT], check=True, capture_output=True)
+                    if writable:
+                        # Repair before writing into a FAT that may be damaged (unsafe
+                        # ejection from a laptop). Never on a read: reading must not
+                        # change the card.
+                        subprocess.run(["sudo", "fsck.fat", "-a", "-w", dev], capture_output=True)
+                    opts = ("rw" if writable else "ro") + ",uid=1000,gid=1000"
+                    subprocess.run(["sudo", "mount", "-t", "vfat", "-o", opts, dev, cls.MOUNT_POINT], check=True, capture_output=True)
                     if cls.is_mounted():
                         return True
             return False
@@ -74,54 +95,45 @@ class MicroSDManager:
             
     @classmethod
     def list_files(cls, extensions=(".psbt", ".json", ".txt")):
-        if not cls.is_mounted():
-            if not cls.mount():
-                return [] # Failed to mount
-                
         valid_files = []
         try:
-            for filename in os.listdir(cls.MOUNT_POINT):
-                if not filename.startswith(".") and filename.lower().endswith(extensions):
-                    valid_files.append(filename)
-        except OSError:
+            with cls._mounted():
+                for filename in os.listdir(cls.MOUNT_POINT):
+                    if not filename.startswith(".") and filename.lower().endswith(extensions):
+                        valid_files.append(filename)
+        except OSError:  # includes failing to mount
             pass
         return sorted(valid_files)
         
     @classmethod
     def read_file(cls, filename):
-        if not cls.is_mounted():
-            cls.mount()
-            
-        filepath = os.path.join(cls.MOUNT_POINT, filename)
-        with open(filepath, "rb") as f:
-            return f.read()
+        with cls._mounted():
+            with open(os.path.join(cls.MOUNT_POINT, filename), "rb") as f:
+                return f.read()
             
     @classmethod
     def write_file(cls, filename, data, binary=True):
-        if not cls.is_mounted():
-            if not cls.mount():
-                raise IOError("Failed to mount MicroSD card")
-                
-        filepath = os.path.join(cls.MOUNT_POINT, filename)
-        mode = "wb" if binary else "w"
+        with cls._mounted(writable=True):
+            filepath = os.path.join(cls.MOUNT_POINT, filename)
+            mode = "wb" if binary else "w"
         
-        # Write to temporary file then move for atomicity
-        temp_filepath = filepath + ".tmp"
+            # Write to temporary file then move for atomicity
+            temp_filepath = filepath + ".tmp"
         
-        # We might need sudo to write if mount is root-owned. Let's try regular write first.
-        try:
-            with open(temp_filepath, mode) as f:
-                f.write(data)
-            shutil.move(temp_filepath, filepath)
-        except PermissionError:
-            # Fallback to sudo tee
-            if binary:
-                p = subprocess.Popen(["sudo", "tee", temp_filepath], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL)
-                p.communicate(input=data)
-            else:
-                p = subprocess.Popen(["sudo", "tee", temp_filepath], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True)
-                p.communicate(input=data)
-            subprocess.run(["sudo", "mv", temp_filepath, filepath], check=True)
+            # We might need sudo to write if mount is root-owned. Let's try regular write first.
+            try:
+                with open(temp_filepath, mode) as f:
+                    f.write(data)
+                shutil.move(temp_filepath, filepath)
+            except PermissionError:
+                # Fallback to sudo tee
+                if binary:
+                    p = subprocess.Popen(["sudo", "tee", temp_filepath], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL)
+                    p.communicate(input=data)
+                else:
+                    p = subprocess.Popen(["sudo", "tee", temp_filepath], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True)
+                    p.communicate(input=data)
+                subprocess.run(["sudo", "mv", temp_filepath, filepath], check=True)
             
-        # Ensure it's flushed to disk
-        subprocess.run(["sync"], check=True)
+            # Ensure it's flushed to disk
+            subprocess.run(["sync"], check=True)

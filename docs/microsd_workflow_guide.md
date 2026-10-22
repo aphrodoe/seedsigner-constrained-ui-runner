@@ -27,17 +27,21 @@ This forces the Linux kernel to immediately re-probe the SPI bus, discovering th
 
 > **SPI Conflict Mitigation:** This re-probe targets specifically `spi0.0` (Chip Select 0). If you are using an SPI E-Paper display, you must wire the E-Paper's CS pin to `spi0.1` (Chip Select 1 / GPIO 7). Because the script only unbinds `spi0.0`, the E-Paper display will never flash or lose connection during SD card hot-swapping!
 
-## 3. Automated Filesystem Repair (`fsck.fat`)
+## 3. Mounting: read-only, and only for one operation
 
-A major issue with airgapped workflows is "lazy ejection." If a user unplugs the SD card from their laptop without safely ejecting it, the FAT32 filesystem is marked with a "dirty bit."
-
-When the Pi attempts to mount a dirty FAT32 partition via the SPI bus, the kernel refuses to mount it in Read-Write mode to protect data integrity, which causes the entire signing flow to crash when it attempts to save the signed PSBT.
-
-To guarantee flawlessly robust operation, the `MicroSDManager` intercepts the mount command and forcefully runs a non-interactive filesystem repair just milliseconds before mounting:
+The card is mounted only while an operation runs, and unmounted straight after, even on error:
 
 ```bash
-fsck.fat -a -w /dev/mmcblk2p1
-mount -t vfat -o uid=1000,gid=1000 /dev/mmcblk2p1 /mnt/sd
+# list or read a PSBT: read-only, nothing on the card can change
+mount -t vfat -o ro,uid=1000,gid=1000 /dev/mmcblk1p1 /mnt/sd
+
+# write the signed PSBT or xpub: repair first, then read-write
+fsck.fat -a -w /dev/mmcblk1p1
+mount -t vfat -o rw,uid=1000,gid=1000 /dev/mmcblk1p1 /mnt/sd
 ```
 
-This instantly clears the dirty bit and recovers any orphaned clusters, ensuring the SD card is always ready for I/O operations without user intervention.
+Why:
+
+- **Reading a PSBT must not modify the card.** Earlier builds ran `fsck.fat -a -w` before every mount, which could rewrite the FAT or recover clusters into new files just from loading a PSBT.
+- **A mount left in place breaks hot-swapping.** Earlier builds mounted the card once, read-write, and never unmounted it. After a swap, the Pi kept using its cached view of the previous card. While a FAT is mounted read-write, Linux marks it dirty, and the mark is cleared only on a clean unmount. So every card pulled from the Pi was left dirty.
+- **A dirty card is still readable and writable.** Linux mounts a FAT with the dirty bit set; it only warns (`fs/fat/inode.c`). The repair before writing stays, so a card that really was damaged by an unsafe ejection from a laptop gets fixed before anything is written into it.

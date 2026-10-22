@@ -82,9 +82,11 @@ To enable stable SPI communication for the MicroSD card (without kernel timeout 
    *(Reboot required after changes).*
 
 2. **Sudoers I/O Permissions**
-   Create `/etc/sudoers.d/010_seedsigner-sd` with the following content to allow seamless mounting and kernel binding:
+   Create `/etc/sudoers.d/010_seedsigner-sd` with the following content to allow seamless mounting and kernel binding. sudo matches the whole command, so the mount options must be exactly these: read-only for loading a PSBT, read-write (after the `fsck.fat` repair) only for saving one:
    ```bash
-   pi ALL=(root) NOPASSWD: /usr/bin/mount -t vfat -o uid=1000\,gid=1000 /dev/mmcblk2p1 /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/bin/mount -t vfat -o ro\,uid=1000\,gid=1000 /dev/mmcblk2p1 /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/bin/mount -t vfat -o rw\,uid=1000\,gid=1000 /dev/mmcblk2p1 /mnt/sd
+   pi ALL=(root) NOPASSWD: /usr/sbin/fsck.fat -a -w /dev/mmcblk2p1
    pi ALL=(root) NOPASSWD: /usr/bin/umount /mnt/sd
    pi ALL=(root) NOPASSWD: /usr/bin/tee /mnt/sd/*
    pi ALL=(root) NOPASSWD: /usr/bin/mkdir -p /mnt/sd
