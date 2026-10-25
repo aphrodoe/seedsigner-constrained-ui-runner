@@ -1,6 +1,6 @@
 """On-device embit profile: heap and time for the operations a signer runs.
 
-Run on MicroPython with embit, Keith's hashlib.py + hmac.py shims, and the two
+Run on MicroPython with embit, the hashlib.py + hmac.py shims from seedsigner-micropython-builder, and the two
 test PSBTs on the filesystem:
 
     mpremote run profile_embit.py

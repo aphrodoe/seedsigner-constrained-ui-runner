@@ -1,5 +1,5 @@
 """On-device SeedSigner app footprint: what the frozen app costs in RAM to import
-and to instantiate, staged the way Keith's launcher boots it.
+and to instantiate, staged the way seedsigner-micropython-builder's launcher boots it.
 
 Run on the constrained firmware with the app frozen (see firmware/manifest.py):
 

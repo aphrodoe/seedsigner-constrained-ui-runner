@@ -1,16 +1,16 @@
 # Silicon profiling: how small a chip can run SeedSigner?
 
-The question from the fellowship scoping call: what is the cheapest MCU that can
-run the constrained build? Measured on one ESP32-S3 N16R8 devkit (16 MB flash,
-8 MB octal PSRAM), twice: with PSRAM, and with PSRAM switched off as a stand-in
-for an ESP32-C3, which has none. All runs are on stock MicroPython 1.27.0 plus
-native secp256k1 and SHA-512/HMAC (`firmware/`). Raw output is in `results/`.
+Which is the cheapest MCU that can run the constrained build? Measured on one
+ESP32-S3 N16R8 devkit (16 MB flash, 8 MB octal PSRAM), twice: with PSRAM, and
+with PSRAM switched off as a stand-in for an ESP32-C3, which has none. All runs
+are on stock MicroPython 1.27.0 plus native secp256k1 and SHA-512/HMAC
+(`firmware/`). Raw output is in `results/`.
 
 ## What's measured
 
 | | S3, PSRAM | S3, PSRAM off (C3 proxy) |
 |---|---|---|
-| firmware, frozen app + embit (+ renderer, right) | 1.35 MB | 1.41 MB |
+| firmware size, app + embit frozen (PSRAM-off build also has the renderer) | 1.35 MB | 1.41 MB |
 | BIP39 mnemonic → seed | 142 ms | 139 ms |
 | sign a 10-input PSBT | 616 ms | 620–842 ms |
 | SeedSigner app resident (all views imported) | ~92 KB | ~92 KB |

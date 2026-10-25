@@ -1,5 +1,5 @@
 """On-device footprint of this repo's text renderer and the bridge: what they cost
-to import, and to draw a frame, at the two tiers on the bench -- a 20x4 character
+to import, and to draw a frame, at two display tiers -- a 20x4 character
 LCD and a 128x64 OLED (16x8 characters).
 
 Run on the constrained firmware with src/ frozen (see firmware/manifest.py):

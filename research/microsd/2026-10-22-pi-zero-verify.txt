@@ -1,4 +1,4 @@
-# tools/verify_microsd_pi.py on the bench Pi -- 2026-10-22
+# tools/verify_microsd_pi.py on a Raspberry Pi Zero -- 2026-10-22
 # Pi Zero v1.3, Raspberry Pi OS (kernel 6.12.75+rpt-rpi-v6), SPI card reader on spi0.0 (spi-sd overlay, 5 MHz),
 # 3.75 GiB SDHC card as /dev/mmcblk2p1. Branch fix/readonly-microsd. Laptop step done on Ubuntu.
 #

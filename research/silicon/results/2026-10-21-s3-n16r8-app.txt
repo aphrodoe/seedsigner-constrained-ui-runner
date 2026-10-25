@@ -1,6 +1,6 @@
 # SeedSigner app footprint — ESP32-S3 N16R8, octal PSRAM, Bluetooth disabled
 # firmware: firmware/ SEEDSIGNER_S3_DEVKIT, stock MicroPython 1.27.0 + native crypto; embit, urtypes, logging and
-#           the SeedSigner app (integration/lvgl-mpy fd9ba8f, staged by Keith's stager) frozen. micropython.bin 1,354,016 B
+#           the SeedSigner app (integration/lvgl-mpy fd9ba8f, staged by seedsigner-micropython-builder's stage_frozen_app.py) frozen. micropython.bin 1,354,016 B
 # run: 2026-10-21
 # 'alloc' = bytes allocated with GC disabled (upper bound on transient peak); 'retained' = resident after collect
 # 'int_free' = ESP-IDF internal (non-PSRAM) data heap
