@@ -1,0 +1,5 @@
+CONFIG_BT_ENABLED=n
+
+# modhashlibext.c's ripemd160 type calls mbedtls_ripemd160_*, which ESP-IDF's
+# mbedtls leaves disabled by default. Without this the firmware fails to link.
+CONFIG_MBEDTLS_RIPEMD160_C=y
