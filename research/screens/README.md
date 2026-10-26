@@ -55,6 +55,8 @@ fewer cells.
   half brightness, and static content burns in (a top navigation bar is static). A signing
   device is on for minutes per transaction, so 10,000 hours is decades of use. Keeping it that
   way takes powering down between uses and the screensaver SeedSigner already has.
+  In the field they still die: a Bitaxe retailer's troubleshooting guide treats a dead OLED as a
+  routine fault, fixed by swapping in a ~$5 0.96" SSD1306 module.
 - **Availability.** Sold everywhere, by many vendors.
 - **Reliability.**
   - 3.3 V native, −30–70 °C.
@@ -154,6 +156,8 @@ and [`docs/esp32_s3_oled_128x32.jpg`](../../docs/esp32_s3_oled_128x32.jpg).
   arm's length matters more than price.
 - Its one weak axis, OLED life and burn-in, is answered by how a signing device is used: on
   for minutes, off otherwise, with a screensaver.
+- Panels still die, so the board should make one cheap to replace: seat the OLED on a header,
+  not soldered down, so a dead panel is a ₹130 swap rather than a new device.
 
 **Upgrade option: the ST7789 240×240 IPS.** It's cheap as a bare module, colour, and the panel
 class SeedSigner's LVGL screens target. Choosing it means an LVGL firmware, and drawing without
@@ -207,6 +211,9 @@ Availability:
 - https://www.sparkfun.com/graphic-lcd-84x48-nokia-5110.html
 - https://littlebirdelectronics.com.au/products/graphic-lcd-84x48-nokia-5110
 - https://forum.crystalfontz.com/threads/whatever-happend-to-hd44780.4530
+
+Field failures:
+- https://d-central.tech/asic-troubleshooting/bitaxe-oled-display-blank-no-boot-screen/
 
 Drivers:
 - https://github.com/micropython/micropython-lib/tree/master/micropython/drivers/display
