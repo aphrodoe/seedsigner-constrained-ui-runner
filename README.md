@@ -14,7 +14,7 @@ Because constrained hardware (like standard I2C LCDs on a Raspberry Pi Zero) typ
 
 This runner solves this by securely routing all data ingress (reading PSBTs) and data egress (writing XPUBs and signed PSBTs) through an attached SPI MicroSD card module. The runner natively intercepts the SeedSigner OS camera/QR hardware calls and seamlessly maps them to file I/O operations, preserving the entire upstream Bitcoin signing logic without modification.
 
-For detailed hardware setup instructions (including the 5MHz SPI overlay), required sudoers permissions, and an automated Python script for generating valid test PSBTs to verify the workflow end-to-end, please see the **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**.
+For how the card is handled (hot-swap rescan, read-only reads, the repair before writes) and how to check it on a real Pi, see the **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**. The hardware setup, the 5MHz SPI overlay and the sudoers permissions, is in **[section 1.4 of the Constrained Build Guide](docs/constrained_build_guide.md#14-hardware-configuration--sudoers)**.
 
 ## Multi-Platform Support (CPython & MicroPython)
 
