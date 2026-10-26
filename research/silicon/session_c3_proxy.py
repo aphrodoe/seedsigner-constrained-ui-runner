@@ -114,3 +114,8 @@ print("signatures: %d of 10%s" % (sigs, "" if sigs == 10 else "  !! FAILED"))
 session_low = internal()[2]
 print("\ninternal SRAM low-water over the session: %d bytes" % session_low)
 print("largest single allocation still possible: %d bytes" % largest_alloc())
+
+# "total" is the Python heap as it ended up; above the initial size means MicroPython
+# grew it during the session (it only grows after a full collection has failed).
+import micropython  # noqa: E402
+micropython.mem_info()

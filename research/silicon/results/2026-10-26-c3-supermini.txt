@@ -1,0 +1,31 @@
+# ESP32-C3 SuperMini — ESP32-C3FH4 rev 0.4, 4 MB flash in package, no PSRAM, Bluetooth disabled
+# firmware: firmware/ SEEDSIGNER_C3_SUPERMINI. Stock MicroPython 1.27.0 (stock auto-growing heap, 64 KB initial)
+#           + native crypto; embit, urtypes, logging, this repo's src/ and the SeedSigner app frozen.
+#           micropython.bin 1,323,744 B (riscv builds optimise for size), 35% of the 1.9 MB app slot free.
+# run: 2026-10-26, hard reset before each run. Two runs; the second matched the first to the byte.
+#
+# At boot: Python heap 64,000 B, largest block it could grow into 114,688 B. The heap grew during the
+# session (see the final GC line): MicroPython only grows it after a full collection has failed.
+
+## session_c3_proxy.py, run 1
+
+impl  SeedSigner constrained, ESP32-C3 SuperMini with ESP32C3
+boot (nothing loaded)               0 ms  gc_alloc    5152  gc_free  173536  int_free  230284  int_largest  114688  int_low  226340
+import app, all views             358 ms  gc_alloc   97472  gc_free  145152  int_free  164036  int_largest  114688  int_low  164036
+Set LANGUAGE locale to en
+Controller.get_instance()          46 ms  gc_alloc  100848  gc_free  109008  int_free  130908  int_largest   81920  int_low  130908
+import thread exited             1000 ms  gc_alloc  104800  gc_free  137824  int_free  164036  int_largest  114688  int_low  130908
+import renderer + bridge          149 ms  gc_alloc  117120  gc_free  125504  int_free  164036  int_largest  114688  int_low  130908
+render main menu + PSBT overview     26 ms  gc_alloc  117712  gc_free  124912  int_free  164036  int_largest  114688  int_low  130908
+bip39 mnemonic->seed              724 ms  gc_alloc  117328  gc_free  125296  int_free  164036  int_largest  114688  int_low  130784
+bip32 root from seed                5 ms  gc_alloc  117600  gc_free  125024  int_free  164036  int_largest  114688  int_low  130784
+bip32 m/84h/0h/0h/0/0             105 ms  gc_alloc  119296  gc_free  123328  int_free  164036  int_largest  114688  int_low  130784
+psbt parse 10 in                  114 ms  gc_alloc  130720  gc_free  137888  int_free   49344  int_largest   28672  int_low   48864
+psbt sign 10 in                   882 ms  gc_alloc  134832  gc_free  133776  int_free   49344  int_largest   28672  int_low   48864
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 48864 bytes
+largest single allocation still possible: 26624 bytes
+stack: 580 out of 15360
+GC: total: 239936, used: 134416, free: 105520, max new split: 28672
+ No. of 1-blocks: 2641, 2-blocks: 453, max blk sz: 512, max free sz: 606
