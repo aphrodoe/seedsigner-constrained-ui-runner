@@ -4,21 +4,22 @@ Which is the cheapest MCU that can run the constrained build? Measured on one
 ESP32-S3 N16R8 devkit (16 MB flash, 8 MB octal PSRAM), twice: with PSRAM, and
 with PSRAM switched off as a stand-in for an ESP32-C3, which has none; then on a
 real ESP32-C3 SuperMini (ESP32-C3FH4: 400 KB SRAM, 4 MB flash in the package, no
+PSRAM) and a real ESP32-S2 Mini (ESP32-S2FN4R2: single core, 320 KB SRAM, 2 MB
 PSRAM). All runs are on stock MicroPython 1.27.0 plus native secp256k1 and SHA-512/HMAC
 (`firmware/`). Raw output is in `results/`.
 
 ## What's measured
 
-| | S3, PSRAM | S3, PSRAM off (C3 proxy) | C3 SuperMini |
-|---|---|---|---|
-| firmware size, app + embit frozen (PSRAM-off build also has the renderer) | 1.35 MB | 1.41 MB | 1.32 MB (also has the renderer) |
-| BIP39 mnemonic → seed | 142 ms | 139 ms | 724 ms |
-| sign a 10-input PSBT | 616 ms | 620–842 ms | 881 ms |
-| SeedSigner app resident (all views imported) | ~92 KB | ~92 KB | ~92 KB |
-| renderer + bridge resident | — | 14 KB | 12 KB |
-| render one frame (20×4 LCD or 16×8 OLED) | — | 6–13 ms | ~13 ms |
-| full session's live Python heap peak | — | ~136 KB | ~135 KB |
-| full session: 10 of 10 signatures | yes | yes | yes |
+| | S3, PSRAM | S3, PSRAM off (C3 proxy) | C3 SuperMini | S2 Mini |
+|---|---|---|---|---|
+| firmware size, app + embit frozen (PSRAM-off build also has the renderer) | 1.35 MB | 1.41 MB | 1.32 MB (also has the renderer) | 1.38 MB (also has the renderer) |
+| BIP39 mnemonic → seed | 142 ms | 139 ms | 724 ms | 136 ms |
+| sign a 10-input PSBT | 616 ms | 620–842 ms | 881 ms | 818 ms |
+| SeedSigner app resident (all views imported) | ~92 KB | ~92 KB | ~92 KB | ~92 KB |
+| renderer + bridge resident | — | 14 KB | 12 KB | 13 KB |
+| render one frame (20×4 LCD or 16×8 OLED) | — | 6–13 ms | ~13 ms | ~10 ms |
+| full session's live Python heap peak | — | ~136 KB | ~135 KB | ~136 KB |
+| full session: 10 of 10 signatures | yes | yes | yes | yes |
 
 The session (`session_c3_proxy.py`) is boot → import the app and every view →
 `Controller.get_instance()` → render the main menu and a PSBT overview → derive a
@@ -59,6 +60,18 @@ seed → parse and sign a 10-input PSBT, GC on, with no PSRAM to fall back on.
    SHA-256, so mbedtls falls back to software. 724 ms happens once per seed load,
    so it's slow but usable. Signing is 1.4× slower, about the clock ratio
    (160 MHz RISC-V vs 240 MHz Xtensa).
+8. **On the S2, cache size decides signing speed, not the clock.** Code and
+   constant tables run from flash through the caches, and ESP-IDF gives the S2
+   8 KB of instruction and 8 KB of data cache (the S3 board has 16 KB + 32 KB).
+   Signing a 10-input PSBT took 2.9 s at the stock 160 MHz, 2.8 s at 240 MHz, and
+   0.8 s with both caches at the S2's 16 KB maximum. The board ships with 16 KB
+   caches and 240 MHz. SHA-512 is in hardware, so BIP39 matches the S3.
+9. **A PSRAM-less S2 (the S2FN4) depends on finding 3.** With PSRAM switched off and
+   the default 8 KB caches, the session fits (28 KB of internal SRAM left at the
+   tightest point) but signs in 3 s. With 16 KB caches, the extra 16 KB of cache
+   leaves no single 32 KiB block for `BackgroundImportThread`'s stack, and
+   `Controller.get_instance()` fails with "can't create thread". The
+   single-threaded facade would remove that thread.
 
 ## Recommendation
 
@@ -66,9 +79,9 @@ seed → parse and sign a 10-input PSBT, GC on, with no PSRAM to fall back on.
 - **ESP32-C3 works too**, measured on a real board: the full session signs 10 of
   10 inputs in under a second, with less margin than the S3 (48 KB of internal
   SRAM left at the tightest point). The cheapest chip measured so far.
-- **ESP32-S2** (single core, 320 KB SRAM, optional PSRAM, no Bluetooth at all) is
-  worth one run: less SRAM than the C3, but SHA-512 hardware
-  (`SOC_SHA_SUPPORT_SHA512`) and, on the S2 Mini, 2 MB of PSRAM. **ESP32-C2** (272 KB) looks too small.
+- **ESP32-S2 with PSRAM works too**, once its caches are raised to 16 KB: 0.8 s to
+  sign, S3-speed BIP39 (SHA-512 hardware), and PSRAM for headroom. Without PSRAM it
+  needs either slow 8 KB caches or the single-threaded facade. **ESP32-C2** (272 KB) looks too small.
   **ESP32-H2** (96 MHz) looks too slow to sign comfortably. Neither is measured.
 
 ## Reproduce
@@ -76,6 +89,7 @@ seed → parse and sign a 10-input PSBT, GC on, with no PSRAM to fall back on.
 ```sh
 firmware/build.sh SEEDSIGNER_S3_DEVKIT            # or: ... NOPSRAM
 firmware/build.sh SEEDSIGNER_C3_SUPERMINI
+firmware/build.sh SEEDSIGNER_S2_MINI            # or: ... NOPSRAM
 # flash with esptool @flash_args from firmware/build/<board>/, hard reset, then:
 mpremote run research/silicon/session_c3_proxy.py # first run after hard reset only
 mpremote run research/silicon/profile_embit.py
