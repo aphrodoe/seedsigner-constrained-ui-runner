@@ -1,0 +1,123 @@
+# ESP32-S2 Mini — ESP32-S2FN4R2 rev 1.0: single core, 320 KB SRAM, 4 MB flash and 2 MB quad PSRAM in the package
+# firmware: firmware/ SEEDSIGNER_S2_MINI (and variant NOPSRAM). Stock MicroPython 1.27.0 (stock auto-growing heap)
+#           + native crypto; embit, urtypes, logging, this repo's src/ and the SeedSigner app frozen.
+#           micropython.bin 1,378,544 B (PSRAM) / 1,372,848 B (PSRAM off), 32% of the 1.9 MB app slot free.
+# run: 2026-10-29, hard reset before each run, each configuration run twice (matching within a few ms).
+#
+# Five configurations, in the order tried. The board as committed is the third: 240 MHz, 16 KB caches, PSRAM.
+#   1. 160 MHz (stock S2 sdkconfig), 8 KB I + 8 KB D cache (IDF default), PSRAM   sign 2,934 ms
+#   2. 240 MHz,                      8 KB + 8 KB,                          PSRAM   sign 2,769 ms
+#   3. 240 MHz,                     16 KB + 16 KB,                         PSRAM   sign   818 ms
+#   4. 240 MHz,                      8 KB + 8 KB,                      PSRAM off   sign 2,954 ms, fits (28 KB low-water)
+#   5. 240 MHz,                     16 KB + 16 KB,                     PSRAM off   OSError: can't create thread
+# The clock barely matters; the caches do. Code and constant tables run from flash through them.
+# Run 5 fails at Controller.get_instance(): BackgroundImportThread's 32 KiB stack needs one internal block, and
+# the largest left after the 16 KB of extra cache is 25.6 KB.
+
+## session_c3_proxy.py, configuration 1. 160 MHz, 8 KB caches, PSRAM
+
+impl  SeedSigner constrained, ESP32-S2 Mini with ESP32-S2FN4R2
+boot (nothing loaded)               0 ms  gc_alloc    5216  gc_free 2057632  int_free  207803  int_largest  147456  int_low  171696
+import app, all views             611 ms  gc_alloc   97696  gc_free 1963552  int_free  207095  int_largest  147456  int_low  170988
+Set LANGUAGE locale to en
+Controller.get_instance()          60 ms  gc_alloc  100912  gc_free 1960336  int_free  173967  int_largest  118784  int_low  141936
+import thread exited             1000 ms  gc_alloc  104864  gc_free 1956384  int_free  207095  int_largest  147456  int_low  141804
+import renderer + bridge          195 ms  gc_alloc  118032  gc_free 1943216  int_free  207095  int_largest  147456  int_low  141804
+render main menu + PSBT overview     33 ms  gc_alloc  118496  gc_free 1942752  int_free  207095  int_largest  147456  int_low  141804
+bip39 mnemonic->seed              195 ms  gc_alloc  118336  gc_free 1942912  int_free  207003  int_largest  147456  int_low  141712
+bip32 root from seed                4 ms  gc_alloc  118480  gc_free 1942768  int_free  207003  int_largest  147456  int_low  141712
+bip32 m/84h/0h/0h/0/0             358 ms  gc_alloc  120112  gc_free 1941136  int_free  207003  int_largest  147456  int_low  141712
+psbt parse 10 in                  154 ms  gc_alloc  131504  gc_free 1926544  int_free  207003  int_largest  147456  int_low  141712
+psbt sign 10 in                  2934 ms  gc_alloc  135744  gc_free 1922304  int_free  207003  int_largest  147456  int_low  141712
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 141712 bytes
+largest single allocation still possible: 523264 bytes
+stack: 736 out of 15360
+GC: total: 780032, used: 658416, free: 121616, max new split: 1277952
+ No. of 1-blocks: 2652, 2-blocks: 462, max blk sz: 32704, max free sz: 606
+
+## session_c3_proxy.py, configuration 2. 240 MHz, 8 KB caches, PSRAM
+
+impl  SeedSigner constrained, ESP32-S2 Mini with ESP32-S2FN4R2
+boot (nothing loaded)               1 ms  gc_alloc    5216  gc_free 2057632  int_free  207803  int_largest  147456  int_low  171696
+import app, all views             519 ms  gc_alloc   97696  gc_free 1963552  int_free  207095  int_largest  147456  int_low  170988
+Set LANGUAGE locale to en
+Controller.get_instance()          47 ms  gc_alloc  100912  gc_free 1960336  int_free  173967  int_largest  118784  int_low  141936
+import thread exited             1000 ms  gc_alloc  104864  gc_free 1956384  int_free  207095  int_largest  147456  int_low  141804
+import renderer + bridge          150 ms  gc_alloc  118032  gc_free 1943216  int_free  207095  int_largest  147456  int_low  141804
+render main menu + PSBT overview     28 ms  gc_alloc  118528  gc_free 1942720  int_free  207095  int_largest  147456  int_low  141804
+bip39 mnemonic->seed              138 ms  gc_alloc  118352  gc_free 1942896  int_free  207003  int_largest  147456  int_low  141712
+bip32 root from seed                4 ms  gc_alloc  118480  gc_free 1942768  int_free  207003  int_largest  147456  int_low  141712
+bip32 m/84h/0h/0h/0/0             335 ms  gc_alloc  120112  gc_free 1941136  int_free  207003  int_largest  147456  int_low  141712
+psbt parse 10 in                  129 ms  gc_alloc  131504  gc_free 1926544  int_free  207003  int_largest  147456  int_low  141712
+psbt sign 10 in                  2769 ms  gc_alloc  135840  gc_free 1922208  int_free  207003  int_largest  147456  int_low  141712
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 141712 bytes
+largest single allocation still possible: 523264 bytes
+stack: 736 out of 15360
+GC: total: 780032, used: 658256, free: 121776, max new split: 1277952
+ No. of 1-blocks: 2650, 2-blocks: 458, max blk sz: 32704, max free sz: 606
+
+## session_c3_proxy.py, configuration 3. 240 MHz, 16 KB caches, PSRAM (the board as committed)
+
+impl  SeedSigner constrained, ESP32-S2 Mini with ESP32-S2FN4R2
+boot (nothing loaded)               0 ms  gc_alloc    5216  gc_free 2057632  int_free  191419  int_largest  131072  int_low  155312
+import app, all views             288 ms  gc_alloc   97696  gc_free 1963552  int_free  190711  int_largest  131072  int_low  154604
+Set LANGUAGE locale to en
+Controller.get_instance()          37 ms  gc_alloc  100912  gc_free 1960336  int_free  157583  int_largest  102400  int_low  125552
+import thread exited             1000 ms  gc_alloc  104864  gc_free 1956384  int_free  190711  int_largest  131072  int_low  125420
+import renderer + bridge          121 ms  gc_alloc  118032  gc_free 1943216  int_free  190711  int_largest  131072  int_low  125420
+render main menu + PSBT overview     19 ms  gc_alloc  118496  gc_free 1942752  int_free  190711  int_largest  131072  int_low  125420
+bip39 mnemonic->seed              136 ms  gc_alloc  118352  gc_free 1942896  int_free  190619  int_largest  131072  int_low  125328
+bip32 root from seed                3 ms  gc_alloc  118480  gc_free 1942768  int_free  190619  int_largest  131072  int_low  125328
+bip32 m/84h/0h/0h/0/0             115 ms  gc_alloc  120112  gc_free 1941136  int_free  190619  int_largest  131072  int_low  125328
+psbt parse 10 in                   76 ms  gc_alloc  131504  gc_free 1926544  int_free  190619  int_largest  131072  int_low  125328
+psbt sign 10 in                   818 ms  gc_alloc  135744  gc_free 1922304  int_free  190619  int_largest  131072  int_low  125328
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 125328 bytes
+largest single allocation still possible: 523264 bytes
+stack: 736 out of 15360
+GC: total: 780032, used: 658256, free: 121776, max new split: 1277952
+ No. of 1-blocks: 2650, 2-blocks: 458, max blk sz: 32704, max free sz: 606
+
+## session_c3_proxy.py, configuration 4. 240 MHz, 8 KB caches, PSRAM off
+
+impl  SeedSigner constrained ESP32-S2 Mini PSRAM-off with ESP32-S2FN4R2
+boot (nothing loaded)               1 ms  gc_alloc    5136  gc_free  178288  int_free  173056  int_largest  147456  int_low  169088
+import app, all views             458 ms  gc_alloc   97744  gc_free   86896  int_free   61748  int_largest   40960  int_low   61748
+Set LANGUAGE locale to en
+Controller.get_instance()          39 ms  gc_alloc  100976  gc_free   51920  int_free   28620  int_largest    9216  int_low   28620
+import thread exited             1000 ms  gc_alloc  104928  gc_free   79712  int_free   61748  int_largest   40960  int_low   28620
+import renderer + bridge          126 ms  gc_alloc  118096  gc_free   66544  int_free   61748  int_largest   40960  int_low   28620
+render main menu + PSBT overview     24 ms  gc_alloc  118560  gc_free   66080  int_free   61748  int_largest   40960  int_low   28620
+bip39 mnemonic->seed              137 ms  gc_alloc  118400  gc_free   66240  int_free   61656  int_largest   40960  int_low   28396
+bip32 root from seed                4 ms  gc_alloc  118544  gc_free   66096  int_free   61656  int_largest   40960  int_low   28396
+bip32 m/84h/0h/0h/0/0             320 ms  gc_alloc  120176  gc_free   64464  int_free   61656  int_largest   40960  int_low   28396
+psbt parse 10 in                  143 ms  gc_alloc  131568  gc_free   53072  int_free   61656  int_largest   40960  int_low   28396
+psbt sign 10 in                  2954 ms  gc_alloc  135808  gc_free   48832  int_free   61656  int_largest   40960  int_low   28396
+signatures: 10 of 10
+
+internal SRAM low-water over the session: 28396 bytes
+largest single allocation still possible: 38912 bytes
+stack: 736 out of 15360
+GC: total: 143680, used: 135408, free: 8272, max new split: 40960
+ No. of 1-blocks: 2659, 2-blocks: 464, max blk sz: 512, max free sz: 46
+
+## session_c3_proxy.py, configuration 5. 240 MHz, 16 KB caches, PSRAM off
+
+impl  SeedSigner constrained ESP32-S2 Mini PSRAM-off with ESP32-S2FN4R2
+boot (nothing loaded)               0 ms  gc_alloc    5136  gc_free  161904  int_free  156672  int_largest  131072  int_low  152704
+import app, all views             261 ms  gc_alloc   97744  gc_free   71536  int_free   45364  int_largest   25600  int_low   45364
+Set LANGUAGE locale to en
+Traceback (most recent call last):
+  File "<stdin>", line 70, in <module>
+  File "<stdin>", line 30, in step
+  File "seedsigner/controller.py", line 172, in get_instance
+  File "seedsigner/controller.py", line 239, in configure_instance
+  File "seedsigner/models/threads.py", line 14, in start
+  File "seedsigner/compat/threading.py", line 92, in start
+OSError: can't create thread
+

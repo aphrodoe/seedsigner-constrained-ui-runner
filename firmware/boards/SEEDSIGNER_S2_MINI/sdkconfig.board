@@ -1,0 +1,12 @@
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+
+# modhashlibext.c's ripemd160 type calls mbedtls_ripemd160_*, which ESP-IDF's
+# mbedtls leaves disabled by default. Without this the firmware fails to link.
+CONFIG_MBEDTLS_RIPEMD160_C=y
+
+# The S2's largest caches, up from IDF's 8 KB each. Code and constant tables run
+# from flash through them: at 8 KB, signing a 10-input PSBT took 2.8 s; at 16 KB,
+# 0.8 s. Costs 16 KB of internal SRAM.
+CONFIG_ESP32S2_INSTRUCTION_CACHE_16KB=y
+CONFIG_ESP32S2_DATA_CACHE_16KB=y
