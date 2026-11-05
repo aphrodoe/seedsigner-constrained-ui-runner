@@ -1,0 +1,5 @@
+# Back to IDF's 8 KB caches: with 16 KB, BackgroundImportThread's 32 KiB stack no
+# longer fits in one internal block and Controller.get_instance() fails with
+# "can't create thread" (configuration 5 in results/2026-10-29-s2-mini.txt).
+CONFIG_ESP32S2_INSTRUCTION_CACHE_8KB=y
+CONFIG_ESP32S2_DATA_CACHE_8KB=y
