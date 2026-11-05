@@ -4,7 +4,8 @@
 #           micropython.bin 1,378,544 B (PSRAM) / 1,372,848 B (PSRAM off), 32% of the 1.9 MB app slot free.
 # run: 2026-10-29, hard reset before each run, each configuration run twice (matching within a few ms).
 #
-# Five configurations, in the order tried. The board as committed is the third: 240 MHz, 16 KB caches, PSRAM.
+# Five configurations, in the order tried. The board as committed is the third: 240 MHz, 16 KB caches, PSRAM;
+# its NOPSRAM variant is the fourth: 240 MHz, 8 KB caches, PSRAM off.
 #   1. 160 MHz (stock S2 sdkconfig), 8 KB I + 8 KB D cache (IDF default), PSRAM   sign 2,934 ms
 #   2. 240 MHz,                      8 KB + 8 KB,                          PSRAM   sign 2,769 ms
 #   3. 240 MHz,                     16 KB + 16 KB,                         PSRAM   sign   818 ms
