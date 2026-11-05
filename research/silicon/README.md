@@ -13,7 +13,7 @@ PSRAM). All runs are on stock MicroPython 1.27.0 plus native secp256k1 and SHA-5
 |---|---|---|---|
 | firmware size, app + embit frozen (PSRAM-off build also has the renderer) | 1.35 MB | 1.41 MB | 1.32 MB (also has the renderer) |
 | BIP39 mnemonic → seed | 142 ms | 139 ms | 724 ms |
-| sign a 10-input PSBT | 616 ms | 620–842 ms | 881 ms |
+| sign a 10-input PSBT | 616 ms | 620–842 ms | 882 ms |
 | SeedSigner app resident (all views imported) | ~92 KB | ~92 KB | ~92 KB |
 | renderer + bridge resident | — | 14 KB | 12 KB |
 | render one frame (20×4 LCD or 16×8 OLED) | — | 6–13 ms | ~13 ms |
