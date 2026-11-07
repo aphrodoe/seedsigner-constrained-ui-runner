@@ -66,3 +66,6 @@ CLAUDE.md
 
 # Firmware build output
 firmware/build/
+
+# Pi image build cache and output
+pi-image/build/

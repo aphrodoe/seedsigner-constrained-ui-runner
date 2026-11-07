@@ -1,0 +1,13 @@
+[Unit]
+Description=USB gadget network, 10.42.0.2 (dev image)
+After=network-pre.target
+Before=NetworkManager.service
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/usb-gadget-setup.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

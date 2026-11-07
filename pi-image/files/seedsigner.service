@@ -1,0 +1,13 @@
+[Unit]
+Description=SeedSigner, constrained text UI
+After=local-fs.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/seedsigner-constrained-ui-runner
+ExecStart=/home/pi/seedsigner-constrained-ui-runner/venv/bin/python run_seedsigner.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

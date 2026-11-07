@@ -1,0 +1,32 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    /* Disable the generic spidev so it doesn't conflict */
+    fragment@0 {
+        target = <&spi0>;
+        __overlay__ {
+            status = "okay";
+            spidev@0 {
+                status = "disabled";
+            };
+        };
+    };
+
+    /* Bind the MMC over SPI driver to Chip Select 0 */
+    fragment@1 {
+        target = <&spi0>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            sd1: sd@0 {
+                compatible = "mmc-spi-slot";
+                reg = <0>;
+                voltage-ranges = <3300 3300>;
+                spi-max-frequency = <5000000>;
+            };
+        };
+    };
+};
