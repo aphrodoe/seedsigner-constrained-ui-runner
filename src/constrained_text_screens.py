@@ -383,8 +383,9 @@ def poll_for_result():
     # Read from Pi GPIO buttons (if wired)
     event = _hardware_input.read()
     
-    # Also read from SSH Terminal Keyboard for easy testing!
-    if not event and not IS_MICROPYTHON:
+    # Also read from SSH Terminal Keyboard for easy testing! Only from a terminal:
+    # started by systemd, stdin isn't one, and termios raises.
+    if not event and not IS_MICROPYTHON and sys.stdin.isatty():
         from src.input.keyboard_input import KeyboardInput
         if not hasattr(HardwareInput, '_keyboard_hook'):
             HardwareInput._keyboard_hook = KeyboardInput()

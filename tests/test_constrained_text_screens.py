@@ -362,3 +362,20 @@ def test_mpy_selected_display_draws_through_the_bridge(mpy, bridge):
     bridge._renderer = mpy({"type": "lcd_20x4"})
     bridge.main_menu_screen({"top_nav": {"title": "Home"}, "button_list": ["Scan", "Seeds", "Tools", "Settings"]})
     assert bridge._renderer.i2c.writes  # the frame went out over I2C
+
+
+# --- running headless --------------------------------------------------------
+
+class NotATerminal:
+    def isatty(self):
+        return False
+
+
+def test_without_a_terminal_buttons_still_work_and_no_keyboard_is_opened(bridge, monkeypatch):
+    # Started by systemd, stdin isn't a terminal: termios.tcgetattr would raise.
+    monkeypatch.delattr(bridge.HardwareInput, "_keyboard_hook")
+    monkeypatch.setattr(bridge.sys, "stdin", NotATerminal())
+    bridge.button_list_screen({"top_nav": {"title": "Seeds"}, "button_list": ["A", "B"]})
+    assert bridge.poll_for_result() is None  # idle poll: this is where the keyboard was opened
+    assert not hasattr(bridge.HardwareInput, "_keyboard_hook")
+    assert press(bridge, "ENTER") == ("button_selected", 0, "A")
