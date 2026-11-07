@@ -6,3 +6,6 @@ pytest>=7.0.0
 waveshare-epaper>=1.4.0
 spidev>=3.6
 lgpio>=0.2.2
+# luma.core needs cbor2. 6.2.0 has no ARMv6 wheel on piwheels and builds only
+# with Rust, so a Pi Zero install fails on it; 6.1.5 has one.
+cbor2==6.1.5
