@@ -26,6 +26,8 @@ This allows the UI to run on two vastly different architectures:
 
 ## Setup
 
+On a Raspberry Pi Zero, the quickest start is the **[prebuilt Pi Zero image](pi-image/README.md)**: flash it, pick your display, boot.
+
 For complete, step-by-step installation instructions and hardware wiring diagrams, please see the **[Constrained UI Build Guide](docs/constrained_build_guide.md)**.
 
 ## Interactive Dual Runner (Developer Tool)

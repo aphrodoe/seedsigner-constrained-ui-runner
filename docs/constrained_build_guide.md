@@ -10,7 +10,7 @@ The Pi Zero is the standard SeedSigner target. We run the text UI engine directl
 
 ### 1.1 Requirements
 - Raspberry Pi Zero (v1.3 or W)
-- MicroSD Card with Bookworm Lite or Pi OS
+- MicroSD card (4 GB or more) with Raspberry Pi OS Lite, 32-bit (Trixie), or the prebuilt image (see 1.3)
 - SSH Access enabled
 - Connected Display (16x2 LCD, SSD1306 OLED, or Waveshare E-Paper)
 - Passive Buzzer (optional, for audio feedback)
@@ -55,6 +55,17 @@ Wire your components to the Pi Zero exactly as shown in the diagrams below.
 | **Push Buttons** | UP: `31`, DOWN: `35`, L: `29`, R: `37`, ENT: `33`, BACK: `40`, GND: `9` | UP: `6`, DN: `19`, L: `5`, R: `26`, ENT: `13`, BCK: `21` | All buttons share the same GND rail. |
 
 ### 1.3 Software Setup
+
+**Quickest:** flash the prebuilt Pi Zero image, which does all of 1.3 and 1.4 for
+you and starts SeedSigner at boot. See [`pi-image/`](../pi-image/README.md).
+
+To set it up by hand on Raspberry Pi OS Lite:
+
+0. Install the system libraries Pillow's prebuilt wheel links against (it fails
+   to import without them):
+   ```bash
+   sudo apt install git libavif16 libfreetype6 liblcms2-2 libopenjp2-7 libwebpdemux2 libwebpmux3
+   ```
 1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository (Keith's LVGL fork's integration/lvgl-mpy branch) as a submodule:
    ```bash
    git clone --recursive --shallow-submodules --depth 1 https://github.com/aphrodoe/seedsigner-constrained-ui-runner.git
@@ -72,14 +83,21 @@ Wire your components to the Pi Zero exactly as shown in the diagrams below.
 
 To enable stable SPI communication for the MicroSD card (without kernel timeout errors) and to allow the Python script to hot-swap cards without a root password, you must configure the Pi OS kernel and permissions.
 
-1. **Kernel Overlays (`/boot/firmware/config.txt`)**
-   Append these exact lines to enable the `mmc-spi` driver at 5MHz:
+1. **Kernel Overlay (`/boot/firmware/config.txt`)**
+   The card reader uses the `spi-sd` overlay in
+   [`pi-image/files/spi-sd.dts`](../pi-image/files/spi-sd.dts): the MMC-over-SPI
+   driver on CE0 at 5 MHz, leaving CE1 free for the e-paper. Compile it from
+   the repo root:
+   ```bash
+   sudo dtc -@ -I dts -O dtb -o /boot/firmware/overlays/spi-sd.dtbo pi-image/files/spi-sd.dts
+   ```
+   Then append these lines:
    ```text
    dtparam=spi=on
-   dtoverlay=spi0-1cs
-   dtoverlay=mmc-spi,spi0-0,brm=5000000
+   dtoverlay=spi-sd
    ```
-   *(Reboot required after changes).*
+   *(Reboot required after changes.)* The card then appears as `/dev/mmcblk2p1`,
+   which the sudoers rules below expect.
 
 2. **Sudoers I/O Permissions**
    Create `/etc/sudoers.d/010_seedsigner-sd` with the following content to allow seamless mounting and kernel binding. sudo matches the whole command, so the mount options must be exactly these: read-only for loading a PSBT, read-write (after the `fsck.fat` repair) only for saving one:
