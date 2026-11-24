@@ -28,19 +28,16 @@ That [screen contract](https://github.com/kdmukAI-bot/seedsigner/blob/integratio
 was built so other backends could plug in. This repo is one.
 
 ```mermaid
-flowchart LR
-    subgraph app ["SeedSigner app (unmodified)"]
-        V["Views<br/>seeds · PSBTs · settings"]
-    end
+flowchart TD
+    V["<b>SeedSigner app</b>, unmodified<br/>seeds · PSBTs · settings"]
     V -- "screen JSON" --> C{{"screen contract"}}
     C --> L["LVGL backend<br/>colour touchscreens"]
-    C --> B["text backend<br/><b>this repo</b>"]
-    B --> R["text renderer<br/>layouts per grid size"]
-    R --> D1["16×2 / 20×4 LCD"]
-    R --> D2["128×32 / 128×64 OLED"]
-    R --> D3["1.54″ e-paper"]
+    C --> B["<b>text backend: this repo</b><br/>bridge + text renderer"]
     K["buttons"] --> B
-    SD[("MicroSD")] <-- "PSBT in,<br/>signed PSBT out" --> B
+    SD[("MicroSD card")] <-- "PSBT in, signed PSBT out" --> B
+    B --> D1["16×2 / 20×4<br/>character LCD"]
+    B --> D2["128×32 / 128×64<br/>OLED"]
+    B --> D3["1.54″<br/>e-paper"]
 ```
 
 - **The bridge** ([`src/constrained_text_screens.py`](src/constrained_text_screens.py))
