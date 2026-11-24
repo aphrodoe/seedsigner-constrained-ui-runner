@@ -108,11 +108,13 @@ octal PSRAM on the N16R8.
   - **5 V:** HD44780 LCDs whose text is too faint at 3.3 V.
 - **Level shifter for 5 V only.** At 5 V the backpack's PCF8574 needs at least 3.5 V
   to read a logic high, more than the S2 drives, and its pull-ups would put 5 V on
-  GPIO 8/9. So the 5 V build fits a 2-channel BSS138 level shifter (2× BSS138 and
-  4× 10 kΩ: 3.3 V pull-ups on the S2 side, display-power pull-ups on the display
-  side). For 3.3 V it's left off, and two solder jumpers bridge SDA and SCL straight
-  through.
-- **4.7 kΩ I2C pull-ups to 3V3**, not fitted unless a display has none of its own.
+  GPIO 8/9. So the 5 V build fits a 2-channel BSS138 level shifter (2× BSS138, plus
+  2× 10 kΩ pull-ups to display power on the display side). For 3.3 V it's left off,
+  and two solder jumpers bridge SDA and SCL straight through.
+- **I2C pull-ups:** 2× 10 kΩ to 3V3 on the S2 side, always fitted. They also serve
+  as the level shifter's low-side pull-ups.
+
+Full schematic connection list: [`hardware/carrier/connections.md`](../hardware/carrier/connections.md).
 
 **SPI display header (1×8)** in Waveshare's e-paper order: VCC GND DIN CLK CS DC RST
 BUSY, at 3.3 V.

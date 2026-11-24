@@ -14,7 +14,7 @@ November 2026 and will drift.
 | 5-way navigation switch, HRO K1-1506SN-01 (SMD, 10×10 mm) | 1 | Robu ₹73 | C145910 | 73 |
 | Tactile switch 6×6 mm through-hole, C&K PTS645 (KEY1–3) | 3 | Robu ₹6–11 | Omron B3F-1000, C93157 | 18–33 |
 | MicroSD socket, push-push, HRO TF-01A | 1 | Generic 9-pin push type (Quartz ₹9); check it against the TF-01A drawing | C91145 | 9 |
-| Resistor 10 kΩ 0805: MicroSD pull-ups (CS, MOSI, MISO, DAT1, DAT2) and the EN pull-up | 6 | Robu or Evelta | C17414 | 6 |
+| Resistor 10 kΩ 0805: MicroSD pull-ups (CS, MOSI, MISO, DAT1, DAT2), I2C pull-ups (SDA, SCL) and the EN pull-up | 8 | Robu or Evelta | C17414 | 8 |
 | Capacitor 100 nF 0805 (MicroSD decoupling) | 2 | Robu or Evelta | C49678 | 4 |
 | Capacitor 10 µF 0805 (MicroSD decoupling) | 1 | Robu or Evelta | C15850 | 2 |
 | Capacitor 1 µF 0805 (EN filter) | 1 | Robu or Evelta | any 1 µF X7R/X5R 0805 | 1 |
@@ -25,8 +25,7 @@ November 2026 and will drift.
 | Part | Qty | When to fit it |
 |---|---|---|
 | Tactile switch 6×6 mm, PTS645 | 5 | Instead of the 5-way switch. The footprints are wired in parallel, so no SMD soldering is needed. |
-| Resistor 4.7 kΩ 0805 (LCSC C17673) | 2 | I2C pull-ups, only if the display module has none of its own. |
-| BSS138 MOSFET (SOT-23) + 10 kΩ 0805 | 2 + 4 | Level shifter, only when the display header is set to 5 V (see `pin_map.md`). At 3.3 V, close the bypass jumpers instead. |
+| BSS138 MOSFET (SOT-23) + 10 kΩ 0805 | 2 + 2 | Level shifter, only when the display header is set to 5 V (see `pin_map.md`). At 3.3 V, bridge the bypass jumpers instead. |
 | Female header 1×6 + a 6-pin SPI MicroSD module (Robu ₹39) | 1 | Instead of soldering the MicroSD socket. |
 
 All the configuration jumpers (VCC/GND order, 3.3/5 V, level-shifter bypass) are solder
