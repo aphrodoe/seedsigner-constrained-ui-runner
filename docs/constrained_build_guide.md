@@ -171,6 +171,8 @@ mpremote fs cp mpy_main.py :main.py
 ```
 
 ### 2.4 Wiring & Pinout
+The full SeedSigner app picks its button pins by chip (S3, S2 or C3), including KEY1 for back: see [`pin_map.md`](pin_map.md). The demo below, `mpy_main.py`, is older and has its own pins.
+
 By default, `mpy_main.py` expects the following wiring. (You can change these in the script).
 
 **I2C Display (OLED or LCD):**
