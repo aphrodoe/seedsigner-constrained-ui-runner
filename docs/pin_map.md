@@ -43,6 +43,13 @@ The same pins by header position, USB-C at the bottom, viewed from the top:
 So the left header carries the buttons and I2C, and the right header carries the SPI
 bus. Each group's traces leave the module on its own side.
 
+**Buttons, built either way.** The carrier has a footprint for a 5-way through-hole
+navigation switch (UP/DOWN/LEFT/RIGHT/ENTER), the SeedSigner HAT's layout. It also
+has five 6×6 mm tactile footprints wired in parallel to the same five nets, so a
+builder fits whichever they have. KEY1–3 are always 6×6 tactiles. Each switch
+connects its GPIO to GND, and the firmware turns on the pull-ups, so there are no
+resistors.
+
 Why these pins:
 - **UP/DOWN/LEFT/RIGHT on 4–7, as on the S3 and C3**, so a breadboard wired for one
   chip works on the others.
@@ -88,13 +95,44 @@ octal PSRAM on the N16R8.
   be `machine.SDCard(slot=2, sck=36, mosi=35, miso=37, cs=34)`. The S2 has no SDMMC
   host, so SPI mode is the only option.
 
-## Open for the schematic review
+## Carrier circuit (decided 2026-11-25)
 
-- **Display header voltage: 3.3 V.** The bench 20×4 LCD and its backpack run at 3.3 V
-  (contrast trimmer turned well down), and so do the OLEDs. Don't feed the header from
-  VBUS: the backpack pulls SDA and SCL up to its own VCC, which would put 5 V on GPIO 8
-  and 9, and they aren't 5 V tolerant.
-- **I2C header pin order.** SSD1306 modules ship as both GND-VCC-SCL-SDA and
-  VCC-GND-SCL-SDA. Plan: label both on the silkscreen (#10), with GND-VCC-SCL-SDA as
-  the default.
-- **SPI display header:** in Waveshare's e-paper order, VCC GND DIN CLK CS DC RST BUSY.
+**I2C display header (1×4: P1 P2 SCL SDA).**
+- **Pin order.** OLED modules ship as both GND-VCC and VCC-GND (four first-hand
+  reports), and powering one backwards can destroy it. So P1 and P2 each go through a
+  3-pad solder jumper that connects it to either GND or display power. The silkscreen
+  shows both settings, and the default is P1 = GND, P2 = VCC.
+- **Display power.** A third 3-pad jumper picks 3V3 or VBUS (5 V):
+  - **3.3 V (default):** OLEDs, 3.3 V LCDs, and the bench 20×4 with its contrast
+    turned well down.
+  - **5 V:** HD44780 LCDs whose text is faint at 3.3 V (three forum threads report
+    this).
+- **Level shifter for 5 V only.** At 5 V the backpack's PCF8574 needs at least 3.5 V
+  to read a logic high, more than the S2 drives, and its pull-ups would put 5 V on
+  GPIO 8/9. So the 5 V build fits a 2-channel BSS138 level shifter (2× BSS138 and
+  4× 10 kΩ: 3.3 V pull-ups on the S2 side, display-power pull-ups on the display
+  side). For 3.3 V it's left off, and two solder jumpers bridge SDA and SCL straight
+  through.
+- **4.7 kΩ I2C pull-ups to 3V3**, not fitted unless a display has none of its own.
+
+**SPI display header (1×8)** in Waveshare's e-paper order: VCC GND DIN CLK CS DC RST
+BUSY, at 3.3 V.
+
+**MicroSD.**
+- A TF-01A push-push socket on the shared SPI bus, at 3.3 V.
+- 10 kΩ pull-ups on CS, MOSI, MISO and the unused DAT1/DAT2.
+- 100 nF + 10 µF decoupling.
+- An optional 1×6 header (GND VCC MISO MOSI SCK CS) for the plug-in SD module.
+
+**EN (reset) filter.** A 10 kΩ pull-up to 3V3 and 1 µF to GND on the S2 Mini's EN
+pin, against the clone reset problems reported under load. The S2 Mini's RST button
+still works through it.
+
+**Power.** The S2 Mini's 3V3 and VBUS pins feed the carrier, so the carrier has no
+regulator.
+
+## Still open for the schematic review
+
+- Check the SPI IO-MUX pins (34–37) against the ESP32-S2 datasheet.
+- Check the K1-1506SN-01 pad drawing and the MicroSD socket against their footprints.
+- Source the BSS138 for 5 V builds.
