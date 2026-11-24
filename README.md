@@ -199,3 +199,7 @@ pin maps and the drivers. CI runs them on every pull request and on every push t
   work.
 - Started during **Summer of Bitcoin 2026**. Continued under a **Bitshala Developer
   Fellowship** (Oct 2026 – Mar 2027).
+
+## License
+
+[MIT](LICENSE), the same as SeedSigner.
