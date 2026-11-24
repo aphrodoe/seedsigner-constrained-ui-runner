@@ -29,15 +29,15 @@ was built so other backends could plug in. This repo is one.
 
 ```mermaid
 flowchart TD
-    V["<b>SeedSigner app</b>, unmodified<br/>seeds · PSBTs · settings"]
+    V["SeedSigner app<br/>(unmodified)"]
     V -- "screen JSON" --> C{{"screen contract"}}
-    C --> L["LVGL backend<br/>colour touchscreens"]
-    C --> B["<b>text backend: this repo</b><br/>bridge + text renderer"]
+    C --> L["LVGL backend<br/>touchscreens"]
+    C --> B["text backend<br/>(this repo)"]
     K["buttons"] --> B
-    SD[("MicroSD card")] <-- "PSBT in, signed PSBT out" --> B
-    B --> D1["16×2 / 20×4<br/>character LCD"]
-    B --> D2["128×32 / 128×64<br/>OLED"]
-    B --> D3["1.54″<br/>e-paper"]
+    SD[("MicroSD")] <-- "PSBTs" --> B
+    B --> D1["16×2 / 20×4<br/>LCD"]
+    B --> D2["OLED"]
+    B --> D3["e-paper"]
 ```
 
 - **The bridge** ([`src/constrained_text_screens.py`](src/constrained_text_screens.py))
@@ -54,32 +54,16 @@ flowchart TD
 
 ## What the screens look like
 
-The same SeedSigner screens, as the renderer draws them for each display size. These
-are from the [golden snapshot tests](tests/golden/).
+The same SeedSigner screens, as the renderer lays them out for each display size
+(drawn from the [golden snapshot tests](tests/golden/) by
+[`tools/readme_lcd_images.py`](tools/readme_lcd_images.py)). Text that doesn't fit, like
+"Review Transaction" on 16×2, scrolls on the device.
 
 <table>
 <tr><th>Screen</th><th>16×2 LCD</th><th>20×4 LCD</th></tr>
-<tr><td>Main menu</td>
-<td><pre>Home         1/4
-> ▦ Scan        </pre></td>
-<td><pre>Home             1/4
->▦ Scan
- ⚿ Seeds
- ⚒ Tools</pre></td></tr>
-<tr><td>Seed words</td>
-<td><pre>Seed Words: 1/3
-  1. vault</pre></td>
-<td><pre>Seed Words: 1/3
-  1. vault
-  2. ridge
-  3. oyster</pre></td></tr>
-<tr><td>Transaction</td>
-<td><pre>Review Transacti
- Spend: 841,234</pre></td>
-<td><pre>Review Transaction
-Spend: 841,234 sats
-     Inputs: 3
-  Destinations: 2</pre></td></tr>
+<tr><td>Main menu</td><td><img src="docs/readme/main_menu_screen_16x2.png" width="250" alt="Main menu on a 16×2 LCD"></td><td><img src="docs/readme/main_menu_screen_20x4.png" width="310" alt="Main menu on a 20×4 LCD"></td></tr>
+<tr><td>Seed words</td><td><img src="docs/readme/seed_words_screen_16x2.png" width="250" alt="Seed words on a 16×2 LCD"></td><td><img src="docs/readme/seed_words_screen_20x4.png" width="310" alt="Seed words on a 20×4 LCD"></td></tr>
+<tr><td>Transaction</td><td><img src="docs/readme/psbt_overview_screen_16x2.png" width="250" alt="Transaction on a 16×2 LCD"></td><td><img src="docs/readme/psbt_overview_screen_20x4.png" width="310" alt="Transaction on a 20×4 LCD"></td></tr>
 </table>
 
 The full flow works this way: creating a seed, entering a passphrase, reviewing and
