@@ -40,7 +40,7 @@ seed → parse and sign a 10-input PSBT, GC on, with no PSRAM to fall back on.
    `MICROPY_GC_SPLIT_HEAP_AUTO` off, set `MICROPY_GC_INITIAL_HEAP_SIZE`).
 3. **Threads cost internal SRAM.** `BackgroundImportThread` takes a 32 KiB stack
    (`seedsigner/compat/threading.py`, sized assuming PSRAM) from internal SRAM even
-   when PSRAM exists. The single-threaded facade planned for Month 3 removes it.
+   when PSRAM exists. A planned single-threaded screen facade removes it.
 4. **The renderer had never run on MicroPython.** It took four fixes to get there:
    an unguarded `typing` import; `textwrap` and `base64`, which MicroPython doesn't
    ship; padding, which MicroPython measures in UTF-8 bytes; and dict order, which

@@ -66,7 +66,7 @@ To set it up by hand on Raspberry Pi OS Lite:
    ```bash
    sudo apt install git libavif16 libfreetype6 liblcms2-2 libopenjp2-7 libwebpdemux2 libwebpmux3
    ```
-1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository (Keith's LVGL fork's integration/lvgl-mpy branch) as a submodule:
+1. Clone this repository onto your Pi using a shallow recursive clone. This pulls the upstream SeedSigner repository (the `integration/lvgl-mpy` branch of the [LVGL/MicroPython port](https://github.com/kdmukAI-bot/seedsigner/tree/integration/lvgl-mpy)) as a submodule:
    ```bash
    git clone --recursive --shallow-submodules --depth 1 https://github.com/aphrodoe/seedsigner-constrained-ui-runner.git
    cd seedsigner-constrained-ui-runner
@@ -124,7 +124,7 @@ You can interact with the engine immediately using the hardware tester tool. Thi
 ./tools/interactive_hardware_test.py --display lcd16x2
 ```
 ### 1.6 Running the Full SeedSigner codebase
-The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner code and automatically applies the Constrained UI monkey-patches at runtime, similar to Keith's work (https://github.com/kdmukAI-bot/seedsigner/blob/integration/lvgl-mpy/docs/architecture/view-to-screen-json-contract.md).
+The repository comes with a bootstrap script (`run_seedsigner.py`) that securely imports the upstream SeedSigner code and automatically applies the Constrained UI monkey-patches at runtime, against the same [screen contract](https://github.com/kdmukAI-bot/seedsigner/blob/integration/lvgl-mpy/docs/architecture/view-to-screen-json-contract.md) the LVGL backend uses.
 
 ```bash
 # Ensure your virtual environment is active

@@ -1,103 +1,204 @@
-# SeedSigner Constrained UI Runner
+# SeedSigner on a $2 screen
 
-This repository contains the standalone Python runner for constrained hardware interfaces (character LCDs, small OLEDs, and audio buzzers) using the same JSON semantic contract developed for SeedSigner's LVGL architecture.
+**A text backend for [SeedSigner](https://seedsigner.com)**: the real SeedSigner app,
+unmodified, running on character LCDs, tiny OLEDs and e-paper, on a Raspberry Pi Zero
+or a bare ESP32. PSBTs move over a MicroSD card instead of a camera.
 
-## Overview
+<table>
+<tr>
+<td width="58%"><img src="docs/esp32_s3_lcd_20x4.jpg" alt="SeedSigner's home menu (Scan, Seeds, Tools) on a blue 20×4 character LCD, driven by an ESP32-S3"></td>
+<td width="42%"><img src="docs/esp32_s3_oled_128x32.jpg" alt="The same home menu on a 0.91-inch 128×32 OLED, wired to an ESP32-S3 devkit"></td>
+</tr>
+<tr>
+<td align="center"><sub>20×4 character LCD, ESP32-S3</sub></td>
+<td align="center"><sub>0.91″ 128×32 OLED, ESP32-S3</sub></td>
+</tr>
+</table>
 
-Instead of directly drawing pixels to a 240x240 screen, this engine consumes JSON payloads that describe the *intent* of a screen (e.g., a list of buttons, a warning, or a QR code) and renders them optimally for the connected hardware.
+A standard SeedSigner is a Pi Zero, a camera and a 240×240 colour screen, about $50.
+This project asks how far down that cost can go and still sign Bitcoin transactions
+safely. The current answer is a carrier board around a ~$6 ESP32-S2 with a ~$2 screen,
+at about **$12 for the whole device**.
 
-For a comprehensive overview of supported hardware tiers, Airgapped MicroSD workflows, and architectural guidelines, **please refer directly to the [docs/](docs/) folder.**
+## How it works
 
-## Airgapped MicroSD Workflows
+SeedSigner's LVGL/MicroPython port describes every screen as data: a JSON payload of
+what the screen *means* (a title, a list of buttons, a warning), not how to draw it.
+That [screen contract](https://github.com/kdmukAI-bot/seedsigner/blob/integration/lvgl-mpy/docs/architecture/view-to-screen-json-contract.md)
+was built so other backends could plug in. This repo is one.
 
-Because constrained hardware (like standard I2C LCDs on a Raspberry Pi Zero) typically lacks a camera module and a high-resolution graphical display, standard SeedSigner QR-code data ingestion is impossible. 
+```mermaid
+flowchart LR
+    subgraph app ["SeedSigner app (unmodified)"]
+        V["Views<br/>seeds · PSBTs · settings"]
+    end
+    V -- "screen JSON" --> C{{"screen contract"}}
+    C --> L["LVGL backend<br/>colour touchscreens"]
+    C --> B["text backend<br/><b>this repo</b>"]
+    B --> R["text renderer<br/>layouts per grid size"]
+    R --> D1["16×2 / 20×4 LCD"]
+    R --> D2["128×32 / 128×64 OLED"]
+    R --> D3["1.54″ e-paper"]
+    K["buttons"] --> B
+    SD[("MicroSD")] <-- "PSBT in,<br/>signed PSBT out" --> B
+```
 
-This runner solves this by securely routing all data ingress (reading PSBTs) and data egress (writing XPUBs and signed PSBTs) through an attached SPI MicroSD card module. The runner natively intercepts the SeedSigner OS camera/QR hardware calls and seamlessly maps them to file I/O operations, preserving the entire upstream Bitcoin signing logic without modification.
+- **The bridge** ([`src/constrained_text_screens.py`](src/constrained_text_screens.py))
+  stands in for the LVGL screen module. It turns each screen into text, reads the
+  buttons, and returns the same results the graphical screens would. It never sees a
+  private key.
+- **The renderer** fits each screen to its grid: one item per page on 16×2, a
+  scrolling window on 20×4, marquee scrolling for long labels, and SeedSigner's icons
+  remapped into the LCD chip's 8 custom-glyph slots.
+- **No camera.** Where SeedSigner would scan a QR code, the bridge lists PSBT files
+  on the MicroSD card. Where it would show a QR code, it writes the signed PSBT back.
+  Cards are mounted read-only to load a file, and written only to save one
+  ([MicroSD workflow](docs/microsd_workflow_guide.md)).
 
-For how the card is handled (hot-swap rescan, read-only reads, the repair before writes) and how to check it on a real Pi, see the **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**. The hardware setup, the 5MHz SPI overlay and the sudoers permissions, is in **[section 1.4 of the Constrained Build Guide](docs/constrained_build_guide.md#14-hardware-configuration--sudoers)**.
+## What the screens look like
 
-## Multi-Platform Support (CPython & MicroPython)
+The same SeedSigner screens, as the renderer draws them for each display size. These
+are from the [golden snapshot tests](tests/golden/).
 
-The core text rendering engine is **100% pure Python** with zero standard library dependencies (`os.path`, `threading`, `uuid` have been bypassed or polyfilled). 
+<table>
+<tr><th>Screen</th><th>16×2 LCD</th><th>20×4 LCD</th></tr>
+<tr><td>Main menu</td>
+<td><pre>Home         1/4
+> ▦ Scan        </pre></td>
+<td><pre>Home             1/4
+>▦ Scan
+ ⚿ Seeds
+ ⚒ Tools</pre></td></tr>
+<tr><td>Seed words</td>
+<td><pre>Seed Words: 1/3
+  1. vault</pre></td>
+<td><pre>Seed Words: 1/3
+  1. vault
+  2. ridge
+  3. oyster</pre></td></tr>
+<tr><td>Transaction</td>
+<td><pre>Review Transacti
+ Spend: 841,234</pre></td>
+<td><pre>Review Transaction
+Spend: 841,234 sats
+     Inputs: 3
+  Destinations: 2</pre></td></tr>
+</table>
 
-This allows the UI to run on two vastly different architectures:
-1. **Raspberry Pi Zero (CPython)**: Using `smbus2` for I2C and `Pillow`/`luma.oled` for graphical drawing.
-2. **ESP32-S3 (MicroPython 1.27)**: Using our native `machine.I2C` LCD driver and the lightweight `framebuf_mpy.py` renderer for OLEDs and E-Paper. No Pillow required.
+The full flow works this way: creating a seed, entering a passphrase, reviewing and
+signing a transaction, and multisig.
 
-## Setup
+## Hardware
 
-On a Raspberry Pi Zero, the quickest start is the **[prebuilt Pi Zero image](pi-image/README.md)**: flash it, pick your display, boot.
+| | Pi Zero (CPython) | ESP32 (MicroPython 1.27) |
+|---|---|---|
+| Status | Full SeedSigner flow, tested end to end on a Pi Zero v1.3 | App loads, derives seeds and signs on S3, S2 and C3. MicroSD support in progress. |
+| Displays | 16×2 and 20×4 LCD, 128×32 and 128×64 OLED, 1.54″ e-paper | 16×2 and 20×4 LCD, 128×32 and 128×64 OLED |
+| Input | 6 buttons (Waveshare HAT pinout) | 6–8 buttons, pins per chip ([pin map](docs/pin_map.md)) |
+| Setup | [Flashable image](pi-image/README.md) or the [build guide](docs/constrained_build_guide.md) | [`firmware/build.sh`](firmware/build.sh) |
 
-For complete, step-by-step installation instructions and hardware wiring diagrams, please see the **[Constrained UI Build Guide](docs/constrained_build_guide.md)**.
+### How small a chip can run SeedSigner?
 
-## Interactive Dual Runner (Developer Tool)
+Measured on real boards, running the app, renderer, seed derivation and a 10-input
+PSBT signed 10 of 10 ([details](research/silicon/README.md)):
 
-For rapid design validation, you can run the side-by-side interactive Tkinter application. This loads the generated LVGL screenshots from the upstream repository alongside the live `16x2`, `20x4`, `16x8`, and `25x16` text simulators.
+| Chip (board) | Board price | Sign a 10-input PSBT | Seed from its words | PSRAM |
+|---|---|---|---|---|
+| ESP32-S3 (devkit) | ~$11 | 0.62 s | 0.14 s | 8 MB |
+| **ESP32-S2 (S2 Mini)** | **~$6–7.50** | **0.82 s** | **0.14 s** | **2 MB** |
+| ESP32-C3 (SuperMini) | ~$3 | 0.88 s | 0.72 s | none |
+
+Even the ~$3 C3 signs in under a second. It's slower at seeds only because it has no
+SHA-512 hardware. On the S2, cache size mattered more than clock speed: raising it from
+8 KB to 16 KB cut signing from 2.8 s to 0.8 s.
+
+<details>
+<summary><b>Pi Zero wiring diagrams</b></summary>
+
+<br>
+
+**I2C OLED + buttons + MicroSD**
+<img src="docs/pi_zero_oled.png" alt="Fritzing wiring diagram: Pi Zero with an I2C OLED, six buttons and an SPI MicroSD module">
+
+**I2C character LCD**
+<img src="docs/pi_zero_lcd.png" alt="Fritzing wiring diagram: Pi Zero with an I2C 20×4 character LCD">
+
+**SPI e-paper**
+<img src="docs/pi_zero_epaper.png" alt="Fritzing wiring diagram: Pi Zero with a Waveshare 1.54-inch SPI e-paper display">
+
+</details>
+
+## Quick start
+
+**Pi Zero, flashable image:** build the image (Docker, about 15 minutes), flash it, pick your display
+in `seedsigner-config.json` on the boot partition, and boot. See
+[`pi-image/`](pi-image/README.md).
+
+**Pi Zero, by hand:**
+
+```bash
+git clone --recursive https://github.com/aphrodoe/seedsigner-constrained-ui-runner
+cd seedsigner-constrained-ui-runner
+./setup.sh                    # venv, the SeedSigner submodule, dependencies
+source venv/bin/activate
+python3 run_seedsigner.py     # the real app, on the display set in config.json
+```
+
+**ESP32:** `firmware/build.sh SEEDSIGNER_S2_MINI` builds MicroPython with native
+secp256k1 and SHA-512 and the app frozen in. Boards: `SEEDSIGNER_S3_DEVKIT`,
+`SEEDSIGNER_S2_MINI`, `SEEDSIGNER_C3_SUPERMINI`.
+
+**No hardware:** the dual runner shows the LVGL screenshots next to live 16×2, 20×4,
+16×8 and 25×16 text simulators (W/A/S/D to move, Space to select):
 
 ```bash
 python3 tools/dual_runner.py
 ```
-*Note: You can pass `--lvgl-dir` to point to custom screenshot directories.*
 
-* Keyboard controls: `W`, `A`, `S`, `D` to navigate, `Space` to select. 
-* **Side-by-Side vs Isolated Mode**: By default, the Dual Runner renders all display tiers simultaneously. Because it shares a single virtual controller, it prioritizes the scrolling limits of the smallest display (Tier 0). You can use the dropdown menu to isolate a specific tier (e.g., "Tier 3: E-Paper"), which will immediately un-link the shared scroll constraints and allow you to interact with that tier's 1-to-1 native scrolling behavior.
+## The carrier board (in progress)
 
-## Interactive Hardware Tester
+The next step is a circuit board anyone can build. The ESP32-S2 Mini, a display and a
+MicroSD card plug into sockets. A 5-way joystick and three keys are soldered on, or
+eight ordinary buttons if you'd rather avoid SMD.
 
-For testing the full UI experience on physical hardware connected to a Raspberry Pi (e.g., over SSH), use the interactive hardware tester. It supports all display types and dynamically computes the text grid from the hardware's physical dimensions.
+- [Pin map](docs/pin_map.md): every GPIO, the header layout and the circuit.
+- [Bill of materials](docs/bom.md): parts, Indian and international sources, about
+  **₹1,140 (~$12) per device**.
+- Schematic and layout: next.
 
-```bash
-# Test on 128x32 OLED (SSD1306)
-./tools/interactive_hardware_test.py --display oled
-
-# Test on 16x2 Character LCD
-./tools/interactive_hardware_test.py --display lcd16x2
-
-# Test on 20x4 Character LCD
-./tools/interactive_hardware_test.py --display lcd20x4
-
-# Test on Waveshare 1.54" E-Paper
-./tools/interactive_hardware_test.py --display epaper
-```
-
-* Keyboard controls: `W`/`S` or Arrow keys to scroll, `N`/`Enter` for next screen, `Q` to quit.
-* The tool mirrors the current screen to your SSH terminal so you can see what the hardware is rendering.
-* Marquee animations run in real-time (non-blocking 300ms tick loop), matching `dual_runner.py`.
-
-## Running Full SeedSigner OS
-
-You can run the full upstream SeedSigner OS application logic using this constrained UI runner as the display driver. This replaces the standard LVGL graphical display with the constrained hardware outputs.
-
-Instead of manually cloning the upstream repository, this runner uses a unified setup script to automatically pull the correct upstream LVGL branch as a git submodule and install all hardware dependencies.
-
-1. Run the unified setup script:
-```bash
-./setup.sh
-```
-
-2. Activate the virtual environment and start the OS:
-```bash
-source venv/bin/activate
-python3 run_seedsigner.py
-```
-
-*Note: Configure your `config.json` in the constrained UI runner directory to select your target display hardware (e.g. `oled_128x32`, `lcd_16x2`, etc) before running the OS.*
+Later: an all-in-one board, a 3D-printed case, and audio-only navigation for blind
+users.
 
 ## Documentation
 
-* **[Constrained UI Build Guide](docs/constrained_build_guide.md)**: The definitive, step-by-step setup guide including hardware configurations, software installation, and Fritzing wiring diagrams for all supported displays.
-* **[Airgapped MicroSD Workflow Guide](docs/microsd_workflow_guide.md)**: Architectural rationale for the SPI-based hot-swappable MicroSD data ingress/egress pipeline.
-* **[Text UI Design Guide](docs/text_ui_design_guide.md)**: Rules for architectural tiers (Tier 0-3), block pagination, sliding windows, and 2D spatial layouts.
+| | |
+|---|---|
+| [Build guide](docs/constrained_build_guide.md) | Wiring, software setup and `config.json` for the Pi Zero and ESP32 |
+| [MicroSD workflow](docs/microsd_workflow_guide.md) | How PSBTs move on and off the card, and why it's read-only by default |
+| [Text UI design guide](docs/text_ui_design_guide.md) | Display tiers, pagination, sliding windows, icon mapping |
+| [Pin map](docs/pin_map.md) · [BOM](docs/bom.md) | The carrier board |
+| [Screen survey](research/screens/README.md) | Displays compared on cost, lifetime, availability and reliability |
+| [Silicon profiling](research/silicon/README.md) | The chip measurements above, with raw logs |
+| [Pi Zero image](pi-image/README.md) | Building and flashing the image |
 
-## Running Tests
+## Tests
 
-To run the standard unit tests:
 ```bash
-python3 -m pytest tests/test_screen_state.py tests/test_text_renderer.py tests/test_json_parser.py -v
+python3 -m pytest tests/                           # 922 tests, a few seconds
+python3 -m pytest tests/ --update-golden           # after an intentional layout change
 ```
 
-To run the automated Golden UI tests (verifies text snapshots across all hardware tiers against `scenarios.json`):
-```bash
-python3 -m pytest tests/test_all_screens_golden.py
-```
-*(Append `--update-golden` to overwrite baselines if you make intentional design changes)*
+632 golden snapshots pin the rendering of every SeedSigner screen at every grid size.
+The rest test the bridge against the screen contract, the MicroSD handling, the input
+pin maps and the drivers. CI runs them on every pull request and on every push to main.
+
+## Status and credits
+
+- **Not for real funds yet.** The upstream app comes from the `integration/lvgl-mpy`
+  branch of the LVGL/MicroPython port, which hasn't been merged into SeedSigner's
+  releases. Production SeedSigner is still the Pi Zero/PIL build.
+- Built on [SeedSigner](https://github.com/SeedSigner/seedsigner) and its
+  LVGL/MicroPython port by Keith Mukai, SeedSigner's lead developer, who mentors this
+  work.
+- Started during **Summer of Bitcoin 2026**. Continued under a **Bitshala Developer
+  Fellowship** (Oct 2026 – Mar 2027).
