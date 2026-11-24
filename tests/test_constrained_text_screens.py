@@ -379,3 +379,41 @@ def test_without_a_terminal_buttons_still_work_and_no_keyboard_is_opened(bridge,
     assert bridge.poll_for_result() is None  # idle poll: this is where the keyboard was opened
     assert not hasattr(bridge.HardwareInput, "_keyboard_hook")
     assert press(bridge, "ENTER") == ("button_selected", 0, "A")
+
+
+# --- Buttons per chip (docs/pin_map.md) --------------------------------------
+
+@pytest.mark.parametrize("uname, chip", [
+    ("SeedSigner constrained, ESP32-S3 N16R8 with ESP32S3", "S3"),
+    ("SeedSigner constrained ESP32-S3 N16R8 PSRAM-off C3-proxy with ESP32S3", "S3"),
+    ("SeedSigner constrained, ESP32-S2 Mini with ESP32-S2FN4R2", "S2"),
+    ("SeedSigner constrained ESP32-S2 Mini PSRAM-off with ESP32-S2FN4R2", "S2"),
+    ("SeedSigner constrained, ESP32-C3 SuperMini with ESP32C3", "C3"),
+])
+def test_chip_comes_from_the_mcu_not_the_board_name(uname, chip):
+    assert cts._chip(uname) == chip
+
+
+def test_no_chip_uses_a_gpio_its_board_lacks():
+    # C3 SuperMini breaks out 0-10, 20, 21; the S2 Mini 1-18, 21, 33-40 (15 is its LED).
+    exposed = {"C3": set(range(11)) | {20, 21}, "S2": (set(range(1, 19)) | {21} | set(range(33, 41))) - {15}}
+    for chip, pins in exposed.items():
+        used = [n for _, n in cts._BUTTON_PINS[chip]] + [8, 9]  # + I2C SDA/SCL
+        assert set(used) <= pins and len(used) == len(set(used)), chip
+    for chip, pairs in cts._BUTTON_PINS.items():
+        keys = [k for k, _ in pairs]
+        assert {"UP", "DOWN", "LEFT", "RIGHT", "ENTER", "KEY1"} <= set(keys), chip
+
+
+def test_s2_reads_key1_as_back(monkeypatch):
+    class FakePin:
+        IN, PULL_UP = 1, 2
+        def __init__(self, n, *a, **k): self.n = n
+        def value(self): return 0 if self.n == 1 else 1   # GPIO 1 (KEY1) held down
+    monkeypatch.setattr(cts, "IS_MICROPYTHON", True)
+    monkeypatch.setattr(cts, "machine", types.SimpleNamespace(Pin=FakePin), raising=False)
+    monkeypatch.setattr("os.uname", lambda: types.SimpleNamespace(
+        machine="SeedSigner constrained, ESP32-S2 Mini with ESP32-S2FN4R2"), raising=False)
+    monkeypatch.setattr(cts.time, "ticks_ms", lambda: 0, raising=False)
+    monkeypatch.setattr(cts.time, "ticks_diff", lambda a, b: a - b, raising=False)
+    assert cts.HardwareInput().read() == "KEY1"

@@ -28,17 +28,36 @@ _initialized = False
 RET_CODE__BACK_BUTTON = 1000
 RET_CODE__POWER_BUTTON = 1001
 
+# Buttons per chip, active-low with internal pull-ups. A list of pairs, not a dict:
+# the first pressed pin wins, so the order must be fixed. The S2 map is the carrier
+# board's (docs/pin_map.md). The C3 SuperMini has no GPIO 15, so ENTER is on 10.
+_BUTTON_PINS = {
+    "S3": [("UP", 4), ("DOWN", 5), ("LEFT", 6), ("RIGHT", 7), ("ENTER", 15), ("KEY1", 16)],
+    "S2": [("UP", 4), ("DOWN", 5), ("LEFT", 6), ("RIGHT", 7), ("ENTER", 10),
+           ("KEY1", 1), ("KEY2", 2), ("KEY3", 3)],
+    "C3": [("UP", 4), ("DOWN", 5), ("LEFT", 6), ("RIGHT", 7), ("ENTER", 10), ("KEY1", 1)],
+}
+
+
+def _chip(uname_machine):
+    """The chip from os.uname().machine, "<board name> with <MCU name>". Keyed on the
+    MCU, not the board name: the PSRAM-off S3 build is called "C3-proxy"."""
+    mcu = uname_machine.rsplit(" with ", 1)[-1].replace("-", "").upper()
+    for chip in ("S2", "C3"):
+        if mcu.startswith("ESP32" + chip):
+            return chip
+    return "S3"
+
+
 class HardwareInput:
     def __init__(self):
         self.last_pressed = None
         self.last_press_time = 0
         
         if IS_MICROPYTHON:
-            self.btn_up = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
-            self.btn_down = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
-            self.btn_left = machine.Pin(6, machine.Pin.IN, machine.Pin.PULL_UP)
-            self.btn_right = machine.Pin(7, machine.Pin.IN, machine.Pin.PULL_UP)
-            self.btn_enter = machine.Pin(15, machine.Pin.IN, machine.Pin.PULL_UP)
+            import os
+            self.pins = [(key, machine.Pin(n, machine.Pin.IN, machine.Pin.PULL_UP))
+                         for key, n in _BUTTON_PINS[_chip(os.uname().machine)]]
             self.GPIO = None
         else:
             try:
@@ -68,11 +87,10 @@ class HardwareInput:
     def read(self):
         if IS_MICROPYTHON:
             event = None
-            if self.btn_up.value() == 0: event = "UP"
-            elif self.btn_down.value() == 0: event = "DOWN"
-            elif self.btn_left.value() == 0: event = "LEFT"
-            elif self.btn_right.value() == 0: event = "RIGHT"
-            elif self.btn_enter.value() == 0: event = "ENTER"
+            for key, pin in self.pins:
+                if pin.value() == 0:
+                    event = key
+                    break
             
             # Manual debounce for MicroPython polling
             now = time.ticks_ms()
