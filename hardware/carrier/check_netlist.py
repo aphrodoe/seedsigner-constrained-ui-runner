@@ -35,7 +35,7 @@ PINS.update({
     ("SW1", "4"): "GND", ("SW1", "5"): "RIGHT", ("SW1", "6"): "ENTER",
     ("J5", "1"): "SD_DAT2", ("J5", "2"): "SD_CS", ("J5", "3"): "SPI_MOSI", ("J5", "4"): "+3V3",
     ("J5", "5"): "SPI_SCK", ("J5", "6"): "GND", ("J5", "7"): "SPI_MISO", ("J5", "8"): "SD_DAT1",
-    ("J5", "SH"): "GND",
+    ("J5", "9"): NC, ("J5", "10"): "GND", ("J5", "11"): "GND", ("J5", "12"): "GND", ("J5", "13"): "GND",
     # SolderJumper_3: pin 2 is the common (centre) pad.
     ("JP1", "1"): "GND", ("JP1", "2"): "P1", ("JP1", "3"): "VDISP",
     ("JP2", "1"): "GND", ("JP2", "2"): "P2", ("JP2", "3"): "VDISP",

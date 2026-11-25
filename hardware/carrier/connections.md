@@ -3,7 +3,9 @@
 Every connection on the S2 Mini carrier, for drawing and checking the schematic. Pin
 assignments come from [`pin_map.md`](../../docs/pin_map.md) and parts from
 [`bom.md`](../../docs/bom.md). Symbol and footprint names are KiCad 10's standard
-libraries unless marked **custom**.
+libraries, except the `carrier:` parts. Those are in `lib/`, fetched from LCSC with
+easyeda2kicad and checked against the datasheet drawings. The project's library tables
+load them automatically.
 
 Use **net labels** with the names below rather than long wires: `UP`, `SDA` and so on.
 Two pins with the same label are connected.
@@ -65,7 +67,7 @@ there are no resistors.
 
 | Ref | Symbol | Footprint | Connections |
 |---|---|---|---|
-| SW1 | 5-way switch, **custom** (6 pins) | **custom**, HRO K1-1506SN-01 | 1 (A) → `UP`, 2 (B) → `LEFT`, 3 (C) → `DOWN`, 5 (D) → `RIGHT`, 6 (centre) → `ENTER`, 4 (common) → `GND` |
+| SW1 | `carrier:K1-1506SN-01` | `carrier:KEY-SMD_K1-1506SN-01` | 1 (A) → `UP`, 2 (B) → `LEFT`, 3 (C) → `DOWN`, 5 (D) → `RIGHT`, 6 (centre) → `ENTER`, 4 (common) → `GND` |
 | SW2 | `Switch:SW_Push` | `Button_Switch_THT:SW_PUSH_6mm` | `UP` – `GND` (alternative to SW1) |
 | SW3 | same | same | `DOWN` – `GND` (alternative) |
 | SW4 | same | same | `LEFT` – `GND` (alternative) |
@@ -140,8 +142,8 @@ J4 is a `Connector_Generic:Conn_01x08` with footprint
 
 ## MicroSD
 
-J5 is a `Connector:Micro_SD_Card` with a **custom** footprint, HRO TF-01A (LCSC
-C91145, push-push, 9 signal pads at 1.10 mm pitch, plus 4 shell pads).
+J5 is the `carrier:TF-01A` symbol with footprint `carrier:TF-SMD_TF-01A` (HRO TF-01A,
+LCSC C91145: push-push, 9 pads at 1.10 mm pitch, 4 shell pads, 2 locating holes).
 
 | Socket pin | Net | Plus |
 |---|---|---|
@@ -153,8 +155,8 @@ C91145, push-push, 9 signal pads at 1.10 mm pitch, plus 4 shell pads).
 | VSS (6) | `GND` | |
 | DAT0 (7) | `SPI_MISO` | R9 10 kΩ to `+3V3` |
 | DAT1 (8) | `SD_DAT1` | R10 10 kΩ to `+3V3` |
-| Shell | `GND` | |
-| Card-detect pad, if the symbol has one | no connect | |
+| CD (9) | no connect | card-detect switch, unused |
+| GND (10–13), the shell | `GND` | |
 
 The optional plug-in SD module, J6, is a `Connector_Generic:Conn_01x06` with
 footprint `PinSocket_1x06_P2.54mm_Vertical`:
