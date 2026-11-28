@@ -19,12 +19,20 @@ Two pins with the same label are connected.
 | `GND` | S2 Mini GND pins (both) | `power:GND` symbol |
 | `VDISP` | JP3 (3.3 V or 5 V) | I2C display power only |
 
+The I2C displays' VCC and GND are `VDISP` and `GND` directly.
+
 ## J1, J2: the S2 Mini sockets
 
 Two `Connector_Generic:Conn_02x08_Odd_Even`, footprint
-`Connector_PinSocket_2.54mm:PinSocket_2x08_P2.54mm_Vertical`. Rows run from the
+`Connector_PinHeader_2.54mm:PinHeader_2x08_P2.54mm_Vertical`. Rows run from the
 end away from USB-C (row 1) to the USB-C end (row 8). In each row, the odd pin is
 the left column of that header, viewed from the top.
+
+The part soldered there is a female socket, but the footprint is the **pin header**
+one on purpose. KiCad's `PinSocket_2x08` footprint puts pad 2 to the *left* of pad 1:
+it's drawn for a socket that mates face-down with a header on another board. The S2
+Mini sits face-up, so its pins are where `PinHeader_2x08` puts them. The drill
+pattern is the same.
 
 **J1, left header** (odd = outer column, even = inner column):
 
@@ -90,45 +98,47 @@ switch before ordering.
 
 ## I2C display header
 
-J3 is a `Connector_Generic:Conn_01x04` with footprint
+OLED modules ship as both GND-VCC-SCL-SDA and VCC-GND-SCL-SDA, and powering one
+backwards can destroy it. So there are **two** 4-pin footprints side by side, one for
+each order. The builder fits a socket in the one that matches their module and leaves
+the other empty. There are no jumpers to get wrong.
+
+Both are `Connector_Generic:Conn_01x04` with footprint
 `Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical`.
-- Pin 1: `P1`.
-- Pin 2: `P2`.
-- Pin 3: `SCL_D`.
-- Pin 4: `SDA_D`.
 
-Silkscreen next to it: `GND/VCC · GND/VCC · SCL · SDA`.
+| Ref | Pin 1 | Pin 2 | Pin 3 | Pin 4 | Silkscreen |
+|---|---|---|---|---|---|
+| J3 | `GND` | `VDISP` | `SCL_D` | `SDA_D` | `GND VCC SCL SDA` |
+| J7 | `VDISP` | `GND` | `SCL_D` | `SDA_D` | `VCC GND SCL SDA` |
 
-**Power order and voltage.** All three jumpers are `Jumper:SolderJumper_3_Open` with
-footprint `Jumper:SolderJumper-3_P1.3mm_Open_RoundedPad1.0x1.5mm`.
+PCF8574 LCD backpacks are usually GND VCC **SDA SCL**. They connect with jumper
+wires anyway, so cross SDA and SCL.
 
-| Ref | Pad 1 | Pad 2 (common) | Pad 3 | Silkscreen |
+**Display voltage.** JP3 is a 3-pin header with a jumper cap, so it can only select one
+supply at a time: `Jumper:Jumper_3_Open` with footprint
+`Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical`.
+
+| Ref | Pin 1 | Pin 2 (common) | Pin 3 | Silkscreen |
 |---|---|---|---|---|
-| JP1 | `GND` | `P1` | `VDISP` | "P1: GND \| VCC" |
-| JP2 | `GND` | `P2` | `VDISP` | "P2: GND \| VCC" |
-| JP3 | `+3V3` | `VDISP` | `VBUS` | "3V3 \| 5V" |
+| JP3 | `+3V3` | `VDISP` | `VBUS` | `3V3 · VCC · 5V` |
 
-The jumpers ship **open**, so the display gets no power until the builder bridges them
-to match the module. There's deliberately no default: a wrong default could reverse a
-module's power and destroy it.
+It ships without a cap, so the display gets no power until the builder chooses.
 
-**Level shifter for 5 V displays.** Two BSS138 MOSFETs, each wired gate to `+3V3`,
-source to the S2 side, drain to the display side.
+**Level shifter, always fitted.** Two BSS138 MOSFETs, each wired gate to `+3V3`,
+source to the S2 side, drain to the display side. It works the same at 3.3 V and at
+5 V, so there's no bypass, and no setting can put 5 V on GPIO 8/9.
 
 | Ref | Symbol | Footprint | Connections |
 |---|---|---|---|
 | Q1 | `Transistor_FET:BSS138` | `Package_TO_SOT_SMD:SOT-23` | G → `+3V3`, S → `SDA`, D → `SDA_D` |
 | Q2 | same | same | G → `+3V3`, S → `SCL`, D → `SCL_D` |
-| R2 | `Device:R_Small`, 10 kΩ | `R_0805_2012Metric` | `SDA` – `+3V3` |
+| R2 | `Device:R_Small`, 4.7 kΩ | `R_0805_2012Metric` | `SDA` – `+3V3` |
 | R3 | same | same | `SCL` – `+3V3` |
 | R4 | same | same | `SDA_D` – `VDISP` |
 | R5 | same | same | `SCL_D` – `VDISP` |
-| JP4 | `Jumper:SolderJumper_2_Open` | `Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm` | `SDA` – `SDA_D` (bridge for 3.3 V) |
-| JP5 | same | same | `SCL` – `SCL_D` (bridge for 3.3 V) |
-| C2 | `Device:C_Small`, 100 nF | `C_0805_2012Metric` | `VDISP` – `GND`, close to J3 |
+| C2 | `Device:C_Small`, 100 nF | `C_0805_2012Metric` | `VDISP` – `GND`, close to J3/J7 |
 
-R2 and R3 are always fitted, because they double as the I2C pull-ups. Q1, Q2, R4 and
-R5 are fitted only for 5 V; at 3.3 V, bridge JP4 and JP5 instead.
+4.7 kΩ rather than 10 kΩ, because the firmware runs I2C at 400 kHz.
 
 ## SPI display header
 
@@ -138,6 +148,9 @@ J4 is a `Connector_Generic:Conn_01x08` with footprint
 | Pin | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|
 | Net | `+3V3` | `GND` | `SPI_MOSI` (DIN) | `SPI_SCK` (CLK) | `DISP_CS` | `DISP_DC` | `DISP_RST` | `DISP_BUSY` |
+
+R11 (`Device:R_Small`, 10 kΩ, `R_0805_2012Metric`): `DISP_CS` – `+3V3`. It keeps the
+display deselected while the S2 boots and while the SD card is in use.
 
 ## MicroSD
 
@@ -160,11 +173,14 @@ LCSC C91145: push-push, 9 pads at 1.10 mm pitch, 4 shell pads, 2 locating holes)
 The optional plug-in SD module, J6, is a `Connector_Generic:Conn_01x06` with
 footprint `PinSocket_1x06_P2.54mm_Vertical`:
 - Pin 1: `GND`.
-- Pin 2: `+3V3`.
+- Pin 2: `VBUS`. The common module has its own 1117 3.3 V regulator and needs 5 V;
+  its level shifter drives MISO at 3.3 V.
 - Pin 3: `SPI_MISO`.
 - Pin 4: `SPI_MOSI`.
 - Pin 5: `SPI_SCK`.
 - Pin 6: `SD_CS`.
+
+Fit **either** the socket (J5) **or** the module (J6), not both: they share CS and MISO.
 
 ## Mounting
 

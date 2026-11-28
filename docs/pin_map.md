@@ -98,33 +98,39 @@ octal PSRAM on the N16R8.
 
 ## Carrier circuit
 
-**I2C display header (1×4: P1 P2 SCL SDA).**
-- **Pin order.** OLED modules ship as both GND-VCC and VCC-GND, and powering one
-  backwards can destroy it. So P1 and P2 each go through a
-  3-pad solder jumper that connects it to either GND or display power. The silkscreen
-  shows both settings, and the default is P1 = GND, P2 = VCC.
-- **Display power.** A third 3-pad jumper picks 3V3 or VBUS (5 V):
-  - **3.3 V (default):** OLEDs, 3.3 V LCDs, and many 5 V 20×4 LCDs with the
-    contrast turned well down.
+**I2C display header.**
+- **Pin order.** OLED modules ship as both GND-VCC-SCL-SDA and VCC-GND-SCL-SDA, and
+  powering one backwards can destroy it. So the carrier has two 4-pin footprints side
+  by side, one for each order. The builder fits the socket in the one that matches
+  their module. There are no jumpers to bridge, so there's no wrong setting to make.
+- **Display power.** A 3-pin header with a jumper cap picks 3V3 or VBUS (5 V). A cap
+  can only sit in one position, so it can't connect 3.3 V to 5 V. The board ships
+  without a cap, so the builder chooses before the display gets power.
+  - **3.3 V:** OLEDs, 3.3 V LCDs, and many 5 V 20×4 LCDs with the contrast turned
+    well down.
   - **5 V:** HD44780 LCDs whose text is too faint at 3.3 V.
-- **Level shifter for 5 V only.** At 5 V the backpack's PCF8574 needs at least 3.5 V
+- **Level shifter, always fitted.** At 5 V the backpack's PCF8574 needs at least 3.5 V
   to read a logic high, more than the S2 drives, and its pull-ups would put 5 V on
-  GPIO 8/9. So the 5 V build fits a 2-channel BSS138 level shifter (2× BSS138, plus
-  2× 10 kΩ pull-ups to display power on the display side). For 3.3 V it's left off,
-  and two solder jumpers bridge SDA and SCL straight through.
-- **I2C pull-ups:** 2× 10 kΩ to 3V3 on the S2 side, always fitted. They also serve
-  as the level shifter's low-side pull-ups.
+  GPIO 8/9. A 2-channel BSS138 shifter sits between the S2 and the display. It works
+  just as well at 3.3 V, so there's no bypass to set wrong.
+- **I2C pull-ups:** 4.7 kΩ on each side of the shifter (to 3V3 and to display power),
+  for the firmware's 400 kHz bus.
+- PCF8574 LCD backpacks are usually GND VCC **SDA SCL**. They connect with jumper
+  wires, so cross SDA and SCL.
 
 Full schematic connection list: [`hardware/carrier/connections.md`](../hardware/carrier/connections.md).
 
 **SPI display header (1×8)** in Waveshare's e-paper order: VCC GND DIN CLK CS DC RST
-BUSY, at 3.3 V.
+BUSY, at 3.3 V. Display CS has a 10 kΩ pull-up, so the display stays deselected while
+the S2 boots and while the SD card is in use.
 
 **MicroSD.**
 - A TF-01A push-push socket on the shared SPI bus, at 3.3 V.
 - 10 kΩ pull-ups on CS, MOSI, MISO and the unused DAT1/DAT2.
 - 100 nF + 10 µF decoupling.
-- An optional 1×6 header (GND VCC MISO MOSI SCK CS) for the plug-in SD module.
+- An optional 1×6 header (GND VCC MISO MOSI SCK CS) for the plug-in SD module. Its
+  VCC is 5 V: the common module has its own 3.3 V regulator. Fit the socket or the
+  module, not both, because they share CS and MISO.
 
 **EN (reset) filter.** A 10 kΩ pull-up to 3V3 and 1 µF to GND on the S2 Mini's EN
 pin, against spurious resets reported on some S2 Mini clones. The S2 Mini's RST button
