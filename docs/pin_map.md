@@ -55,10 +55,11 @@ Why these pins:
   chip works on the others.
 - **I2C on 8/9**, as in all three firmware board files. LOLIN's own default (33/35)
   is overridden in `firmware/boards/SEEDSIGNER_S2_MINI/mpconfigboard.h`.
-- **SPI on 34–37**, the S2's FSPI IO-MUX pins (CS0, D, CLK, Q). They run SPI at
-  full speed without going through the GPIO matrix. If a pin there turns out not to
-  be on the IO MUX, nothing breaks:
-  any GPIO can carry SPI through the matrix at MicroSD speeds.
+- **SPI on 34–37**, the S2's FSPI IO-MUX pins: 34 FSPICS0, 35 FSPID (MOSI),
+  36 FSPICLK, 37 FSPIQ (MISO) (ESP32-S2 datasheet v1.9, Table 2-3). They run SPI at
+  full speed without going through the GPIO matrix. They're 3.3 V on both the
+  S2FN4R2 and the S2FH4 (VDD_SPI is 3.3 V on both), and quad-SPI parts don't use
+  them for flash or PSRAM.
 - **No strapping pins.** The S2's are 0, 45 and 46, and none are on the headers.
 - **39 and 40 are JTAG pins** (MTCK, MTDO) until the firmware sets them as GPIO.
   Display DC and RST are outputs, so a glitch on them during boot is harmless.
@@ -132,7 +133,7 @@ still works through it.
 **Power.** The S2 Mini's 3V3 and VBUS pins feed the carrier, so the carrier has no
 regulator.
 
-## To check before layout
+## To check before ordering
 
-- The SPI IO-MUX pins (34–37) against the ESP32-S2 datasheet.
-- The K1-1506SN-01 and TF-01A footprints against their manufacturer drawings.
+- The K1-1506SN-01 and TF-01A footprints, on a 1:1 print against the real parts.
+- Which way round the S2 Mini sits on J1/J2, on the same print.
