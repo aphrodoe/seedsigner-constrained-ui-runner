@@ -8,7 +8,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "VNOV 2026"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -430,7 +430,7 @@
         "uuid": "6750f675-e260-4914-bb9d-0848f6b1072d"
       }
     ],
-    "used_designators": "#FLG1-4,#PWR1-24,JP3",
+    "used_designators": "#FLG1-4,#PWR1-43,JP3",
     "variants": []
   },
   "sheets": [
