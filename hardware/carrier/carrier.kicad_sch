@@ -4,6 +4,9 @@
 	(generator_version "10.0")
 	(uuid "6750f675-e260-4914-bb9d-0848f6b1072d")
 	(paper "A4")
+	(title_block
+		(date "2026-11-28")
+	)
 	(lib_symbols
 		(symbol "Connector_Generic:Conn_01x04"
 			(pin_names
@@ -5035,7 +5038,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x08_P2.54mm_Vertical"
 			(at 105.41 58.42 0)
 			(hide yes)
 			(show_name no)
@@ -5316,7 +5319,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 191.77 118.11 0)
 			(hide yes)
 			(show_name no)
@@ -5398,7 +5401,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
 			(at 227.33 83.82 0)
 			(hide yes)
 			(show_name no)
@@ -5474,7 +5477,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 45.72 106.68 0)
 			(hide yes)
 			(show_name no)
@@ -5556,7 +5559,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 81.28 158.75 0)
 			(hide yes)
 			(show_name no)
@@ -5638,7 +5641,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
 			(at 250.19 83.82 0)
 			(hide yes)
 			(show_name no)
@@ -5791,7 +5794,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 39.37 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -6197,7 +6200,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 172.72 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -6514,7 +6517,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 124.46 43.18 0)
 			(hide yes)
 			(show_name no)
@@ -6907,7 +6910,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-3_P1.3mm_Open_RoundedPad1.0x1.5mm"
 			(at 88.9 99.06 0)
 			(hide yes)
 			(show_name no)
@@ -7325,7 +7328,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical"
 			(at 240.03 54.61 0)
 			(hide yes)
 			(show_name no)
@@ -7494,7 +7497,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
 			(at 231.14 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -7654,7 +7657,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical"
 			(at 109.22 97.79 0)
 			(hide yes)
 			(show_name no)
@@ -7818,7 +7821,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm"
 			(at 231.14 118.11 0)
 			(hide yes)
 			(show_name no)
@@ -7978,7 +7981,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 158.75 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -8060,7 +8063,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 124.46 114.3 0)
 			(hide yes)
 			(show_name no)
@@ -8219,7 +8222,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x08_P2.54mm_Vertical"
 			(at 194.31 57.15 0)
 			(hide yes)
 			(show_name no)
@@ -8343,7 +8346,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
 			(at 227.33 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -8574,7 +8577,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 57.15 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -8735,7 +8738,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 60.96 137.16 0)
 			(hide yes)
 			(show_name no)
@@ -8817,7 +8820,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 31.75 106.68 0)
 			(hide yes)
 			(show_name no)
@@ -8977,7 +8980,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 62.23 106.68 0)
 			(hide yes)
 			(show_name no)
@@ -9059,7 +9062,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 124.46 96.52 0)
 			(hide yes)
 			(show_name no)
@@ -9141,7 +9144,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical"
 			(at 64.77 44.45 0)
 			(hide yes)
 			(show_name no)
@@ -9320,7 +9323,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 97.79 158.75 0)
 			(hide yes)
 			(show_name no)
@@ -9400,7 +9403,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-3_P1.3mm_Open_RoundedPad1.0x1.5mm"
 			(at 86.36 139.7 0)
 			(hide yes)
 			(show_name no)
@@ -9507,7 +9510,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 205.74 118.11 0)
 			(hide yes)
 			(show_name no)
@@ -9972,7 +9975,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 137.16 48.26 0)
 			(hide yes)
 			(show_name no)
@@ -10209,7 +10212,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 137.16 67.31 0)
 			(hide yes)
 			(show_name no)
@@ -10526,7 +10529,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
 			(at 248.92 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -10680,7 +10683,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 124.46 78.74 0)
 			(hide yes)
 			(show_name no)
@@ -10841,7 +10844,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 102.87 142.24 0)
 			(hide yes)
 			(show_name no)
@@ -11369,7 +11372,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-3_P1.3mm_Open_RoundedPad1.0x1.5mm"
 			(at 92.71 115.57 0)
 			(hide yes)
 			(show_name no)
@@ -11476,7 +11479,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 137.16 85.09 0)
 			(hide yes)
 			(show_name no)
@@ -11715,7 +11718,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 44.45 137.16 0)
 			(hide yes)
 			(show_name no)
@@ -11876,7 +11879,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_THT:SW_PUSH_6mm"
 			(at 124.46 60.96 0)
 			(hide yes)
 			(show_name no)
