@@ -62,13 +62,14 @@ NO_PINS = {"H1", "H2", "H3", "H4"}
 
 
 def parse(text):
-    """KiCad s-expression netlist -> {(ref, pin): net name}, single-node nets as None."""
+    """KiCad s-expression netlist -> {(ref, pin): net name}, unconnected pins as None."""
     pins = {}
     text = re.sub(r"\s+", " ", text)  # KiCad 10 writes one field per line
     for block in re.split(r"\(net \(code", text)[1:]:
         name = re.search(r'\(name "([^"]*)"', block).group(1).lstrip("/")
         nodes = re.findall(r'\(node \(ref "([^"]+)"\) \(pin "([^"]+)"\)', block)
-        real = None if name.startswith("unconnected-") or len(nodes) < 2 else name
+        # A labelled pin keeps its net name even before the other end is drawn.
+        real = None if name.startswith("unconnected-") else name
         for node in nodes:
             pins[node] = real
     return pins
