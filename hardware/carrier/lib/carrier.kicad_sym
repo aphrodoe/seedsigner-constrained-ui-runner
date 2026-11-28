@@ -160,37 +160,37 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 2.54 0)
         (length 5.08)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -2.54 0)
         (length 5.08)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -5.08 0)
         (length 5.08)
         (name "3" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -5.08 180)
         (length 5.08)
         (name "4" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -2.54 180)
         (length 5.08)
         (name "5" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 2.54 180)
         (length 5.08)
         (name "6" (effects (font (size 1.27 1.27))))
@@ -265,79 +265,79 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin bidirectional line
+      (pin passive line
         (at -19.05 2.54 0)
         (length 7.62)
         (name "DAT2(RSV)" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin bidirectional line
+      (pin passive line
         (at -19.05 -0.00 0)
         (length 7.62)
         (name "CDDAT3(CS)" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -19.05 -5.08 0)
         (length 7.62)
         (name "CMD(DI)" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 19.05 7.62 180)
         (length 7.62)
         (name "VDD" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -19.05 -7.62 0)
         (length 7.62)
         (name "CLK(SCLK)" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 19.05 -7.62 180)
         (length 7.62)
         (name "VSS" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin bidirectional line
+      (pin passive line
         (at -19.05 7.62 0)
         (length 7.62)
         (name "DAT0(D0)" (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin bidirectional line
+      (pin passive line
         (at -19.05 5.08 0)
         (length 7.62)
         (name "DAT1(RSV)" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 1.27 17.78 270)
         (length 7.62)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "13" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 1.27 -17.78 90)
         (length 7.62)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "10" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 3.81 -17.78 90)
         (length 7.62)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "11" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 3.81 17.78 270)
         (length 7.62)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "12" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 19.05 -2.54 180)
         (length 7.62)
         (name "CD" (effects (font (size 1.27 1.27))))
