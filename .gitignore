@@ -70,3 +70,10 @@ firmware/build/
 
 # Pi image build cache and output
 pi-image/build/
+
+# KiCad local state
+*.lck
+*.kicad_prl
+.history/
+*-backups/
+fp-info-cache
