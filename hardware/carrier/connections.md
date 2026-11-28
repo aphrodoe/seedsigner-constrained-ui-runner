@@ -77,10 +77,9 @@ there are no resistors.
 | SW8 | same | same | `KEY2` – `GND` |
 | SW9 | same | same | `KEY3` – `GND` |
 
-The K1-1506SN-01 pinout and pad layout are on its datasheet drawing (LCSC C145910):
-- **Pads:** six pads of 1.5 × 1.5 mm.
-- **Columns:** 8.80 mm apart, measured centre to centre.
-- **Rows:** 1.30 mm gaps between the three rows; outer rows 6.50 mm apart.
+The K1-1506SN-01 pinout is on its datasheet drawing (LCSC C145910). The pad layout is
+the `carrier:KEY-SMD_K1-1506SN-01` footprint; check it on a 1:1 print with the real
+switch before ordering.
 
 ## EN filter
 
