@@ -145,7 +145,9 @@ eight ordinary buttons if you'd rather avoid SMD.
 - [Pin map](docs/pin_map.md): every GPIO, the header layout and the circuit.
 - [Bill of materials](docs/bom.md): parts, Indian and international sources, about
   **₹1,140 (~$12) per device**.
-- Schematic and layout: next.
+- [Schematic](hardware/carrier/): a KiCad 10 project, with every connection listed in
+  [`connections.md`](hardware/carrier/connections.md) and a script that checks the
+  schematic against it. Layout: next.
 
 Later: an all-in-one board, a 3D-printed case, and audio-only navigation for blind
 users.
